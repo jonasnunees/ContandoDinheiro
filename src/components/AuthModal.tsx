@@ -119,7 +119,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           </p>
         </div>
 
-        {!isConfigured ? (
+        {!isConfigured && (
           <div className="mb-5 p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-800 dark:text-amber-200 space-y-1.5">
             <div className="flex items-center gap-2 font-bold text-amber-700 dark:text-amber-300">
               <ShieldAlert className="w-4 h-4 flex-shrink-0" />
@@ -139,11 +139,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               <span>Conectar meu Supabase & SQL</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
-          </div>
-        ) : (
-          <div className="mb-4 p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-700 dark:text-emerald-300 flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 flex-shrink-0 text-emerald-600 dark:text-emerald-400" />
-            <span>Banco de dados Supabase conectado. Seus dados e usuário são gravados diretamente no PostgreSQL.</span>
           </div>
         )}
 
