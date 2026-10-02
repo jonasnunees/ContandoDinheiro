@@ -198,6 +198,20 @@ export function setStoredUser(user: { id: string; email: string; isDemo: boolean
   }
 }
 
+export async function signInWithGoogleService(): Promise<{ error?: any; url?: string | null }> {
+  const client = getSupabaseClient();
+  if (client) {
+    const { data, error } = await client.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin,
+      },
+    });
+    return { error, url: data?.url ?? null };
+  }
+  return { error: new Error('Supabase não configurado') };
+}
+
 // Service functions for Transactions
 export async function fetchTransactionsService(userId: string, isDemo: boolean): Promise<Transaction[]> {
   const client = getSupabaseClient();

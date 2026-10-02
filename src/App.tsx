@@ -503,7 +503,7 @@ export default function App() {
               onClick={() => setIsAuthModalOpen(true)}
               className="text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 transition cursor-pointer"
             >
-              Autenticação
+              Entrar com Google
             </button>
           </div>
         </div>
