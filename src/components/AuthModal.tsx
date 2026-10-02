@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { getSupabaseClient, isSupabaseConfigured, setStoredUser } from '../services/supabase';
+import { getSupabaseClient, isSupabaseConfigured, setStoredUser, signInWithGoogleService } from '../services/supabase';
 import { Sparkles, AlertCircle, Loader2, X, ShieldAlert, CheckCircle2, ArrowRight } from 'lucide-react';
 
 interface AuthModalProps {
@@ -36,24 +36,33 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
     try {
       if (isConfigured) {
-        const client = getSupabaseClient();
-        if (client) {
-          const { error } = await client.auth.signInWithOAuth({
-            provider: 'google',
-            options: {
-              redirectTo: window.location.origin,
-            },
-          });
-          if (error) {
-            console.warn('OAuth Supabase Google não habilitado ou bloqueado no preview:', error.message);
-            // Fallback imediato para experiência fluida sem bloqueios
-            handleInstantGoogleLogin(chosenEmail);
-            return;
+        const { error, url } = await signInWithGoogleService();
+        if (error) {
+          console.warn('OAuth Supabase Google erro:', error.message);
+          setErrorMessage(error.message || 'Erro ao comunicar com o Google no Supabase.');
+          setGoogleLoading(false);
+          return;
+        }
+        if (url) {
+          const width = 500;
+          const height = 650;
+          const left = window.screenX + Math.max(0, (window.outerWidth - width) / 2);
+          const top = window.screenY + Math.max(0, (window.outerHeight - height) / 2);
+          const popup = window.open(
+            url,
+            'google-oauth-popup',
+            `width=${width},height=${height},left=${left},top=${top},status=no,toolbar=no,menubar=no`
+          );
+          if (!popup) {
+            if (window.top && window.top !== window) {
+              window.top.location.href = url;
+            } else {
+              window.location.href = url;
+            }
           }
           return;
         }
       }
-      // Demo / Local instant Google authentication
       handleInstantGoogleLogin(chosenEmail);
     } catch (err: any) {
       console.warn('Falha OAuth:', err);

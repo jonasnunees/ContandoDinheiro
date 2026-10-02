@@ -316,38 +316,6 @@ export default function App() {
 
       {/* Main Body */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 space-y-6 pb-24 md:pb-12">
-        {/* Supabase Notice & Etapa 1 Quick Access Banner */}
-        {!isConfigured && (
-          <div className="rounded-2xl bg-gradient-to-r from-emerald-50 via-slate-50 to-teal-100 dark:from-emerald-950/70 dark:via-slate-900 dark:to-teal-950/70 border border-emerald-300 dark:border-emerald-500/30 p-4 sm:p-5 shadow-sm dark:shadow-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors">
-            <div className="flex items-start gap-3.5">
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <Database className="w-5 h-5" />
-              </div>
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                    Setup do Banco de Dados & Supabase
-                  </h3>
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
-                    Etapa 1 do Roadmap
-                  </span>
-                </div>
-                <p className="text-xs text-slate-600 dark:text-slate-300 max-w-2xl leading-relaxed">
-                  O aplicativo está funcionando com dados locais demonstrativos. Obtenha a query SQL da tabela <code className="text-emerald-700 dark:text-emerald-300 font-mono font-semibold">transacoes</code> com RLS e conecte seu Supabase em poucos cliques.
-                </p>
-              </div>
-            </div>
-
-            <button
-              onClick={() => setIsSetupModalOpen(true)}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-xs font-bold text-white shadow-lg shadow-emerald-950/20 dark:shadow-emerald-950 transition cursor-pointer whitespace-nowrap self-start sm:self-auto"
-            >
-              <Sparkles className="w-4 h-4" />
-              Ver Script SQL & Conectar
-            </button>
-          </div>
-        )}
-
         {/* Refresh bar & Subheader status */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">

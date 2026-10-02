@@ -110,8 +110,10 @@ const INITIAL_DEMO_TRANSACTIONS: Transaction[] = [
 
 let supabaseClient: SupabaseClient | null = null;
 
+const DEFAULT_SUPABASE_URL = 'https://szdipyjehiaupvuqtwvy.supabase.co';
+
 export function getSupabaseCredentials() {
-  const url = localStorage.getItem(STORAGE_KEYS.SUPABASE_URL) || (import.meta as any).env?.VITE_SUPABASE_URL || '';
+  const url = localStorage.getItem(STORAGE_KEYS.SUPABASE_URL) || (import.meta as any).env?.VITE_SUPABASE_URL || DEFAULT_SUPABASE_URL;
   const key = localStorage.getItem(STORAGE_KEYS.SUPABASE_ANON_KEY) || (import.meta as any).env?.VITE_SUPABASE_ANON_KEY || '';
   return { url, key };
 }
@@ -205,6 +207,7 @@ export async function signInWithGoogleService(): Promise<{ error?: any; url?: st
       provider: 'google',
       options: {
         redirectTo: window.location.origin,
+        skipBrowserRedirect: true,
       },
     });
     return { error, url: data?.url ?? null };
