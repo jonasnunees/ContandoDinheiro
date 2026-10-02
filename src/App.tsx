@@ -77,6 +77,9 @@ export default function App() {
     setTransactionToEdit(null);
     setIsTransactionModalOpen(false);
     setUser(nextUser);
+    if (nextUser) {
+      setCurrentView(nextUser.isDemo ? 'landing' : 'dashboard');
+    }
   }, []);
 
   const loadTransactions = useCallback(async () => {
@@ -146,10 +149,12 @@ export default function App() {
   }, [client, applyUser, configurationVersion]);
 
   const handleLogout = async () => {
+    const previousUser = activeUser.current;
     applyUser(null);
     if (client) {
       const { error } = await client.auth.signOut();
       if (error) {
+        applyUser(previousUser);
         console.error('Não foi possível encerrar a sessão:', error);
         return;
       }
@@ -272,8 +277,18 @@ export default function App() {
     await loadTransactions();
   };
 
-  // If in Landing Page view
-  if (currentView === 'landing') {
+  // Wait for session recovery before choosing the visitor or authenticated view.
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex items-center justify-center" role="status" aria-live="polite">
+        <RefreshCw className="w-5 h-5 animate-spin mr-2 text-emerald-500" aria-hidden="true" />
+        <span>Carregando sua sessão...</span>
+      </div>
+    );
+  }
+
+  // Authenticated users always see their dashboard, including after OAuth or reload.
+  if (currentView === 'landing' && user.isDemo) {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-sans transition-colors duration-200">
         <LandingPage
@@ -339,9 +354,9 @@ export default function App() {
           setIsAuthModalOpen(true);
         }}
         onLogout={handleLogout}
-        onOpenLanding={() => {
+        onOpenLanding={user.isDemo ? () => {
           setCurrentView('landing');
-        }}
+        } : undefined}
         user={user}
       />
 
@@ -362,14 +377,14 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-2">
-            <button
+            {user.isDemo && <button
               onClick={() => setCurrentView('landing')}
               className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/80 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white text-xs transition cursor-pointer shadow-sm"
               title="Voltar para a página de apresentação"
             >
               <Home className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
               <span>Ver Apresentação</span>
-            </button>
+            </button>}
             <button
               onClick={handleRefresh}
               disabled={isRefreshing}
@@ -530,6 +545,7 @@ export default function App() {
         onClose={() => setIsAuthModalOpen(false)}
         onAuthSuccess={(authUser) => {
           applyUser(authUser);
+          setCurrentView('dashboard');
         }}
         onOpenSetup={() => setIsSetupModalOpen(true)}
         initialMode={authModalMode}
