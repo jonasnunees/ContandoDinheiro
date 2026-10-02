@@ -257,7 +257,8 @@ export default function App() {
             setIsAuthModalOpen(true);
           }}
           onGoToDashboard={() => setCurrentView('dashboard')}
-          isLoggedIn={Boolean(user && !user.isDemo)}
+          onLogout={handleLogout}
+          isLoggedIn={Boolean(user)}
           userEmail={user?.email}
         />
 

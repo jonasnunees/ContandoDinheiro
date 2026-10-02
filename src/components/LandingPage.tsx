@@ -12,7 +12,8 @@ import {
   UserPlus,
   Wallet,
   Menu,
-  X
+  X,
+  LogOut
 } from 'lucide-react';
 import { PWAInstallButton } from './PWAInstallButton';
 import { ThemeToggle } from './ThemeToggle';
@@ -21,6 +22,7 @@ interface LandingPageProps {
   onOpenLogin: () => void;
   onOpenRegister: () => void;
   onGoToDashboard: () => void;
+  onLogout?: () => void;
   isLoggedIn: boolean;
   userEmail?: string;
 }
@@ -29,6 +31,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   onOpenLogin,
   onOpenRegister,
   onGoToDashboard,
+  onLogout,
   isLoggedIn,
   userEmail,
 }) => {
@@ -63,13 +66,33 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             <PWAInstallButton />
 
             {isLoggedIn ? (
-              <button
-                onClick={onGoToDashboard}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-xs sm:text-sm font-bold text-white shadow-lg shadow-emerald-950/20 transition cursor-pointer"
-              >
-                <span>Acessar Painel</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-2.5 py-1.5 text-xs">
+                  <div className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-[10px]">
+                    {(userEmail || 'U').charAt(0).toUpperCase()}
+                  </div>
+                  <span className="font-semibold text-slate-800 dark:text-slate-200 max-w-[150px] truncate">
+                    {userEmail || 'Usuário'}
+                  </span>
+                  {onLogout && (
+                    <button
+                      onClick={onLogout}
+                      className="text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 p-0.5 ml-1 transition cursor-pointer"
+                      title="Desconectar"
+                    >
+                      <LogOut className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+
+                <button
+                  onClick={onGoToDashboard}
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-xs font-bold text-white shadow-md shadow-emerald-950/20 transition cursor-pointer"
+                >
+                  <span>Painel</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
             ) : (
               <button
                 onClick={onOpenLogin}
@@ -104,21 +127,40 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         {isMobileMenuOpen && (
           <div className="sm:hidden max-w-7xl mx-auto pt-3 pb-2 mt-3 border-t border-slate-200 dark:border-slate-800 space-y-3">
             {isLoggedIn ? (
-              <div className="p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-bold text-slate-900 dark:text-white">Conectado</p>
-                  <p className="text-[11px] text-emerald-700 dark:text-emerald-300 truncate max-w-[180px]">{userEmail || 'Sessão ativa'}</p>
+              <div className="p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="w-7 h-7 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-xs flex-shrink-0">
+                    {(userEmail || 'U').charAt(0).toUpperCase()}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] uppercase tracking-wider font-bold text-emerald-600 dark:text-emerald-400">Logado</p>
+                    <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">{userEmail || 'Sessão ativa'}</p>
+                  </div>
                 </div>
-                <button
-                  onClick={() => {
-                    setIsMobileMenuOpen(false);
-                    onGoToDashboard();
-                  }}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow transition cursor-pointer"
-                >
-                  <span>Painel</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
+                <div className="flex items-center gap-1.5 flex-shrink-0">
+                  {onLogout && (
+                    <button
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        onLogout();
+                      }}
+                      className="p-1.5 rounded-xl text-slate-400 hover:text-rose-500 transition cursor-pointer"
+                      title="Sair"
+                    >
+                      <LogOut className="w-4 h-4" />
+                    </button>
+                  )}
+                  <button
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      onGoToDashboard();
+                    }}
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow transition cursor-pointer"
+                  >
+                    <span>Painel</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
             ) : (
               <button
