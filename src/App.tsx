@@ -491,7 +491,7 @@ export default function App() {
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           <p>ContandoDinheiro — Sistema de Gestão Financeira com Supabase & PWA</p>
           <div className="flex items-center gap-4">
-            <button>
+            <button
               onClick={() => setIsAuthModalOpen(true)}
               className="text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 transition cursor-pointer"
             >
