@@ -242,7 +242,7 @@ export const SupabaseSetupModal: React.FC<SupabaseSetupModalProps> = ({
                 </div>
 
                 <div className="p-3 rounded-xl bg-blue-500/10 border border-blue-500/20 text-xs text-blue-700 dark:text-blue-300">
-                  💡 <strong>Resultado:</strong> Cada login do Google dispara o script SQL, salvando o usuário em <code className="font-bold">public.usuarios</code> e recuperando todas as suas receitas e despesas de <code className="font-bold">public.transacoes</code> automaticamente em tempo real!
+                  Em <strong>Authentication → URL Configuration</strong>, configure a <strong>Site URL</strong> com o endereço publicado da aplicação e adicione esse endereço em <strong>Redirect URLs</strong>. Para testar localmente, adicione também <code>http://localhost:3000</code>. Após aplicar o SQL, os perfis serão sincronizados e cada usuário terá acesso às próprias transações.
                 </div>
               </div>
             </div>

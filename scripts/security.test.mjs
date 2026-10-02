@@ -169,16 +169,29 @@ test('migração protege dados e gera auditoria no PostgreSQL local', async t =>
         $$ SELECT nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
       GRANT USAGE ON SCHEMA public, auth TO anon, authenticated;
     `);
+    // Uma conta anterior à instalação precisa de perfil para gravar transações.
+    await db.query(`INSERT INTO auth.users (id, email, raw_user_meta_data, raw_app_meta_data)
+      VALUES ($1, 'a@example.invalid', '{"full_name":"Conta anterior"}', '{"provider":"google"}')`, [accountA]);
     await db.exec(sql);
+    await t.test('instalação recupera perfil de conta preexistente', async () => {
+      const { rows } = await db.query('SELECT id, nome FROM public.usuarios');
+      assert.equal(rows[0].id, accountA);
+      assert.equal(rows[0].nome, 'Conta anterior');
+    });
+    await db.query("UPDATE public.usuarios SET nome = 'Nome personalizado' WHERE id = $1", [accountA]);
+    await db.exec(read('supabase/migrations/20261002220000_backfill_existing_profiles.sql'));
     // Simulate permissive policies left by an older configuration.
     await db.exec(`
       CREATE POLICY legacy_allow_all ON public.transacoes FOR ALL USING (true) WITH CHECK (true);
       CREATE POLICY legacy_allow_logs ON public.logs_atividades FOR ALL USING (true) WITH CHECK (true);
     `);
     await db.exec(sql);
+    await t.test('reaplicação preserva perfil personalizado', async () => {
+      const { rows } = await db.query('SELECT nome FROM public.usuarios WHERE id = $1', [accountA]);
+      assert.equal(rows[0].nome, 'Nome personalizado');
+    });
     await db.query(`INSERT INTO auth.users (id, email, raw_app_meta_data) VALUES
-      ($1, 'a@example.invalid', '{"provider":"google"}'),
-      ($2, 'b@example.invalid', '{"provider":"google"}')`, [accountA, accountB]);
+      ($1, 'b@example.invalid', '{"provider":"google"}')`, [accountB]);
 
     await t.test('trigger mapeia provider sem falhar no cadastro', async () => {
       const { rows } = await db.query('SELECT provider FROM public.usuarios ORDER BY id');

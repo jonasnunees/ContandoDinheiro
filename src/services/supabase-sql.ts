@@ -70,6 +70,18 @@ CREATE TRIGGER on_auth_user_created
     AFTER INSERT OR UPDATE ON auth.users
     FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
+-- Preencher perfis de contas que já existiam antes da instalação do trigger.
+-- Preservar perfis existentes e dados personalizados ao reaplicar o script.
+INSERT INTO public.usuarios (id, email, nome, avatar_url, provider)
+SELECT
+    id,
+    COALESCE(email, ''),
+    COALESCE(raw_user_meta_data->>'full_name', raw_user_meta_data->>'name', split_part(email, '@', 1)),
+    COALESCE(raw_user_meta_data->>'avatar_url', raw_user_meta_data->>'picture'),
+    COALESCE(raw_app_meta_data->>'provider', 'google')
+FROM auth.users
+ON CONFLICT (id) DO NOTHING;
+
 -- 3. TABELA DE TRANSAÇÕES FINANCEIRAS
 -- Vinculada ao id do usuário no Supabase com integridade referencial
 CREATE TABLE IF NOT EXISTS public.transacoes (
