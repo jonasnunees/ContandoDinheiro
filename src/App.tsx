@@ -20,6 +20,7 @@ import { SupabaseSetupModal } from './components/SupabaseSetupModal';
 import { AuthModal } from './components/AuthModal';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { LandingPage } from './components/LandingPage';
+import { logActivity } from './services/activityLogger';
 import { 
   Plus, 
   Database, 
@@ -122,6 +123,7 @@ export default function App() {
   }, []);
 
   const handleLogout = async () => {
+    logActivity('logout', { email: user?.email });
     const client = getSupabaseClient();
     if (client && !user?.isDemo) {
       await client.auth.signOut();
@@ -146,21 +148,51 @@ export default function App() {
 
     if (id) {
       await updateTransactionService(id, { ...data, user_id: userId }, isDemo);
+      logActivity('editar_transacao', {
+        transacao_id: id,
+        descricao: data.descricao,
+        valor: data.valor,
+        tipo: data.tipo,
+        categoria: data.categoria,
+        status: data.status,
+      });
     } else {
       await addTransactionService({ ...data, user_id: userId }, isDemo);
+      logActivity(data.tipo === 'receita' ? 'criar_receita' : 'criar_despesa', {
+        descricao: data.descricao,
+        valor: data.valor,
+        tipo: data.tipo,
+        categoria: data.categoria,
+        forma_pagamento: data.forma_pagamento,
+        status: data.status,
+      });
     }
     await loadTransactions();
   };
 
   const handleDeleteTransaction = async (id: string) => {
     const isDemo = user?.isDemo ?? !isConfigured;
+    const tx = transactions.find((t) => t.id === id);
     await deleteTransactionService(id, isDemo);
+    logActivity('excluir_transacao', {
+      transacao_id: id,
+      descricao: tx?.descricao,
+      valor: tx?.valor,
+      tipo: tx?.tipo,
+      categoria: tx?.categoria,
+    });
     await loadTransactions();
   };
 
   const handleToggleStatus = async (id: string, currentStatus: TransactionStatus) => {
     const isDemo = user?.isDemo ?? !isConfigured;
+    const nextStatus = currentStatus === 'pago' ? 'pendente' : 'pago';
     await toggleStatusService(id, currentStatus, isDemo);
+    logActivity('alterar_status_pagamento', {
+      transacao_id: id,
+      status_anterior: currentStatus,
+      status_novo: nextStatus,
+    });
     await loadTransactions();
   };
 
@@ -256,7 +288,10 @@ export default function App() {
             setAuthModalMode('register');
             setIsAuthModalOpen(true);
           }}
-          onGoToDashboard={() => setCurrentView('dashboard')}
+          onGoToDashboard={() => {
+            logActivity('navegar_painel');
+            setCurrentView('dashboard');
+          }}
           onLogout={handleLogout}
           isLoggedIn={Boolean(user)}
           userEmail={user?.email}
@@ -311,7 +346,10 @@ export default function App() {
           setIsAuthModalOpen(true);
         }}
         onLogout={handleLogout}
-        onOpenLanding={() => setCurrentView('landing')}
+        onOpenLanding={() => {
+          logActivity('navegar_apresentacao');
+          setCurrentView('landing');
+        }}
         user={user}
       />
 

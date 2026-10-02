@@ -111,4 +111,36 @@ DROP POLICY IF EXISTS "Usuários podem deletar suas transações" ON public.tran
 CREATE POLICY "Usuários podem deletar suas transações"
     ON public.transacoes FOR DELETE
     USING (auth.uid() = user_id);
+
+-- ========================================================
+-- 5. TABELA DE AUDITORIA E LOGS DE RASTRO (ACESSO EXCLUSIVO DO ADMINISTRADOR NO BANCO)
+-- ========================================================
+CREATE TABLE IF NOT EXISTS public.logs_atividades (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id TEXT,
+    user_email TEXT,
+    acao TEXT NOT NULL,
+    detalhes JSONB DEFAULT '{}'::jsonb,
+    dispositivo TEXT,
+    url TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Índices de auditoria para busca rápida por data, ação e usuário
+CREATE INDEX IF NOT EXISTS idx_logs_atividades_user ON public.logs_atividades (user_id);
+CREATE INDEX IF NOT EXISTS idx_logs_atividades_email ON public.logs_atividades (user_email);
+CREATE INDEX IF NOT EXISTS idx_logs_atividades_acao ON public.logs_atividades (acao);
+CREATE INDEX IF NOT EXISTS idx_logs_atividades_created_at ON public.logs_atividades (created_at DESC);
+
+-- Ativar Row Level Security (RLS)
+ALTER TABLE public.logs_atividades ENABLE ROW LEVEL SECURITY;
+
+-- Permitir gravação de logs pelo app (clientes autenticados e anônimos podem registrar)
+DROP POLICY IF EXISTS "Permitir inserção de logs de atividade" ON public.logs_atividades;
+CREATE POLICY "Permitir inserção de logs de atividade"
+    ON public.logs_atividades FOR INSERT
+    WITH CHECK (true);
+
+-- IMPORTANTE: Nenhuma política de SELECT pública é criada.
+-- Somente você (administrador do projeto) tem acesso a esses registros diretamente pelo painel do Supabase!
 `;

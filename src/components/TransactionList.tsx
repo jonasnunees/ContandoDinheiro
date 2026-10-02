@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Transaction, TransactionStatus, TransactionType, Category } from '../types/finance';
+import { logActivity } from '../services/activityLogger';
 import { 
   Search, 
   Trash2, 
@@ -88,6 +89,8 @@ export const TransactionList: React.FC<TransactionListProps> = ({
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+
+    logActivity('exportar_planilha_csv', { total_transacoes: transactions.length });
   };
 
   return (

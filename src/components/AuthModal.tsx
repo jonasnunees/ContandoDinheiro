@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { getSupabaseClient, isSupabaseConfigured, setStoredUser, signInWithGoogleService } from '../services/supabase';
+import { logActivity } from '../services/activityLogger';
 import { Sparkles, AlertCircle, Loader2, X, ShieldAlert, CheckCircle2, ArrowRight } from 'lucide-react';
 
 interface AuthModalProps {
@@ -84,6 +85,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       isDemo: !isConfigured,
     };
     setStoredUser(googleUser);
+    logActivity('login_google', { email: targetEmail, modo_demo: !isConfigured }, googleUser);
     onAuthSuccess(googleUser);
     onClose();
   };
@@ -95,6 +97,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       isDemo: true,
     };
     setStoredUser(guestUser);
+    logActivity('login_convidado', {}, guestUser);
     onAuthSuccess(guestUser);
     onClose();
   };
