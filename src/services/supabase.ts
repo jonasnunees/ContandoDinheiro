@@ -238,9 +238,14 @@ export async function addTransactionService(
 ): Promise<Transaction> {
   const client = getSupabaseClient();
   if (!isDemo && client) {
+    const { data: userData } = await client.auth.getUser();
+    const payload = {
+      ...transactionData,
+      ...(userData?.user ? { user_id: userData.user.id } : {}),
+    };
     const { data, error } = await client
       .from('transacoes')
-      .insert([transactionData])
+      .insert([payload])
       .select()
       .single();
 
