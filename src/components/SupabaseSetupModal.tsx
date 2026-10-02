@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { SUPABASE_SQL_SCRIPT } from '../services/supabase-sql';
-import { getSupabaseCredentials, setSupabaseCredentials, isSupabaseConfigured } from '../services/supabase';
+import { getSupabaseCredentials, getSupabaseClient, setSupabaseCredentials, validateSupabaseCredentials, isSupabaseConfigured } from '../services/supabase';
 import { Database, Copy, Check, ExternalLink, X, ShieldCheck, KeyRound, Terminal, AlertCircle } from 'lucide-react';
 
 interface SupabaseSetupModalProps {
@@ -19,6 +19,9 @@ export const SupabaseSetupModal: React.FC<SupabaseSetupModalProps> = ({
   const [key, setKey] = useState(currentCreds.key);
   const [copied, setCopied] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [credentialsError, setCredentialsError] = useState('');
+  const [savingCredentials, setSavingCredentials] = useState(false);
+  const isManagedConnection = Boolean(import.meta.env.VITE_SUPABASE_URL || import.meta.env.VITE_SUPABASE_ANON_KEY);
   const [activeTab, setActiveTab] = useState<'sql' | 'google' | 'creds' | 'instructions'>('sql');
 
   if (!isOpen) return null;
@@ -33,21 +36,52 @@ export const SupabaseSetupModal: React.FC<SupabaseSetupModalProps> = ({
     }
   };
 
-  const handleSaveCredentials = (e: React.FormEvent) => {
+  const handleSaveCredentials = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSupabaseCredentials(url, key);
+    if (isManagedConnection || savingCredentials) return;
+    setSavingCredentials(true);
+    setCredentialsError('');
+    try {
+      validateSupabaseCredentials(url.trim(), key.trim());
+      const client = getSupabaseClient();
+      if (client) {
+        const { error } = await client.auth.signOut();
+        if (error) throw error;
+      }
+      setSupabaseCredentials(url, key);
+    } catch (error) {
+      setCredentialsError(error instanceof Error ? error.message : 'Não foi possível salvar a conexão.');
+      setSavingCredentials(false);
+      return;
+    }
     setSaveSuccess(true);
     setTimeout(() => {
       setSaveSuccess(false);
+      setSavingCredentials(false);
       onCredentialsSaved();
       onClose();
     }, 1200);
   };
 
-  const handleClearCredentials = () => {
+  const handleClearCredentials = async () => {
+    if (isManagedConnection || savingCredentials) return;
+    setSavingCredentials(true);
+    setCredentialsError('');
+    try {
+      const client = getSupabaseClient();
+      if (client) {
+        const { error } = await client.auth.signOut();
+        if (error) throw error;
+      }
+      setSupabaseCredentials('', '');
+    } catch (error) {
+      setCredentialsError(error instanceof Error ? error.message : 'Não foi possível desconectar.');
+      setSavingCredentials(false);
+      return;
+    }
     setUrl('');
     setKey('');
-    setSupabaseCredentials('', '');
+    setSavingCredentials(false);
     onCredentialsSaved();
   };
 
@@ -243,6 +277,7 @@ export const SupabaseSetupModal: React.FC<SupabaseSetupModalProps> = ({
                 <input
                   type="url"
                   value={url}
+                  disabled={isManagedConnection || savingCredentials}
                   onChange={(e) => setUrl(e.target.value)}
                   placeholder="https://sua-empresa.supabase.co"
                   className="w-full rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 px-3.5 py-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-emerald-500"
@@ -256,6 +291,7 @@ export const SupabaseSetupModal: React.FC<SupabaseSetupModalProps> = ({
                 <input
                   type="password"
                   value={key}
+                  disabled={isManagedConnection || savingCredentials}
                   onChange={(e) => setKey(e.target.value)}
                   placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
                   className="w-full rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 px-3.5 py-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 font-mono focus:outline-none focus:border-emerald-500"
@@ -263,10 +299,11 @@ export const SupabaseSetupModal: React.FC<SupabaseSetupModalProps> = ({
               </div>
 
               <div className="flex items-center justify-between pt-2">
-                {isConfigured && (
+                {isConfigured && !isManagedConnection && (
                   <button
                     type="button"
                     onClick={handleClearCredentials}
+                    disabled={savingCredentials}
                     className="text-xs text-rose-500 hover:text-rose-600 dark:text-rose-400 dark:hover:text-rose-300 underline cursor-pointer"
                   >
                     Desconectar e Voltar ao Modo Demonstração
@@ -282,6 +319,7 @@ export const SupabaseSetupModal: React.FC<SupabaseSetupModalProps> = ({
                   </button>
                   <button
                     type="submit"
+                    disabled={isManagedConnection || savingCredentials}
                     className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-xs font-semibold text-white transition flex items-center gap-2 shadow-lg shadow-emerald-950/20 dark:shadow-emerald-950"
                   >
                     {saveSuccess ? (
@@ -297,6 +335,11 @@ export const SupabaseSetupModal: React.FC<SupabaseSetupModalProps> = ({
               </div>
             </form>
           )}
+
+          {activeTab === 'creds' && isManagedConnection && (
+            <p className="text-xs">A conexão deste ambiente é definida pela configuração da aplicação.</p>
+          )}
+          {credentialsError && <p role="alert" className="text-sm text-rose-600">{credentialsError}</p>}
 
           {activeTab === 'instructions' && (
             <div className="space-y-4">

@@ -1,11 +1,10 @@
-import { createClient, SupabaseClient, User } from '@supabase/supabase-js';
-import { Transaction, TransactionStatus } from '../types/finance';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import type { Transaction, TransactionStatus } from '../types/finance';
 
 const STORAGE_KEYS = {
   SUPABASE_URL: 'gf_supabase_url',
   SUPABASE_ANON_KEY: 'gf_supabase_anon_key',
   LOCAL_TRANSACTIONS: 'gf_local_transactions',
-  LOCAL_USER: 'gf_local_user',
 };
 
 // Initial sample transactions for instant demonstration
@@ -113,20 +112,47 @@ let supabaseClient: SupabaseClient | null = null;
 const DEFAULT_SUPABASE_URL = 'https://szdipyjehiaupvuqtwvy.supabase.co';
 
 export function getSupabaseCredentials() {
-  const url = localStorage.getItem(STORAGE_KEYS.SUPABASE_URL) || (import.meta as any).env?.VITE_SUPABASE_URL || DEFAULT_SUPABASE_URL;
-  const key = localStorage.getItem(STORAGE_KEYS.SUPABASE_ANON_KEY) || (import.meta as any).env?.VITE_SUPABASE_ANON_KEY || '';
-  return { url, key };
+  const envUrl = import.meta.env.VITE_SUPABASE_URL;
+  const envKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  if (envUrl || envKey) return { url: envUrl || '', key: envKey || '' };
+  return {
+    url: localStorage.getItem(STORAGE_KEYS.SUPABASE_URL) || DEFAULT_SUPABASE_URL,
+    key: localStorage.getItem(STORAGE_KEYS.SUPABASE_ANON_KEY) || '',
+  };
+}
+
+export function validateSupabaseCredentials(url: string, key: string): void {
+  const parsed = new URL(url);
+  const configuredHost = import.meta.env.VITE_SUPABASE_URL
+    ? new URL(import.meta.env.VITE_SUPABASE_URL).host
+    : null;
+  if (parsed.protocol !== 'https:' || parsed.username || parsed.password || parsed.search || parsed.hash ||
+      (parsed.pathname !== '/' && parsed.pathname !== '') ||
+      (configuredHost ? parsed.host !== configuredHost : !/^[a-z0-9-]+\.supabase\.co$/.test(parsed.host))) {
+    throw new Error('Use a URL HTTPS do projeto Supabase autorizado.');
+  }
+  if (/^sb_publishable_[A-Za-z0-9_-]+$/.test(key)) return;
+  try {
+    const segment = key.split('.')[1];
+    const base64 = segment.replace(/-/g, '+').replace(/_/g, '/');
+    const payload = JSON.parse(atob(base64.padEnd(Math.ceil(base64.length / 4) * 4, '=')));
+    if (key.split('.').length === 3 && payload.role === 'anon') return;
+  } catch {
+    // Only public keys are accepted. The server validates the JWT signature.
+  }
+  throw new Error('Use somente a chave pública anon ou publishable; chaves secretas não são permitidas.');
 }
 
 export function setSupabaseCredentials(url: string, key: string) {
-  if (url && key) {
+  if (import.meta.env.VITE_SUPABASE_URL || import.meta.env.VITE_SUPABASE_ANON_KEY) {
+    throw new Error('A conexão deste ambiente é definida pela configuração da aplicação.');
+  }
+  if (url || key) {
+    validateSupabaseCredentials(url.trim(), key.trim());
+    const nextClient = createClient(url.trim(), key.trim());
     localStorage.setItem(STORAGE_KEYS.SUPABASE_URL, url.trim());
     localStorage.setItem(STORAGE_KEYS.SUPABASE_ANON_KEY, key.trim());
-    try {
-      supabaseClient = createClient(url.trim(), key.trim());
-    } catch {
-      supabaseClient = null;
-    }
+    supabaseClient = nextClient;
   } else {
     localStorage.removeItem(STORAGE_KEYS.SUPABASE_URL);
     localStorage.removeItem(STORAGE_KEYS.SUPABASE_ANON_KEY);
@@ -136,22 +162,32 @@ export function setSupabaseCredentials(url: string, key: string) {
 
 export function isSupabaseConfigured(): boolean {
   const { url, key } = getSupabaseCredentials();
-  return Boolean(url && key && url.startsWith('http') && key.length > 20);
+  try {
+    validateSupabaseCredentials(url, key);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export function getSupabaseClient(): SupabaseClient | null {
   if (supabaseClient) return supabaseClient;
   const { url, key } = getSupabaseCredentials();
-  if (url && key && url.startsWith('http')) {
-    try {
-      supabaseClient = createClient(url, key);
-      return supabaseClient;
-    } catch (e) {
-      console.warn('Erro ao inicializar Supabase client:', e);
-      return null;
-    }
+  try {
+    validateSupabaseCredentials(url, key);
+    supabaseClient = createClient(url, key);
+    return supabaseClient;
+  } catch {
+    return null;
   }
-  return null;
+}
+
+async function requireAuthenticatedClient() {
+  const client = getSupabaseClient();
+  if (!client) throw new Error('Supabase não configurado.');
+  const { data, error } = await client.auth.getUser();
+  if (error || !data.user) throw new Error('Sessão inválida. Entre novamente com o Google.');
+  return { client, user: data.user };
 }
 
 // Local mock storage handlers
@@ -180,26 +216,6 @@ export interface AuthUserState {
   } | null;
 }
 
-export function getStoredUser(): { id: string; email: string; isDemo: boolean } | null {
-  const raw = localStorage.getItem(STORAGE_KEYS.LOCAL_USER);
-  if (raw) {
-    try {
-      return JSON.parse(raw);
-    } catch {
-      return null;
-    }
-  }
-  return null;
-}
-
-export function setStoredUser(user: { id: string; email: string; isDemo: boolean } | null) {
-  if (user) {
-    localStorage.setItem(STORAGE_KEYS.LOCAL_USER, JSON.stringify(user));
-  } else {
-    localStorage.removeItem(STORAGE_KEYS.LOCAL_USER);
-  }
-}
-
 export async function signInWithGoogleService(): Promise<{ error?: any; url?: string | null }> {
   const client = getSupabaseClient();
   if (client) {
@@ -208,6 +224,7 @@ export async function signInWithGoogleService(): Promise<{ error?: any; url?: st
       options: {
         redirectTo: window.location.origin,
         skipBrowserRedirect: true,
+        queryParams: { prompt: 'select_account' },
       },
     });
     return { error, url: data?.url ?? null };
@@ -215,13 +232,19 @@ export async function signInWithGoogleService(): Promise<{ error?: any; url?: st
   return { error: new Error('Supabase não configurado') };
 }
 
+function editableTransactionFields(input: Partial<Transaction>) {
+  const fields = ['descricao', 'valor', 'tipo', 'data', 'forma_pagamento', 'status', 'categoria'] as const;
+  return Object.fromEntries(fields.filter(field => input[field] !== undefined).map(field => [field, input[field]]));
+}
+
 // Service functions for Transactions
 export async function fetchTransactionsService(userId: string, isDemo: boolean): Promise<Transaction[]> {
-  const client = getSupabaseClient();
-  if (!isDemo && client) {
+  if (!isDemo) {
+    const { client, user } = await requireAuthenticatedClient();
     const { data, error } = await client
       .from('transacoes')
       .select('*')
+      .eq('user_id', user.id)
       .order('data', { ascending: false });
 
     if (error) {
@@ -239,13 +262,9 @@ export async function addTransactionService(
   transactionData: Omit<Transaction, 'id' | 'created_at'>,
   isDemo: boolean
 ): Promise<Transaction> {
-  const client = getSupabaseClient();
-  if (!isDemo && client) {
-    const { data: userData } = await client.auth.getUser();
-    const payload = {
-      ...transactionData,
-      ...(userData?.user ? { user_id: userData.user.id } : {}),
-    };
+  if (!isDemo) {
+    const { client, user } = await requireAuthenticatedClient();
+    const payload = { ...editableTransactionFields(transactionData), user_id: user.id };
     const { data, error } = await client
       .from('transacoes')
       .insert([payload])
@@ -277,12 +296,13 @@ export async function updateTransactionService(
   updates: Partial<Transaction>,
   isDemo: boolean
 ): Promise<Transaction> {
-  const client = getSupabaseClient();
-  if (!isDemo && client) {
+  if (!isDemo) {
+    const { client, user } = await requireAuthenticatedClient();
     const { data, error } = await client
       .from('transacoes')
-      .update(updates)
+      .update(editableTransactionFields(updates))
       .eq('id', id)
+      .eq('user_id', user.id)
       .select()
       .single();
 
@@ -304,12 +324,13 @@ export async function updateTransactionService(
 }
 
 export async function deleteTransactionService(id: string, isDemo: boolean): Promise<void> {
-  const client = getSupabaseClient();
-  if (!isDemo && client) {
+  if (!isDemo) {
+    const { client, user } = await requireAuthenticatedClient();
     const { error } = await client
       .from('transacoes')
       .delete()
-      .eq('id', id);
+      .eq('id', id)
+      .eq('user_id', user.id);
 
     if (error) {
       console.error('Erro ao deletar do Supabase:', error);

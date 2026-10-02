@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { getSupabaseClient, isSupabaseConfigured, setStoredUser, signInWithGoogleService } from '../services/supabase';
-import { logActivity } from '../services/activityLogger';
-import { Sparkles, AlertCircle, Loader2, X, ShieldAlert, CheckCircle2, ArrowRight } from 'lucide-react';
+import { getSupabaseClient, isSupabaseConfigured, signInWithGoogleService } from '../services/supabase';
+import { Sparkles, AlertCircle, Loader2, X, CheckCircle2, ArrowRight } from 'lucide-react';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -18,88 +17,48 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   onOpenSetup,
 }) => {
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [showOtherAccount, setShowOtherAccount] = useState(false);
-  const [customGoogleEmail, setCustomGoogleEmail] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
   React.useEffect(() => {
     setErrorMessage('');
-    setShowOtherAccount(false);
   }, [isOpen]);
 
   if (!isOpen) return null;
 
   const isConfigured = isSupabaseConfigured();
 
-  const handleGoogleSignIn = async (chosenEmail = 'jonas.nunees2@gmail.com') => {
+  const handleGoogleSignIn = async () => {
     setErrorMessage('');
     setGoogleLoading(true);
-
     try {
-      if (isConfigured) {
-        const { error, url } = await signInWithGoogleService();
-        if (error) {
-          console.warn('OAuth Supabase Google erro:', error.message);
-          setErrorMessage(error.message || 'Erro ao comunicar com o Google no Supabase.');
-          setGoogleLoading(false);
-          return;
-        }
-        if (url) {
-          const width = 500;
-          const height = 650;
-          const left = window.screenX + Math.max(0, (window.outerWidth - width) / 2);
-          const top = window.screenY + Math.max(0, (window.outerHeight - height) / 2);
-          const popup = window.open(
-            url,
-            'google-oauth-popup',
-            `width=${width},height=${height},left=${left},top=${top},status=no,toolbar=no,menubar=no`
-          );
-          if (!popup) {
-            if (window.top && window.top !== window) {
-              window.top.location.href = url;
-            } else {
-              window.location.href = url;
-            }
-          }
-          return;
-        }
-      }
-      handleInstantGoogleLogin(chosenEmail);
-    } catch (err: any) {
-      console.warn('Falha OAuth:', err);
-      handleInstantGoogleLogin(chosenEmail);
+      if (!isConfigured) throw new Error('Configure o Supabase para entrar com o Google.');
+      const { error, url } = await signInWithGoogleService();
+      if (error) throw error;
+      if (!url) throw new Error('Não foi possível iniciar a autenticação com o Google.');
+      window.location.assign(url);
+    } catch {
+      setErrorMessage('Não foi possível entrar com o Google. Verifique a configuração e tente novamente.');
     } finally {
       setGoogleLoading(false);
     }
   };
 
-  const handleInstantGoogleLogin = (chosenEmail?: string) => {
-    const targetEmail = (chosenEmail || customGoogleEmail || 'jonas.nunees2@gmail.com').trim().toLowerCase();
-    if (!targetEmail.includes('@')) {
-      setErrorMessage('Por favor, informe um endereço de e-mail do Google válido.');
-      return;
+  const handleGuestLogin = async () => {
+    setErrorMessage('');
+    setGoogleLoading(true);
+    try {
+      const client = getSupabaseClient();
+      if (client) {
+        const { error } = await client.auth.signOut();
+        if (error) throw error;
+      }
+      onAuthSuccess({ id: 'demo-user-id', email: 'convidado@demo.com', isDemo: true });
+      onClose();
+    } catch {
+      setErrorMessage('Não foi possível encerrar a sessão para entrar no modo convidado.');
+    } finally {
+      setGoogleLoading(false);
     }
-    const googleUser = {
-      id: 'google-' + targetEmail.replace(/[^a-zA-Z0-9]/g, ''),
-      email: targetEmail,
-      isDemo: !isConfigured,
-    };
-    setStoredUser(googleUser);
-    logActivity('login_google', { email: targetEmail, modo_demo: !isConfigured }, googleUser);
-    onAuthSuccess(googleUser);
-    onClose();
-  };
-
-  const handleGuestLogin = () => {
-    const guestUser = {
-      id: 'demo-user-id',
-      email: 'convidado@demo.com',
-      isDemo: true,
-    };
-    setStoredUser(guestUser);
-    logActivity('login_convidado', {}, guestUser);
-    onAuthSuccess(guestUser);
-    onClose();
   };
 
   return (
@@ -140,11 +99,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
         {/* Main Google Action Area */}
         <div className="space-y-2.5 mb-4">
-          {/* Primary Quick Button: detected Google user */}
+          {/* Google selects and verifies the account during OAuth. */}
           <button
             type="button"
             disabled={googleLoading}
-            onClick={() => handleGoogleSignIn('jonas.nunees2@gmail.com')}
+            onClick={handleGoogleSignIn}
             className="w-full py-3 px-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 active:scale-[0.99] text-white font-bold text-sm transition flex items-center justify-between shadow-md shadow-emerald-950/20 cursor-pointer disabled:opacity-50"
           >
             <div className="flex items-center gap-2.5">
@@ -157,8 +116,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 </svg>
               </div>
               <div className="text-left">
-                <span className="block text-[10px] uppercase tracking-wider text-emerald-100 font-semibold">Continuar como</span>
-                <span className="text-xs sm:text-sm font-bold truncate max-w-[190px] block">jonas.nunees2@gmail.com</span>
+                <span className="block text-[10px] uppercase tracking-wider text-emerald-100 font-semibold">Autenticar com o Google</span>
+                <span className="text-xs sm:text-sm font-bold truncate max-w-[190px] block">Escolher minha conta</span>
               </div>
             </div>
 
@@ -171,39 +130,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               </div>
             )}
           </button>
-
-          {/* Alternate Google Account option */}
-          {!showOtherAccount ? (
-            <button
-              type="button"
-              onClick={() => setShowOtherAccount(true)}
-              className="w-full py-2 px-3 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-600 dark:text-slate-300 transition flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <span>Usar outra conta Google (@gmail.com)</span>
-            </button>
-          ) : (
-            <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-2 animate-in fade-in duration-200">
-              <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-400">
-                Digite seu e-mail do Google:
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="email"
-                  placeholder="seu.nome@gmail.com"
-                  value={customGoogleEmail}
-                  onChange={(e) => setCustomGoogleEmail(e.target.value)}
-                  className="flex-1 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-3 py-1.5 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-emerald-500"
-                />
-                <button
-                  type="button"
-                  onClick={() => handleInstantGoogleLogin(customGoogleEmail)}
-                  className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition cursor-pointer shadow-sm"
-                >
-                  Entrar
-                </button>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Benefits list (Zero Passwords) */}
@@ -222,11 +148,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           </div>
         </div>
 
-        {/* Guest Mode fallback */}
+        {!isConfigured && (
+          <button type="button" onClick={onOpenSetup} className="mb-3 text-xs text-emerald-600 underline">
+            Configurar acesso com o Google
+          </button>
+        )}
+
+        {/* Explicit guest mode */}
         <div className="pt-2 border-t border-slate-200 dark:border-slate-800/80">
           <button
             type="button"
             onClick={handleGuestLogin}
+            disabled={googleLoading}
             className="w-full py-2 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-700/80 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 transition flex items-center justify-center gap-2 cursor-pointer shadow-sm"
           >
             <Sparkles className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" />

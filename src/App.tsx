@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Transaction, SummaryStats, FilterState, TransactionStatus } from './types/finance';
 import {
   fetchTransactionsService,
@@ -6,9 +6,6 @@ import {
   updateTransactionService,
   deleteTransactionService,
   toggleStatusService,
-  getStoredUser,
-  setStoredUser,
-  isSupabaseConfigured,
   getSupabaseClient,
 } from './services/supabase';
 import { Header } from './components/Header';
@@ -20,7 +17,6 @@ import { SupabaseSetupModal } from './components/SupabaseSetupModal';
 import { AuthModal } from './components/AuthModal';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { LandingPage } from './components/LandingPage';
-import { logActivity } from './services/activityLogger';
 import { 
   Plus, 
   Database, 
@@ -42,9 +38,11 @@ export default function App() {
   const [currentMonth, setCurrentMonth] = useState<number>(currentDate.getMonth());
   const [currentYear, setCurrentYear] = useState<number>(currentDate.getFullYear());
 
-  const [user, setUser] = useState<{ id: string; email: string; isDemo: boolean } | null>(() => {
-    return getStoredUser() || { id: 'demo-user-id', email: 'demo@exemplo.com', isDemo: true };
-  });
+  type AppUser = { id: string; email: string; isDemo: boolean };
+  const [user, setUser] = useState<AppUser | null>(null);
+  const activeUser = useRef<AppUser | null>(null);
+  const requestVersion = useRef(0);
+  const [configurationVersion, refreshConfiguration] = useState(0);
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -70,72 +68,98 @@ export default function App() {
     searchTerm: '',
   });
 
-  const isConfigured = isSupabaseConfigured();
+  const client = getSupabaseClient();
 
-  // Load transactions
-  const loadTransactions = useCallback(async () => {
-    try {
-      const currentUserId = user?.id || 'demo-user-id';
-      const isDemo = user?.isDemo ?? !isConfigured;
-      const data = await fetchTransactionsService(currentUserId, isDemo);
-      setTransactions(data);
-    } catch (err) {
-      console.error('Falha ao carregar transações:', err);
-    } finally {
-      setLoading(false);
-      setIsRefreshing(false);
-    }
-  }, [user, isConfigured]);
-
-  useEffect(() => {
-    loadTransactions();
-  }, [loadTransactions]);
-
-  // Auth state listener for Supabase
-  useEffect(() => {
-    const client = getSupabaseClient();
-    if (client) {
-      const {
-        data: { subscription },
-      } = client.auth.onAuthStateChange((event, session) => {
-        if (session?.user) {
-          const authUser = {
-            id: session.user.id,
-            email: session.user.email || 'usuario@supabase.com',
-            isDemo: false,
-          };
-          setUser(authUser);
-          setStoredUser(authUser);
-        } else if (event === 'SIGNED_OUT') {
-          const guestUser = {
-            id: 'demo-user-id',
-            email: 'demo@exemplo.com',
-            isDemo: true,
-          };
-          setUser(guestUser);
-          setStoredUser(guestUser);
-        }
-      });
-      return () => {
-        subscription.unsubscribe();
-      };
-    }
+  const applyUser = useCallback((nextUser: AppUser | null) => {
+    requestVersion.current++;
+    activeUser.current = nextUser;
+    setTransactions([]);
+    setTransactionToEdit(null);
+    setIsTransactionModalOpen(false);
+    setUser(nextUser);
   }, []);
 
-  const handleLogout = async () => {
-    logActivity('logout', { email: user?.email });
-    const client = getSupabaseClient();
-    if (client && !user?.isDemo) {
-      await client.auth.signOut();
+  const loadTransactions = useCallback(async () => {
+    if (!user || activeUser.current !== user) return;
+    const version = ++requestVersion.current;
+    try {
+      const data = await fetchTransactionsService(user.id, user.isDemo);
+      if (version === requestVersion.current) setTransactions(data);
+    } catch (err) {
+      if (version === requestVersion.current) {
+        setTransactions([]);
+        console.error('Falha ao carregar transações:', err);
+      }
+    } finally {
+      if (version === requestVersion.current) {
+        setLoading(false);
+        setIsRefreshing(false);
+      }
     }
-    const guestUser = {
-      id: 'demo-user-id',
-      email: 'demo@exemplo.com',
-      isDemo: true,
+  }, [user]);
+
+  useEffect(() => {
+    void loadTransactions();
+    return () => { requestVersion.current++; };
+  }, [loadTransactions]);
+
+  useEffect(() => {
+    const guestUser: AppUser = { id: 'demo-user-id', email: 'demo@exemplo.com', isDemo: true };
+    let disposed = false;
+    let authVersion = 0;
+    if (!client) {
+      applyUser(guestUser);
+      return;
+    }
+    applyUser(null);
+    const { data: { subscription } } = client.auth.onAuthStateChange((_event, session) => {
+      if (disposed) return;
+      const version = ++authVersion;
+      // Invalidate pending responses as soon as the auth event arrives.
+      applyUser(null);
+      if (!session?.user) {
+        applyUser(guestUser);
+        return;
+      }
+      // Run outside the auth callback lock, and validate identity with the server.
+      setTimeout(() => {
+        if (disposed || version !== authVersion) return;
+        void client.auth.getUser().then(({ data, error }) => {
+          if (disposed || version !== authVersion) return;
+          if (error || !data.user) {
+            applyUser(guestUser);
+            return;
+          }
+          applyUser({ id: data.user.id, email: data.user.email || '', isDemo: false });
+          setIsAuthModalOpen(false);
+        }).catch(() => {
+          if (!disposed && version === authVersion) applyUser(guestUser);
+        });
+      }, 0);
+    });
+    return () => {
+      disposed = true;
+      authVersion++;
+      requestVersion.current++;
+      subscription.unsubscribe();
     };
-    setUser(guestUser);
-    setStoredUser(guestUser);
-    loadTransactions();
+  }, [client, applyUser, configurationVersion]);
+
+  const handleLogout = async () => {
+    applyUser(null);
+    if (client) {
+      const { error } = await client.auth.signOut();
+      if (error) {
+        console.error('Não foi possível encerrar a sessão:', error);
+        return;
+      }
+    }
+    applyUser({ id: 'demo-user-id', email: 'demo@exemplo.com', isDemo: true });
+  };
+
+  const handleConfigurationSaved = () => {
+    applyUser(null);
+    refreshConfiguration(version => version + 1);
   };
 
   // CRUD Handlers
@@ -143,56 +167,29 @@ export default function App() {
     data: Omit<Transaction, 'id' | 'created_at'>,
     id?: string
   ) => {
-    const isDemo = user?.isDemo ?? !isConfigured;
-    const userId = user?.id || 'demo-user-id';
+    if (!user) throw new Error('Aguarde a validação da sessão.');
+    const isDemo = user.isDemo;
+    const userId = user.id;
 
     if (id) {
       await updateTransactionService(id, { ...data, user_id: userId }, isDemo);
-      logActivity('editar_transacao', {
-        transacao_id: id,
-        descricao: data.descricao,
-        valor: data.valor,
-        tipo: data.tipo,
-        categoria: data.categoria,
-        status: data.status,
-      });
     } else {
       await addTransactionService({ ...data, user_id: userId }, isDemo);
-      logActivity(data.tipo === 'receita' ? 'criar_receita' : 'criar_despesa', {
-        descricao: data.descricao,
-        valor: data.valor,
-        tipo: data.tipo,
-        categoria: data.categoria,
-        forma_pagamento: data.forma_pagamento,
-        status: data.status,
-      });
     }
     await loadTransactions();
   };
 
   const handleDeleteTransaction = async (id: string) => {
-    const isDemo = user?.isDemo ?? !isConfigured;
-    const tx = transactions.find((t) => t.id === id);
+    if (!user) throw new Error('Aguarde a validação da sessão.');
+    const isDemo = user.isDemo;
     await deleteTransactionService(id, isDemo);
-    logActivity('excluir_transacao', {
-      transacao_id: id,
-      descricao: tx?.descricao,
-      valor: tx?.valor,
-      tipo: tx?.tipo,
-      categoria: tx?.categoria,
-    });
     await loadTransactions();
   };
 
   const handleToggleStatus = async (id: string, currentStatus: TransactionStatus) => {
-    const isDemo = user?.isDemo ?? !isConfigured;
-    const nextStatus = currentStatus === 'pago' ? 'pendente' : 'pago';
+    if (!user) throw new Error('Aguarde a validação da sessão.');
+    const isDemo = user.isDemo;
     await toggleStatusService(id, currentStatus, isDemo);
-    logActivity('alterar_status_pagamento', {
-      transacao_id: id,
-      status_anterior: currentStatus,
-      status_novo: nextStatus,
-    });
     await loadTransactions();
   };
 
@@ -289,11 +286,10 @@ export default function App() {
             setIsAuthModalOpen(true);
           }}
           onGoToDashboard={() => {
-            logActivity('navegar_painel');
             setCurrentView('dashboard');
           }}
           onLogout={handleLogout}
-          isLoggedIn={Boolean(user)}
+          isLoggedIn={Boolean(user && !user.isDemo)}
           userEmail={user?.email}
         />
 
@@ -301,8 +297,7 @@ export default function App() {
           isOpen={isAuthModalOpen}
           onClose={() => setIsAuthModalOpen(false)}
           onAuthSuccess={(authUser) => {
-            setUser(authUser);
-            loadTransactions();
+            applyUser(authUser);
             setCurrentView('dashboard');
           }}
           onOpenSetup={() => setIsSetupModalOpen(true)}
@@ -312,9 +307,7 @@ export default function App() {
         <SupabaseSetupModal
           isOpen={isSetupModalOpen}
           onClose={() => setIsSetupModalOpen(false)}
-          onCredentialsSaved={() => {
-            loadTransactions();
-          }}
+          onCredentialsSaved={handleConfigurationSaved}
         />
 
         <OfflineIndicator />
@@ -347,7 +340,6 @@ export default function App() {
         }}
         onLogout={handleLogout}
         onOpenLanding={() => {
-          logActivity('navegar_apresentacao');
           setCurrentView('landing');
         }}
         user={user}
@@ -530,17 +522,14 @@ export default function App() {
       <SupabaseSetupModal
         isOpen={isSetupModalOpen}
         onClose={() => setIsSetupModalOpen(false)}
-        onCredentialsSaved={() => {
-          loadTransactions();
-        }}
+        onCredentialsSaved={handleConfigurationSaved}
       />
 
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
         onAuthSuccess={(authUser) => {
-          setUser(authUser);
-          loadTransactions();
+          applyUser(authUser);
         }}
         onOpenSetup={() => setIsSetupModalOpen(true)}
         initialMode={authModalMode}

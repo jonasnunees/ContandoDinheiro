@@ -3,6 +3,8 @@ export const SUPABASE_SQL_SCRIPT = `-- =========================================
 -- Mapeamento automático de usuários e transações com RLS
 -- ========================================================
 
+BEGIN;
+
 -- 1. TABELA DE USUÁRIOS MAPEADOS DO GOOGLE AUTH
 -- Armazena os dados públicos do usuário autenticado via Google
 CREATE TABLE IF NOT EXISTS public.usuarios (
@@ -49,7 +51,7 @@ BEGIN
             NEW.raw_user_meta_data->>'avatar_url',
             NEW.raw_user_meta_data->>'picture'
         ),
-        COALESCE(NEW.app_metadata->>'provider', 'google')
+        COALESCE(NEW.raw_app_meta_data->>'provider', 'google')
     )
     ON CONFLICT (id) DO UPDATE SET
         email = EXCLUDED.email,
@@ -58,7 +60,9 @@ BEGIN
         updated_at = timezone('utc'::text, now());
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = '';
+
+REVOKE ALL ON FUNCTION public.handle_new_user() FROM PUBLIC, anon, authenticated;
 
 -- Disparador no schema auth.users
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
@@ -112,6 +116,24 @@ CREATE POLICY "Usuários podem deletar suas transações"
     ON public.transacoes FOR DELETE
     USING (auth.uid() = user_id);
 
+-- Restrictive policies also constrain permissive policies left by older setups.
+DROP POLICY IF EXISTS "Exigir proprietário autenticado" ON public.transacoes;
+CREATE POLICY "Exigir proprietário autenticado"
+    ON public.transacoes AS RESTRICTIVE FOR ALL TO authenticated
+    USING (auth.uid() = user_id)
+    WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Exigir perfil autenticado" ON public.usuarios;
+CREATE POLICY "Exigir perfil autenticado"
+    ON public.usuarios AS RESTRICTIVE FOR ALL TO authenticated
+    USING (auth.uid() = id)
+    WITH CHECK (auth.uid() = id);
+
+REVOKE ALL ON public.transacoes, public.usuarios FROM PUBLIC, anon, authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.transacoes TO authenticated;
+GRANT SELECT ON public.usuarios TO authenticated;
+GRANT UPDATE (nome, avatar_url) ON public.usuarios TO authenticated;
+
 -- ========================================================
 -- 5. TABELA DE AUDITORIA E LOGS DE RASTRO (ACESSO EXCLUSIVO DO ADMINISTRADOR NO BANCO)
 -- ========================================================
@@ -135,12 +157,63 @@ CREATE INDEX IF NOT EXISTS idx_logs_atividades_created_at ON public.logs_ativida
 -- Ativar Row Level Security (RLS)
 ALTER TABLE public.logs_atividades ENABLE ROW LEVEL SECURITY;
 
--- Permitir gravação de logs pelo app (clientes autenticados e anônimos podem registrar)
+-- Audit writes belong exclusively to database triggers, never browser clients.
 DROP POLICY IF EXISTS "Permitir inserção de logs de atividade" ON public.logs_atividades;
-CREATE POLICY "Permitir inserção de logs de atividade"
-    ON public.logs_atividades FOR INSERT
-    WITH CHECK (true);
+REVOKE ALL ON public.logs_atividades FROM PUBLIC, anon, authenticated;
+DROP POLICY IF EXISTS "Bloquear acesso direto à auditoria" ON public.logs_atividades;
+CREATE POLICY "Bloquear acesso direto à auditoria"
+    ON public.logs_atividades AS RESTRICTIVE FOR ALL TO anon, authenticated
+    USING (false) WITH CHECK (false);
+
+CREATE OR REPLACE FUNCTION public.audit_transaction()
+RETURNS TRIGGER
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = ''
+AS $$
+DECLARE
+    transaction_row public.transacoes%ROWTYPE;
+    actor_id UUID;
+    actor_email TEXT;
+BEGIN
+    IF TG_OP = 'DELETE' THEN
+        transaction_row := OLD;
+    ELSE
+        transaction_row := NEW;
+    END IF;
+    actor_id := auth.uid();
+    SELECT email INTO actor_email FROM auth.users WHERE id = actor_id;
+    INSERT INTO public.logs_atividades (user_id, user_email, acao, detalhes, created_at)
+    VALUES (
+        actor_id::text,
+        actor_email,
+        CASE TG_OP
+            WHEN 'INSERT' THEN 'criar_transacao'
+            WHEN 'UPDATE' THEN 'editar_transacao'
+            WHEN 'DELETE' THEN 'excluir_transacao'
+        END,
+        jsonb_build_object(
+            'origem', 'banco',
+            'operacao', TG_OP,
+            'transacao_id', transaction_row.id,
+            'proprietario_id', transaction_row.user_id,
+            'tipo', transaction_row.tipo,
+            'valor', transaction_row.valor,
+            'status', transaction_row.status
+        ),
+        now()
+    );
+    IF TG_OP = 'DELETE' THEN RETURN OLD; END IF;
+    RETURN NEW;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.audit_transaction() FROM PUBLIC, anon, authenticated;
+DROP TRIGGER IF EXISTS on_transaction_audit ON public.transacoes;
+CREATE TRIGGER on_transaction_audit
+    AFTER INSERT OR UPDATE OR DELETE ON public.transacoes
+    FOR EACH ROW EXECUTE FUNCTION public.audit_transaction();
 
 -- IMPORTANTE: Nenhuma política de SELECT pública é criada.
 -- Somente você (administrador do projeto) tem acesso a esses registros diretamente pelo painel do Supabase!
+
+COMMIT;
 `;

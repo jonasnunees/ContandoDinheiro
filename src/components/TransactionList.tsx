@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Transaction, TransactionStatus, TransactionType, Category } from '../types/finance';
-import { logActivity } from '../services/activityLogger';
+import { serializeCSV } from '../services/csv';
 import { 
   Search, 
   Trash2, 
@@ -74,23 +74,22 @@ export const TransactionList: React.FC<TransactionListProps> = ({
     const rows = transactions.map((t) => [
       t.id,
       t.data,
-      `"${t.descricao.replace(/"/g, '""')}"`,
+      t.descricao,
       t.tipo,
-      `"${t.categoria}"`,
-      `"${t.forma_pagamento}"`,
+      t.categoria,
+      t.forma_pagamento,
       t.valor.toFixed(2),
       t.status,
     ]);
-    const csvContent = 'data:text/csv;charset=utf-8,' + [header.join(','), ...rows.map((e) => e.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
+    const objectUrl = URL.createObjectURL(new Blob([serializeCSV([header, ...rows])], { type: 'text/csv;charset=utf-8' }));
     const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
+    link.setAttribute('href', objectUrl);
     link.setAttribute('download', `transacoes_contandodinheiro_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
 
-    logActivity('exportar_planilha_csv', { total_transacoes: transactions.length });
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
   };
 
   return (
