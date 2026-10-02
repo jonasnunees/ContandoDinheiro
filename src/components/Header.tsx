@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { PWAInstallButton } from './PWAInstallButton';
 import { ThemeToggle } from './ThemeToggle';
-import { Database, Plus, ChevronLeft, ChevronRight, LogOut, User, Calendar, Menu, X, Home, Smartphone } from 'lucide-react';
-import { isSupabaseConfigured } from '../services/supabase';
+import { Plus, ChevronLeft, ChevronRight, LogOut, User, Calendar, Menu, X, Home, Smartphone } from 'lucide-react';
 
 interface HeaderProps {
   currentMonth: number; // 0 - 11, or -1 for all
@@ -10,7 +9,6 @@ interface HeaderProps {
   onMonthChange: (month: number) => void;
   onYearChange: (year: number) => void;
   onOpenNewTransaction: () => void;
-  onOpenSetup: () => void;
   onOpenAuth: () => void;
   onLogout: () => void;
   onOpenLanding?: () => void;
@@ -28,13 +26,11 @@ export const Header: React.FC<HeaderProps> = ({
   onMonthChange,
   onYearChange,
   onOpenNewTransaction,
-  onOpenSetup,
   onOpenAuth,
   onLogout,
   onOpenLanding,
   user,
 }) => {
-  const isConfigured = isSupabaseConfigured();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handlePrevMonth = () => {
@@ -76,22 +72,6 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Theme Toggle (Sol / Lua) */}
       <ThemeToggle />
-
-      {/* Supabase Status & Setup Trigger */}
-      <button
-        onClick={onOpenSetup}
-        className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-medium border transition cursor-pointer flex-shrink-0 ${
-          isConfigured
-            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20'
-            : 'bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600'
-        }`}
-        title="Configurar Supabase e SQL"
-      >
-        <Database className="w-3.5 h-3.5 flex-shrink-0" />
-        <span className={isCompact ? 'hidden md:inline' : 'inline'}>
-          {isConfigured ? 'Supabase' : 'Setup'}
-        </span>
-      </button>
 
       {/* User Profile or Login */}
       {user ? (
@@ -333,21 +313,6 @@ export const Header: React.FC<HeaderProps> = ({
               >
                 <Plus className="w-4 h-4" />
                 <span>+ Transação</span>
-              </button>
-
-              <button
-                onClick={() => {
-                  setIsMobileMenuOpen(false);
-                  onOpenSetup();
-                }}
-                className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-semibold border transition cursor-pointer ${
-                  isConfigured
-                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400'
-                    : 'bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300'
-                }`}
-              >
-                <Database className="w-4 h-4" />
-                <span>{isConfigured ? 'Supabase OK' : 'Configurar BD'}</span>
               </button>
             </div>
 

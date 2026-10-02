@@ -13,7 +13,6 @@ import { SummaryCards } from './components/SummaryCards';
 import { TransactionList } from './components/TransactionList';
 import { TransactionModal } from './components/TransactionModal';
 import { FinancialCharts } from './components/FinancialCharts';
-import { SupabaseSetupModal } from './components/SupabaseSetupModal';
 import { AuthModal } from './components/AuthModal';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { LandingPage } from './components/LandingPage';
@@ -51,7 +50,6 @@ export default function App() {
   // Modals
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
   const [transactionToEdit, setTransactionToEdit] = useState<Transaction | null>(null);
-  const [isSetupModalOpen, setIsSetupModalOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   // Active view tab for mobile convenience
@@ -160,11 +158,6 @@ export default function App() {
       }
     }
     applyUser({ id: 'demo-user-id', email: 'demo@exemplo.com', isDemo: true });
-  };
-
-  const handleConfigurationSaved = () => {
-    applyUser(null);
-    refreshConfiguration(version => version + 1);
   };
 
   // CRUD Handlers
@@ -315,14 +308,7 @@ export default function App() {
             applyUser(authUser);
             setCurrentView('dashboard');
           }}
-          onOpenSetup={() => setIsSetupModalOpen(true)}
           initialMode={authModalMode}
-        />
-
-        <SupabaseSetupModal
-          isOpen={isSetupModalOpen}
-          onClose={() => setIsSetupModalOpen(false)}
-          onCredentialsSaved={handleConfigurationSaved}
         />
 
         <OfflineIndicator />
@@ -348,7 +334,6 @@ export default function App() {
           setTransactionToEdit(null);
           setIsTransactionModalOpen(true);
         }}
-        onOpenSetup={() => setIsSetupModalOpen(true)}
         onOpenAuth={() => {
           setAuthModalMode('login');
           setIsAuthModalOpen(true);
@@ -506,14 +491,7 @@ export default function App() {
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           <p>ContandoDinheiro — Sistema de Gestão Financeira com Supabase & PWA</p>
           <div className="flex items-center gap-4">
-            <button
-              onClick={() => setIsSetupModalOpen(true)}
-              className="text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 transition cursor-pointer"
-            >
-              Setup do Supabase & SQL
-            </button>
-            <span>•</span>
-            <button
+            <button>
               onClick={() => setIsAuthModalOpen(true)}
               className="text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 transition cursor-pointer"
             >
@@ -534,12 +512,6 @@ export default function App() {
         transactionToEdit={transactionToEdit}
       />
 
-      <SupabaseSetupModal
-        isOpen={isSetupModalOpen}
-        onClose={() => setIsSetupModalOpen(false)}
-        onCredentialsSaved={handleConfigurationSaved}
-      />
-
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
@@ -547,7 +519,6 @@ export default function App() {
           applyUser(authUser);
           setCurrentView('dashboard');
         }}
-        onOpenSetup={() => setIsSetupModalOpen(true)}
         initialMode={authModalMode}
       />
 

@@ -6,7 +6,6 @@ interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAuthSuccess: (user: { id: string; email: string; isDemo: boolean }) => void;
-  onOpenSetup: () => void;
   initialMode?: 'login' | 'register';
 }
 
@@ -14,7 +13,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   isOpen,
   onClose,
   onAuthSuccess,
-  onOpenSetup,
 }) => {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -31,7 +29,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setErrorMessage('');
     setGoogleLoading(true);
     try {
-      if (!isConfigured) throw new Error('Configure o Supabase para entrar com o Google.');
+      if (!isConfigured) throw new Error('O acesso está temporariamente indisponível. Tente novamente mais tarde.');
       const { error, url } = await signInWithGoogleService();
       if (error) throw error;
       if (!url) throw new Error('Não foi possível iniciar a autenticação com o Google.');
@@ -149,9 +147,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         </div>
 
         {!isConfigured && (
-          <button type="button" onClick={onOpenSetup} className="mb-3 text-xs text-emerald-600 underline">
-            Configurar acesso com o Google
-          </button>
+          <p className="mb-3 text-xs text-slate-500">O acesso está temporariamente indisponível. Tente novamente mais tarde.</p>
         )}
 
         {/* Explicit guest mode */}
