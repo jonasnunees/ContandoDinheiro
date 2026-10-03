@@ -130,7 +130,7 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({ stats }) => {
         <div className="flex items-center justify-between">
           <span className="text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
             <PiggyBank className="w-3.5 h-3.5" />
-            Taxa de Poupança
+            Percentual economizado
           </span>
           <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
             <Clock className="w-5 h-5" />
@@ -141,10 +141,9 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({ stats }) => {
             {stats.taxaEconomia > 0 ? `${stats.taxaEconomia.toFixed(1)}%` : '0%'}
           </div>
           <div className="mt-2 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-            <span>Renda poupada</span>
             <span className="text-slate-700 dark:text-slate-300 font-medium">
               {stats.totalEntradas > 0
-                ? `${Math.round((stats.totalSaidas / stats.totalEntradas) * 100)}% comprometido`
+                ? `Você gastou ${Math.round((stats.totalSaidas / stats.totalEntradas) * 100)}% da sua renda`
                 : 'Sem receitas'}
             </span>
           </div>
