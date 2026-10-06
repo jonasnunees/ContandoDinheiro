@@ -1,14 +1,17 @@
 import type { Transaction } from '../types/finance';
 
+// Monta a data no formato ano-mês-dia usando o horário local, sem mudar o dia por causa do fuso.
 export function localDate(date = new Date()): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
 
+// Converte o valor digitado (como 1.234,56) em número e rejeita formatos inválidos.
 export function parseMoney(input: string): number {
   const text = input.trim();
   if (!/^(?:\d+|\d{1,3}(?:\.\d{3})+)(?:,\d{1,2})?$/.test(text) && !/^\d+(?:\.\d{1,2})?$/.test(text)) {
     throw new Error('Informe um valor válido, como 1234,56, com até duas casas decimais.');
   }
+  // Remove os pontos de milhar e troca a vírgula decimal pelo ponto usado em cálculos.
   const normalized = text.includes(',') || /^\d{1,3}(?:\.\d{3})+$/.test(text)
     ? text.replace(/\./g, '').replace(',', '.') : text;
   const value = Number(normalized);
@@ -18,6 +21,8 @@ export function parseMoney(input: string): number {
   return value;
 }
 
+// Confere os campos de dados recebidos antes de tratá-los como um lançamento válido.
+// Os tipos do TypeScript ajudam durante o desenvolvimento, mas não verificam dados externos.
 export function isTransaction(value: unknown): value is Transaction {
   if (!value || typeof value !== 'object') return false;
   const tx = value as Record<string, unknown>;

@@ -1,5 +1,6 @@
 @import "tailwindcss";
 
+/* Aplica estilos escuros aos elementos dentro de uma página com a classe dark. */
 @custom-variant dark (&:where(.dark, .dark *));
 
 @layer base {
@@ -9,14 +10,17 @@
   }
 }
 
+/* Centraliza a janela, limita sua altura e permite rolar conteúdos maiores. */
 .modal-dialog { margin: auto; padding: 0; width: calc(100% - 2rem); max-height: 92dvh; overflow-y: auto; }
 .modal-dialog::backdrop { background: rgb(0 0 0 / 70%); backdrop-filter: blur(4px); }
+/* Destaca o elemento selecionado ao navegar usando o teclado. */
 :is(button, a, input, select, textarea, summary):focus-visible {
   outline: 3px solid #059669 !important;
   outline-offset: 3px;
 }
 button { min-height: 24px; min-width: 24px; }
 button:disabled { cursor: wait; opacity: .6; }
+/* Respeita a preferência do sistema por menos animações. */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
 }

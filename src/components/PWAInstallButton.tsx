@@ -7,7 +7,7 @@ export const PWAInstallButton: React.FC = () => {
   const { isInstallable, isInstalled, isIOS, install } = usePWAInstall();
   const [showIOSGuide, setShowIOSGuide] = useState(false);
 
-  // If already installed as standalone PWA
+  // Se já está instalado, mostra essa informação no lugar do convite.
   if (isInstalled) {
     return (
       <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-400 font-medium">
@@ -17,7 +17,7 @@ export const PWAInstallButton: React.FC = () => {
     );
   }
 
-  // Chromium / Android / Desktop flow
+  // Em navegadores compatíveis, o botão abre o convite de instalação.
   if (isInstallable) {
     return (
       <button
@@ -31,7 +31,7 @@ export const PWAInstallButton: React.FC = () => {
     );
   }
 
-  // iOS Safari flow
+  // No iPhone/iPad, mostra como adicionar o aplicativo à tela inicial pelo Safari.
   if (isIOS) {
     return (
       <>
@@ -89,7 +89,7 @@ export const PWAInstallButton: React.FC = () => {
     );
   }
 
-  // Fallback for browsers that don't trigger beforeinstallprompt directly
+  // Quando o navegador não oferece o convite automático, mostra uma orientação alternativa.
   return (
     <button
       onClick={() => {

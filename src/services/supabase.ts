@@ -9,7 +9,7 @@ const STORAGE_KEYS = {
   LOCAL_TRANSACTIONS: 'gf_local_transactions',
 };
 
-// Initial sample transactions for instant demonstration
+// Exemplos usados na primeira visita ao modo de demonstração, sem acessar o banco.
 const INITIAL_DEMO_TRANSACTIONS: Transaction[] = [
   {
     id: 'demo-1',
@@ -113,6 +113,7 @@ let supabaseClient: SupabaseClient | null = null;
 
 const DEFAULT_SUPABASE_URL = 'https://szdipyjehiaupvuqtwvy.supabase.co';
 
+// Prioriza a configuração do ambiente; se ela não existir, lê a conexão salva no navegador.
 export function getSupabaseCredentials() {
   const envUrl = import.meta.env.VITE_SUPABASE_URL;
   const envKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -123,6 +124,7 @@ export function getSupabaseCredentials() {
   };
 }
 
+// Restringe o endereço ao projeto permitido e aceita somente formatos de chave pública.
 export function validateSupabaseCredentials(url: string, key: string): void {
   const parsed = new URL(url);
   const configuredHost = import.meta.env.VITE_SUPABASE_URL
@@ -140,11 +142,12 @@ export function validateSupabaseCredentials(url: string, key: string): void {
     const payload = JSON.parse(atob(base64.padEnd(Math.ceil(base64.length / 4) * 4, '=')));
     if (key.split('.').length === 3 && payload.role === 'anon') return;
   } catch {
-    // Only public keys are accepted. The server validates the JWT signature.
+    // A assinatura da chave é validada pelo servidor; aqui verificamos o formato e o tipo.
   }
   throw new Error('Use somente a chave pública anon ou publishable; chaves secretas não são permitidas.');
 }
 
+// Salva ou remove a configuração local e atualiza a conexão reutilizada pela aplicação.
 export function setSupabaseCredentials(url: string, key: string) {
   if (import.meta.env.VITE_SUPABASE_URL || import.meta.env.VITE_SUPABASE_ANON_KEY) {
     throw new Error('A conexão deste ambiente é definida pela configuração da aplicação.');
@@ -162,6 +165,7 @@ export function setSupabaseCredentials(url: string, key: string) {
   }
 }
 
+// Indica se a configuração tem formato válido; isso não testa a conexão pela internet.
 export function isSupabaseConfigured(): boolean {
   const { url, key } = getSupabaseCredentials();
   try {
@@ -172,6 +176,7 @@ export function isSupabaseConfigured(): boolean {
   }
 }
 
+// Reutiliza a conexão criada; retorna null se a configuração estiver ausente ou inválida.
 export function getSupabaseClient(): SupabaseClient | null {
   if (supabaseClient) return supabaseClient;
   const { url, key } = getSupabaseCredentials();
@@ -184,6 +189,7 @@ export function getSupabaseClient(): SupabaseClient | null {
   }
 }
 
+// Confirma a identidade no servidor antes de acessar os dados de uma conta real.
 async function requireAuthenticatedClient() {
   const client = getSupabaseClient();
   if (!client) throw new Error('Supabase não configurado.');
@@ -192,7 +198,7 @@ async function requireAuthenticatedClient() {
   return { client, user: data.user };
 }
 
-// Local mock storage handlers
+// No modo de demonstração, os lançamentos ficam apenas neste navegador.
 function demoTransactions(): Transaction[] {
   return INITIAL_DEMO_TRANSACTIONS.map(tx => ({ ...tx }));
 }
@@ -203,10 +209,11 @@ export function getLocalTransactions(): Transaction[] {
   try {
     const parsed: unknown = JSON.parse(raw);
     if (Array.isArray(parsed) && parsed.every(isTransaction)) return parsed;
-  } catch { /* Corrupted demo data is replaced in memory; real data stays on the server. */ }
+  } catch { /* Se os dados locais estiverem danificados, usa os exemplos em memória. */ }
   return demoTransactions();
 }
 
+// Verifica os lançamentos e os transforma em texto JSON para salvar no navegador.
 export function saveLocalTransactions(transactions: Transaction[]) {
   if (!transactions.every(isTransaction)) throw new Error('Dados de demonstração inválidos.');
   writeStorage(STORAGE_KEYS.LOCAL_TRANSACTIONS, JSON.stringify(transactions));
@@ -220,6 +227,7 @@ export interface AuthUserState {
   } | null;
 }
 
+// Pede ao Supabase o endereço de autenticação do Google; a tela fará o redirecionamento.
 export async function signInWithGoogleService(): Promise<{ error?: unknown; url?: string | null }> {
   const client = getSupabaseClient();
   if (client) {
@@ -236,18 +244,19 @@ export async function signInWithGoogleService(): Promise<{ error?: unknown; url?
   return { error: new Error('Supabase não configurado') };
 }
 
+// Separa apenas os campos editáveis, evitando que a atualização troque o dono ou o ID.
 function editableTransactionFields(input: Partial<Transaction>) {
   const fields = ['descricao', 'valor', 'tipo', 'data', 'forma_pagamento', 'status', 'categoria'] as const;
   return Object.fromEntries(fields.filter(field => input[field] !== undefined).map(field => [field, input[field]]));
 }
 
-// Service functions for Transactions
+// Busca lançamentos da conta confirmada; na demonstração, lê os exemplos locais.
 export async function fetchTransactionsService(userId: string, isDemo: boolean, period?: { month: number; year: number }): Promise<Transaction[]> {
   if (!isDemo) {
     const { client, user } = await requireAuthenticatedClient();
     const result: Transaction[] = [];
     let offset = 0;
-    // Use the actual returned page size, including projects with a smaller API cap.
+    // Busca em páginas e avança pela quantidade recebida, até não haver mais registros.
     while (true) {
       let query = client.from('transacoes').select('*').eq('user_id', user.id)
         .order('data', { ascending: false }).order('id', { ascending: false });
@@ -266,10 +275,11 @@ export async function fetchTransactionsService(userId: string, isDemo: boolean, 
     return result;
   }
 
-  // Demo fallback
+  // Na demonstração, usa a lista salva neste navegador.
   return getLocalTransactions().filter(t => t.user_id === userId || userId === 'demo-user-id');
 }
 
+// Cria um lançamento no banco ou na lista local, conforme o modo de acesso.
 export async function addTransactionService(
   transactionData: Omit<Transaction, 'id' | 'created_at'>,
   isDemo: boolean
@@ -290,7 +300,7 @@ export async function addTransactionService(
     return data as Transaction;
   }
 
-  // Demo fallback
+  // Na demonstração, usa a lista salva neste navegador.
   const newTx: Transaction = {
     ...transactionData,
     id: 'tx-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7),
@@ -303,6 +313,7 @@ export async function addTransactionService(
   return newTx;
 }
 
+// Atualiza o lançamento pelo ID; no banco, também exige que pertença à conta atual.
 export async function updateTransactionService(
   id: string,
   updates: Partial<Transaction>,
@@ -325,7 +336,7 @@ export async function updateTransactionService(
     return data as Transaction;
   }
 
-  // Demo fallback
+  // Na demonstração, usa a lista salva neste navegador.
   const list = getLocalTransactions();
   const index = list.findIndex(t => t.id === id);
   if (index === -1) throw new Error('Transação não encontrada.');
@@ -335,6 +346,7 @@ export async function updateTransactionService(
   return updated;
 }
 
+// Exclui o lançamento no banco ou remove seu ID da lista da demonstração.
 export async function deleteTransactionService(id: string, isDemo: boolean): Promise<void> {
   if (!isDemo) {
     const { client, user } = await requireAuthenticatedClient();
@@ -351,11 +363,12 @@ export async function deleteTransactionService(id: string, isDemo: boolean): Pro
     return;
   }
 
-  // Demo fallback
+  // Na demonstração, usa a lista salva neste navegador.
   const list = getLocalTransactions().filter(t => t.id !== id);
   saveLocalTransactions(list);
 }
 
+// Alterna entre pago e pendente, reaproveitando o serviço de atualização.
 export async function toggleStatusService(
   id: string,
   currentStatus: TransactionStatus,

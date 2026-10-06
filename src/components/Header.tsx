@@ -4,7 +4,7 @@ import { ThemeToggle } from './ThemeToggle';
 import { Plus, ChevronLeft, ChevronRight, LogOut, Calendar, Menu, X, Home, Smartphone } from 'lucide-react';
 
 interface HeaderProps {
-  currentMonth: number; // 0 - 11, or -1 for all
+  currentMonth: number; // Janeiro = 0, dezembro = 11; -1 seleciona o ano inteiro.
   currentYear: number;
   onMonthChange: (month: number) => void;
   onYearChange: (year: number) => void;
@@ -33,6 +33,7 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  // Volta um mês e ajusta o ano quando atravessa janeiro.
   const handlePrevMonth = () => {
     if (currentMonth === -1) {
       onMonthChange(new Date().getMonth());
@@ -46,6 +47,7 @@ export const Header: React.FC<HeaderProps> = ({
     }
   };
 
+  // Avança um mês e ajusta o ano quando atravessa dezembro.
   const handleNextMonth = () => {
     if (currentMonth === -1) {
       onMonthChange(new Date().getMonth());
@@ -59,21 +61,22 @@ export const Header: React.FC<HeaderProps> = ({
     }
   };
 
+  // Retorna ao mês e ao ano da data atual.
   const handleGoToCurrentMonth = () => {
     const today = new Date();
     onMonthChange(today.getMonth());
     onYearChange(today.getFullYear());
   };
 
-  // Reusable action buttons cluster
+  // Reutiliza o mesmo grupo de ações nos diferentes tamanhos de tela.
   const renderActions = (_isCompact = false) => (
     <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
       <PWAInstallButton />
 
-      {/* Theme Toggle (Sol / Lua) */}
+      {/* Botão para alternar a aparência clara e escura. */}
       <ThemeToggle />
 
-      {/* User Profile or Login */}
+      {/* Mostra a conta atual ou oferece o acesso pelo Google. */}
       {user ? (
         <div className="flex items-center gap-1.5 sm:gap-2 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-2 sm:px-2.5 py-1 text-xs flex-shrink-0">
           <div className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 flex items-center justify-center font-bold text-[10px] flex-shrink-0">
@@ -110,7 +113,7 @@ export const Header: React.FC<HeaderProps> = ({
         </button>
       )}
 
-      {/* + Nova Transação Button */}
+      {/* Abre o formulário de um novo lançamento. */}
       <button
         onClick={onOpenNewTransaction}
         className="flex items-center justify-center gap-1.5 px-2.5 sm:px-3 md:portrait:px-2.5 lg:landscape:px-4 xl:px-4 py-1.5 sm:py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-xs sm:text-sm font-semibold text-white shadow-lg shadow-emerald-950/20 dark:shadow-emerald-950/40 transition cursor-pointer flex-shrink-0"
@@ -128,9 +131,9 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header className="sticky top-0 z-40 bg-white/90 dark:bg-slate-950/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800/80 px-3 sm:px-6 py-2.5 sm:py-3 transition-all w-full text-slate-800 dark:text-slate-100">
       <div className="max-w-7xl mx-auto flex flex-col xl:flex-row xl:items-center justify-between gap-2.5 sm:gap-3 w-full">
-        {/* Top Row for Mobile & Tablet (Logo on left, Actions on right) */}
+        {/* Organiza o logo e os botões no topo da tela. */}
         <div className="flex items-center justify-between w-full xl:w-auto gap-2 sm:gap-3 flex-wrap sm:flex-nowrap">
-          {/* Brand & App Title */}
+          {/* Logo e nome do aplicativo. */}
           <button type="button" disabled={!onOpenLanding}
             onClick={onOpenLanding}
             className="flex items-center gap-2.5 cursor-pointer group flex-shrink-0"
@@ -155,12 +158,12 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
           </button>
 
-          {/* Tablet & Small Laptop Actions (Visible between 640px and 1279px) */}
+          {/* Ações exibidas em telas de tamanho intermediário. */}
           <div className="hidden sm:flex xl:hidden items-center">
             {renderActions(true)}
           </div>
 
-          {/* Mobile Only Quick Actions (< 640px) */}
+          {/* Ações compactas para telas pequenas. */}
           <div className="flex items-center gap-1.5 sm:hidden">
             <ThemeToggle />
             <button
@@ -182,7 +185,7 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* Center: Month and Year Navigation */}
+        {/* Controles para escolher o período dos lançamentos. */}
         <div className="flex items-center justify-center gap-1 sm:gap-2 bg-slate-100 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-2xl p-1 sm:p-1.5 self-center w-full sm:w-auto max-w-full overflow-x-auto flex-shrink-0">
           <button
             onClick={handlePrevMonth}
@@ -192,7 +195,7 @@ export const Header: React.FC<HeaderProps> = ({
             <ChevronLeft className="w-4 h-4" />
           </button>
 
-          {/* Month selector dropdown */}
+          {/* Lista para escolher um mês ou o ano inteiro. */}
           <div className="flex items-center gap-1 flex-shrink-0">
             <select
               aria-label="Mês dos lançamentos" value={currentMonth}
@@ -240,15 +243,15 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
         </div>
 
-        {/* Desktop Only Actions (Visible on >= 1280px) */}
+        {/* Grupo de ações exibido em telas grandes. */}
         <div className="hidden xl:flex items-center">
           {renderActions(false)}
         </div>
 
-        {/* Mobile Hamburger Menu Drawer */}
+        {/* Menu que abre ao tocar no botão de três linhas no celular. */}
         {isMobileMenuOpen && (
           <div id="mobile-menu" className="sm:hidden w-full pt-3 pb-2 border-t border-slate-200 dark:border-slate-800 space-y-3">
-            {/* User status card */}
+            {/* Mostra se a pessoa está na conta real ou na demonstração. */}
             <div className="p-3 rounded-2xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
               {user ? (
                 <div className="flex items-center justify-between gap-3">
@@ -302,7 +305,7 @@ export const Header: React.FC<HeaderProps> = ({
               )}
             </div>
 
-            {/* Quick Action Buttons */}
+            {/* Atalhos para criar lançamentos e voltar ao período atual. */}
             <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={() => {
@@ -316,7 +319,7 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             </div>
 
-            {/* Navigation links & PWA install */}
+            {/* Atalhos de navegação e instalação do aplicativo. */}
             <div className="space-y-1 pt-1 border-t border-slate-200 dark:border-slate-800">
               {onOpenLanding && (
                 <button

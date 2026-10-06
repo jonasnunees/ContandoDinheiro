@@ -18,6 +18,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [googleLoading, setGoogleLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
+  // Limpa mensagens anteriores quando a janela abre ou fecha.
   React.useEffect(() => {
     setErrorMessage('');
   }, [isOpen]);
@@ -26,6 +27,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   const isConfigured = isSupabaseConfigured();
 
+  // Obtém o endereço de login e leva a pessoa ao Google para escolher sua conta.
   const handleGoogleSignIn = async () => {
     setErrorMessage('');
     setGoogleLoading(true);
@@ -42,6 +44,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
   };
 
+  // Encerra a sessão real antes de abrir a demonstração, que usa dados locais.
   const handleGuestLogin = async () => {
     setErrorMessage('');
     setGoogleLoading(true);
@@ -70,7 +73,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           <X className="w-4 h-4" />
         </button>
 
-        {/* Header with Google Icon */}
+        {/* Apresenta a janela de acesso e o botão de fechar. */}
         <div className="text-center mb-4 pt-1">
           <div className="inline-flex items-center justify-center w-11 h-11 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm mb-2">
             <svg className="w-6 h-6" viewBox="0 0 24 24">
@@ -95,9 +98,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           </div>
         )}
 
-        {/* Main Google Action Area */}
+        {/* Área com o botão de acesso pelo Google e mensagens de erro. */}
         <div className="space-y-2.5 mb-4">
-          {/* Google selects and verifies the account during OAuth. */}
+          {/* O Google permite escolher a conta e verifica a identidade durante o login. */}
           <button
             type="button"
             disabled={googleLoading}
@@ -130,7 +133,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           </button>
         </div>
 
-        {/* Benefits list (Zero Passwords) */}
+        {/* Explica os benefícios de entrar usando a conta Google. */}
         <div className="p-3 rounded-xl bg-slate-50/80 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800/80 space-y-1.5 mb-3.5">
           <div className="flex items-center gap-2 text-[11px] text-slate-700 dark:text-slate-300">
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400 flex-shrink-0" />
@@ -150,7 +153,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           <p className="mb-3 text-xs text-slate-500">O acesso está temporariamente indisponível. Tente novamente mais tarde.</p>
         )}
 
-        {/* Explicit guest mode */}
+        {/* Permite experimentar o aplicativo com dados de demonstração. */}
         <div className="pt-2 border-t border-slate-200 dark:border-slate-800/80">
           <button
             type="button"

@@ -1,3 +1,4 @@
+// Os tipos definem quais valores e campos o código aceita, ajudando a evitar erros ao programar.
 export type TransactionType = 'receita' | 'despesa';
 
 export type TransactionStatus = 'pago' | 'pendente';
@@ -23,19 +24,21 @@ export type Category =
   | 'Serviços'
   | 'Outros';
 
+// Descreve um lançamento: a quem pertence, seu valor, sua data e sua classificação.
 export interface Transaction {
   id: string;
   user_id: string;
   descricao: string;
   valor: number;
   tipo: TransactionType;
-  data: string; // YYYY-MM-DD
+  data: string; // Texto no formato ano-mês-dia, por exemplo: 2026-10-05.
   forma_pagamento: PaymentMethod;
   status: TransactionStatus;
   categoria: Category;
   created_at?: string;
 }
 
+// Agrupa os totais calculados para os cartões do painel.
 export interface SummaryStats {
   totalEntradas: number;
   totalSaidas: number;
@@ -46,8 +49,9 @@ export interface SummaryStats {
   quantidadeTransacoes: number;
 }
 
+// Reúne as escolhas dos filtros e o texto da busca.
 export interface FilterState {
-  month: number; // 0-11 or -1 for all
+  month: number; // Janeiro = 0, dezembro = 11; -1 representa o ano inteiro.
   year: number;
   type: 'todos' | TransactionType;
   status: 'todos' | TransactionStatus;

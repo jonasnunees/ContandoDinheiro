@@ -9,20 +9,23 @@ interface ThemeContextType {
   setTheme: (theme: Theme) => void;
 }
 
+// O contexto compartilha o tema entre componentes, sem passá-lo de tela em tela.
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 const THEME_STORAGE_KEY = 'gf_app_theme';
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // Recupera a preferência salva apenas na primeira montagem deste componente.
   const [theme, setThemeState] = useState<Theme>(() => {
     const saved = readStorage(THEME_STORAGE_KEY);
     if (saved === 'light' || saved === 'dark') {
       return saved;
     }
-    // Default to dark as requested previously
+    // Sem preferência salva, começa com o tema escuro.
     return 'dark';
   });
 
+  // Quando o tema muda, atualiza as classes da página e salva a preferência no navegador.
   useEffect(() => {
     const root = document.documentElement;
     if (theme === 'dark') {
@@ -33,7 +36,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       root.classList.add('light');
     }
     root.setAttribute('data-theme', theme);
-    try { writeStorage(THEME_STORAGE_KEY, theme); } catch { /* Theme remains usable without persistence. */ }
+    try { writeStorage(THEME_STORAGE_KEY, theme); } catch { /* A aparência muda mesmo se o navegador não permitir salvar a preferência. */ }
   }, [theme]);
 
   const toggleTheme = () => {
@@ -51,6 +54,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   );
 };
 
+// Dá acesso ao tema e aos comandos de troca dentro do ThemeProvider.
 export const useTheme = () => {
   const context = useContext(ThemeContext);
   if (!context) {

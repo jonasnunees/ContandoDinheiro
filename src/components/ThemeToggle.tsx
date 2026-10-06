@@ -7,6 +7,7 @@ interface ThemeToggleProps {
 }
 
 export const ThemeToggle: React.FC<ThemeToggleProps> = ({ className = '' }) => {
+  // Lê o tema compartilhado e usa o comando que alterna entre claro e escuro.
   const { theme, toggleTheme } = useTheme();
 
   const isLight = theme === 'light';

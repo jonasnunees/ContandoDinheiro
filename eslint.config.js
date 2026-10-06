@@ -4,6 +4,7 @@ import hooks from 'eslint-plugin-react-hooks';
 import a11y from 'eslint-plugin-jsx-a11y';
 import globals from 'globals';
 
+// Verifica padrões de código, uso dos hooks do React e acessibilidade dos elementos da tela.
 export default tseslint.config(
   { ignores: ['dist/**', 'node_modules/**'] },
   js.configs.recommended,

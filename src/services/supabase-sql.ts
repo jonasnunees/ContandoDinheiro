@@ -1,3 +1,5 @@
+// Texto SQL oferecido pela tela de configuração para criar tabelas e regras de acesso.
+// Importar este arquivo não executa o script no banco de dados.
 export const SUPABASE_SQL_SCRIPT = `-- ========================================================
 -- SISTEMA CONTANDODINHEIRO — SCHEMA SUPABASE + GOOGLE AUTH
 -- Mapeamento automático de usuários e transações com RLS

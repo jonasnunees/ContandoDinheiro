@@ -15,6 +15,7 @@ export const SupabaseSetupModal: React.FC<SupabaseSetupModalProps> = ({
   onClose,
   onCredentialsSaved,
 }) => {
+  // Preenche o formulário com a conexão atual e guarda o estado das abas e mensagens.
   const currentCreds = getSupabaseCredentials();
   const [url, setUrl] = useState(currentCreds.url);
   const [key, setKey] = useState(currentCreds.key);
@@ -27,16 +28,18 @@ export const SupabaseSetupModal: React.FC<SupabaseSetupModalProps> = ({
 
   if (!isOpen) return null;
 
+  // Copia o script para a área de transferência e mostra uma confirmação temporária.
   const handleCopySql = async () => {
     try {
       await navigator.clipboard.writeText(SUPABASE_SQL_SCRIPT);
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
     } catch {
-      // Fallback
+      // Se o navegador bloquear a cópia, não exibe a confirmação de sucesso.
     }
   };
 
+  // Valida a nova conexão e encerra a sessão anterior antes de salvar outro projeto.
   const handleSaveCredentials = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isManagedConnection || savingCredentials) return;
@@ -64,6 +67,7 @@ export const SupabaseSetupModal: React.FC<SupabaseSetupModalProps> = ({
     }, 1200);
   };
 
+  // Encerra a sessão e apaga a conexão salva; configurações do ambiente não são editáveis aqui.
   const handleClearCredentials = async () => {
     if (isManagedConnection || savingCredentials) return;
     setSavingCredentials(true);
@@ -90,7 +94,7 @@ export const SupabaseSetupModal: React.FC<SupabaseSetupModalProps> = ({
 
   return (
     <Modal titleId="setup-title" onClose={onClose} busy={savingCredentials} className="w-full max-w-3xl rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden flex flex-col max-h-[90vh] text-slate-800 dark:text-slate-100 transition-colors">
-        {/* Header */}
+        {/* Título da janela e botão para fechá-la. */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60">
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400">
@@ -116,7 +120,7 @@ export const SupabaseSetupModal: React.FC<SupabaseSetupModalProps> = ({
           </button>
         </div>
 
-        {/* Tab Navigation */}
+        {/* Botões que alternam entre as etapas de configuração. */}
         <div className="flex border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 px-6 gap-3 sm:gap-4 text-xs font-semibold overflow-x-auto">
           <button
             onClick={() => setActiveTab('sql')}
@@ -164,7 +168,7 @@ export const SupabaseSetupModal: React.FC<SupabaseSetupModalProps> = ({
           </button>
         </div>
 
-        {/* Content Area */}
+        {/* Mostra as instruções ou o formulário da aba escolhida. */}
         <div className="flex-1 overflow-y-auto p-6 space-y-4 text-sm text-slate-600 dark:text-slate-300">
           {activeTab === 'sql' && (
             <div className="space-y-4">

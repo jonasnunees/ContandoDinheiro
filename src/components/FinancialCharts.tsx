@@ -15,7 +15,7 @@ import {
 } from 'chart.js';
 import { PieChart, BarChart3, TrendingUp, AlertCircle } from 'lucide-react';
 
-// Register Chart.js components
+// Habilita os tipos de gráfico, eixos e recursos que a biblioteca usará.
 ChartJS.register(
   ArcElement,
   Tooltip,
@@ -59,6 +59,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ transactions }
   const { theme } = useTheme();
   const isLight = theme === 'light';
 
+  // As referências apontam para as áreas de desenho; as instâncias guardam os gráficos criados.
   const categoryCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const paymentCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const cashflowCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -67,7 +68,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ transactions }
   const paymentChartInstance = useRef<ChartJS | null>(null);
   const cashflowChartInstance = useRef<ChartJS | null>(null);
 
-  // Filter expenses for category chart
+  // Considera apenas receitas e despesas pagas nos gráficos de categoria e fluxo de caixa.
   const expenses = useMemo(() => transactions.filter(t => t.tipo === 'despesa' && t.status === 'pago'), [transactions]);
   const revenues = useMemo(() => transactions.filter(t => t.tipo === 'receita' && t.status === 'pago'), [transactions]);
 
@@ -75,10 +76,11 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ transactions }
   const gridColor = isLight ? '#e2e8f0' : '#1e293b';
   const doughnutBorder = isLight ? '#ffffff' : '#0f172a';
 
-  // 1. Category Chart Effect
+  // Recria o gráfico de categorias quando os gastos ou as cores do tema mudam.
   useEffect(() => {
     if (!categoryCanvasRef.current) return;
 
+    // Remove o desenho anterior antes de usar a mesma área para um novo gráfico.
     if (categoryChartInstance.current) {
       categoryChartInstance.current.destroy();
       categoryChartInstance.current = null;
@@ -86,7 +88,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ transactions }
 
     if (expenses.length === 0) return;
 
-    // Aggregate by category
+    // Soma os gastos de cada categoria para definir o tamanho das fatias.
     const catTotals: Record<string, number> = {};
     expenses.forEach((t) => {
       catTotals[t.categoria] = (catTotals[t.categoria] || 0) + t.valor;
@@ -152,7 +154,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ transactions }
     };
   }, [expenses, isLight, textColor, doughnutBorder]);
 
-  // 2. Payment Method Chart Effect
+  // Recria o gráfico que compara as formas de pagamento.
   useEffect(() => {
     if (!paymentCanvasRef.current) return;
 
@@ -163,7 +165,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ transactions }
 
     if (transactions.length === 0) return;
 
-    // Aggregate all transactions by payment method
+    // Soma os valores por forma de pagamento, incluindo lançamentos pendentes.
     const pmTotals: Record<string, number> = {};
     transactions.forEach((t) => {
       pmTotals[t.forma_pagamento] = (pmTotals[t.forma_pagamento] || 0) + t.valor;
@@ -239,7 +241,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ transactions }
     };
   }, [transactions, isLight, textColor, gridColor]);
 
-  // 3. Cash Flow (Entradas vs Saídas)
+  // Compara os totais já recebidos e pagos em duas barras.
   useEffect(() => {
     if (!cashflowCanvasRef.current) return;
 

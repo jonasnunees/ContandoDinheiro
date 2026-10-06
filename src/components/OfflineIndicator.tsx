@@ -3,6 +3,7 @@ import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { WifiOff } from 'lucide-react';
 
 export const OfflineIndicator: React.FC = () => {
+  // Só exibe o aviso quando o navegador informa que está sem conexão.
   const isOnline = useOnlineStatus();
 
   if (isOnline) return null;

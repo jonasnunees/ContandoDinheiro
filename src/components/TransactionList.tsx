@@ -29,6 +29,7 @@ interface TransactionListProps {
   onOpenNewModal: () => void;
 }
 
+// Associa cada categoria às cores do seu selo na lista.
 const CATEGORY_COLORS: Record<string, string> = {
   Alimentação: 'bg-orange-500/10 text-orange-800 dark:text-orange-400 border-orange-500/20',
   Moradia: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20',
@@ -53,6 +54,7 @@ export const TransactionList: React.FC<TransactionListProps> = ({
 }) => {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
+  // Guarda quais lançamentos estão sendo alterados para impedir cliques repetidos na mesma ação.
   const pending = useRef(new Set<string>());
   const [busyIds, setBusyIds] = useState(new Set<string>());
   const [actionError, setActionError] = useState('');
@@ -66,6 +68,7 @@ export const TransactionList: React.FC<TransactionListProps> = ({
     finally { pending.current.delete(id); setBusyIds(new Set(pending.current)); }
   };
 
+  // Formata valores em reais usando a escrita brasileira, como R$ 1.234,56.
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -73,6 +76,7 @@ export const TransactionList: React.FC<TransactionListProps> = ({
     }).format(val);
   };
 
+  // Reorganiza o texto da data para dia/mês/ano, sem conversão de fuso horário.
   const formatDate = (dateStr: string) => {
     if (!dateStr) return '-';
     const [year, month, day] = dateStr.split('-');
@@ -80,6 +84,7 @@ export const TransactionList: React.FC<TransactionListProps> = ({
     return `${day}/${month}/${year}`;
   };
 
+  // Monta uma tabela dos lançamentos exibidos e cria um arquivo CSV para baixar.
   const handleExportCSV = () => {
     if (transactions.length === 0) return;
     const header = ['ID', 'Data', 'Descrição', 'Tipo', 'Categoria', 'Forma de Pagamento', 'Valor', 'Status'];
@@ -101,16 +106,17 @@ export const TransactionList: React.FC<TransactionListProps> = ({
     link.click();
     document.body.removeChild(link);
 
+    // Libera o endereço temporário do arquivo após iniciar o download.
     setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
   };
 
   return (
     <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-xl overflow-hidden transition-colors">
       {actionError && <p role="alert" className="p-4 text-rose-700 dark:text-rose-300">{actionError}</p>}
-      {/* Search & Filters Bar */}
+      {/* Busca e opções que definem quais lançamentos aparecem. */}
       <div className="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/40 space-y-3">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-          {/* Search bar */}
+          {/* Campo de busca por descrição, categoria ou forma de pagamento. */}
           <div className="relative flex-1">
             <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-600 dark:text-slate-400" />
             <input
@@ -122,9 +128,9 @@ export const TransactionList: React.FC<TransactionListProps> = ({
             />
           </div>
 
-          {/* Quick Filters */}
+          {/* Filtros de tipo e situação do lançamento. */}
           <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
-            {/* Type selector */}
+            {/* Escolhe receitas, despesas ou ambas. */}
             <select
               aria-label="Filtrar por tipo" value={filterState.type}
               onChange={(e) => onFilterChange({ type: e.target.value as TransactionListProps['filterState']['type'] })}
@@ -135,7 +141,7 @@ export const TransactionList: React.FC<TransactionListProps> = ({
               <option value="despesa">Despesas (Saídas)</option>
             </select>
 
-            {/* Status selector */}
+            {/* Escolhe lançamentos pagos, pendentes ou ambos. */}
             <select
               aria-label="Filtrar por situação" value={filterState.status}
               onChange={(e) => onFilterChange({ status: e.target.value as TransactionListProps['filterState']['status'] })}
@@ -146,7 +152,7 @@ export const TransactionList: React.FC<TransactionListProps> = ({
               <option value="pendente">Pendentes</option>
             </select>
 
-            {/* Export CSV button */}
+            {/* Baixa os lançamentos exibidos em um arquivo para planilhas. */}
             <button
               aria-label="Exportar transações para CSV" onClick={handleExportCSV}
               disabled={transactions.length === 0}
@@ -160,7 +166,7 @@ export const TransactionList: React.FC<TransactionListProps> = ({
         </div>
       </div>
 
-      {/* Transaction Content */}
+      {/* Mostra a lista ou uma mensagem quando não há lançamentos. */}
       {transactions.length === 0 ? (
         <div className="p-12 text-center space-y-3">
           <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/60 text-slate-600 dark:text-slate-400 flex items-center justify-center mx-auto">
@@ -179,7 +185,7 @@ export const TransactionList: React.FC<TransactionListProps> = ({
         </div>
       ) : (
         <>
-          {/* Desktop Table View */}
+          {/* Em telas maiores, organiza os lançamentos em uma tabela. */}
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left border-collapse text-xs sm:text-sm">
               <thead>
@@ -205,7 +211,7 @@ export const TransactionList: React.FC<TransactionListProps> = ({
                       key={tx.id}
                       className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition group"
                     >
-                      {/* Tipo Icon */}
+                      {/* Ícone que identifica entrada ou saída de dinheiro. */}
                       <td className="py-3.5 px-4 whitespace-nowrap">
                         <div
                           className={`w-8 h-8 rounded-xl flex items-center justify-center border ${
@@ -227,7 +233,7 @@ export const TransactionList: React.FC<TransactionListProps> = ({
                         {tx.descricao}
                       </td>
 
-                      {/* Categoria Badge */}
+                      {/* Selo colorido que identifica a categoria. */}
                       <td className="py-3.5 px-4 whitespace-nowrap">
                         <span
                           className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-medium border ${catColor}`}
@@ -256,7 +262,7 @@ export const TransactionList: React.FC<TransactionListProps> = ({
                         {formatCurrency(tx.valor)}
                       </td>
 
-                      {/* 1-Click Status Toggle */}
+                      {/* Botão que alterna o lançamento entre pago e pendente. */}
                       <td className="py-3.5 px-4 text-center whitespace-nowrap">
                         <button
                           disabled={busyIds.has(tx.id)} aria-label={`Alterar situação de ${tx.descricao}`} onClick={() => runAction(tx.id, () => onToggleStatus(tx.id, tx.status))}
@@ -325,7 +331,7 @@ export const TransactionList: React.FC<TransactionListProps> = ({
             </table>
           </div>
 
-          {/* Mobile Card View (Mobile-First Polish) */}
+          {/* No celular, exibe cada lançamento em um cartão. */}
           <div className="md:hidden divide-y divide-slate-200 dark:divide-slate-800/80">
             {transactions.map((tx) => {
               const isReceita = tx.tipo === 'receita';
@@ -374,7 +380,7 @@ export const TransactionList: React.FC<TransactionListProps> = ({
                       <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium border ${catColor}`}>
                         {tx.categoria}
                       </span>
-                      {/* 1-Click Status */}
+                      {/* Botão que alterna o lançamento entre pago e pendente. */}
                       <button
                         disabled={busyIds.has(tx.id)} aria-label={`Alterar situação de ${tx.descricao}`} onClick={() => runAction(tx.id, () => onToggleStatus(tx.id, tx.status))}
                         className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold border transition cursor-pointer ${
@@ -388,7 +394,7 @@ export const TransactionList: React.FC<TransactionListProps> = ({
                       </button>
                     </div>
 
-                    {/* Actions */}
+                    {/* Ações para editar ou excluir o lançamento. */}
                     {deleteConfirmId === tx.id ? (
                       <div className="flex items-center gap-1">
                         <button

@@ -11,6 +11,7 @@ interface TransactionModalProps {
   transactionToEdit?: Transaction | null;
 }
 
+// Opções fixas usadas nos campos de categoria e forma de pagamento.
 const CATEGORIES: { name: Category; label: string }[] = [
   { name: 'Alimentação', label: '🍔 Alimentação' },
   { name: 'Moradia', label: '🏠 Moradia' },
@@ -40,6 +41,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
   onSave,
   transactionToEdit,
 }) => {
+  // Cada estado guarda um campo do formulário ou uma informação de carregamento/erro.
   const [descricao, setDescricao] = useState('');
   const [valor, setValor] = useState('');
   const [tipo, setTipo] = useState<TransactionType>('despesa');
@@ -50,6 +52,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Ao abrir, preenche os campos para edição ou restaura os valores de um novo lançamento.
   useEffect(() => {
     if (transactionToEdit) {
       setDescricao(transactionToEdit.descricao);
@@ -71,7 +74,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
     setError('');
   }, [transactionToEdit, isOpen]);
 
-  // When changing type, set sensible category default
+  // Ao alternar receita/despesa, ajusta a categoria padrão de salário/alimentação.
   const handleTypeChange = (newType: TransactionType) => {
     setTipo(newType);
     if (newType === 'receita' && categoria === 'Alimentação') {
@@ -83,6 +86,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
 
   if (!isOpen) return null;
 
+  // Impede o recarregamento da página, valida os campos e aguarda o salvamento antes de fechar.
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -108,7 +112,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
           forma_pagamento: formaPagamento,
           status,
           categoria,
-          user_id: '', // Handled by service
+          user_id: '', // O código que salva os dados preenche o usuário responsável.
         },
         transactionToEdit ? transactionToEdit.id : undefined
       );
@@ -123,7 +127,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
 
   return (
     <Modal titleId="transaction-title" onClose={onClose} busy={loading} className="w-full max-w-lg rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden my-6 text-slate-800 dark:text-slate-100 transition-colors">
-        {/* Header */}
+        {/* Título da janela e botão para fechá-la. */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60">
           <h2 id="transaction-title" className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
             {transactionToEdit ? (
@@ -146,7 +150,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
           </button>
         </div>
 
-        {/* Form Body */}
+        {/* Campos preenchidos pela pessoa para cadastrar ou editar o lançamento. */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {error && (
             <div id="transaction-error" role="alert" className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs text-rose-700 dark:text-rose-300">
@@ -154,7 +158,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
             </div>
           )}
 
-          {/* Tipo Selector (Receita vs Despesa) */}
+          {/* Escolhe se o lançamento representa dinheiro recebido ou gasto. */}
           <div className="grid grid-cols-2 gap-3">
             <button
               type="button"
@@ -311,7 +315,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
             </div>
           </div>
 
-          {/* Action Buttons */}
+          {/* Botões para cancelar ou confirmar o formulário. */}
           <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-200 dark:border-slate-800/80">
             <button
               type="button"

@@ -6,12 +6,14 @@ import {VitePWA} from 'vite-plugin-pwa';
 
 export default defineConfig(() => {
   return {
+    // Prepara o React, os estilos do Tailwind e a instalação do site como aplicativo.
     plugins: [
       react(),
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
         includeAssets: ['icon.svg', 'apple-touch-icon.png', 'pwa-192x192.png', 'pwa-512x512.png'],
+        // Define nome, ícones e aparência do aplicativo instalado.
         manifest: {
           id: '/',
           name: 'ContandoDinheiro — Gestão Financeira',

@@ -9,10 +9,12 @@ interface Props {
   children: ReactNode;
 }
 
+// Janela reutilizável: recebe o conteúdo (children) e o comando para fechá-la.
 export function Modal({ titleId, onClose, busy = false, className, children }: Props) {
   const dialog = useRef<HTMLDialogElement>(null);
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
+  // Abre a janela e bloqueia a rolagem do fundo; ao fechar, restaura a rolagem e o foco anterior.
   useEffect(() => {
     const element = dialog.current;
     const previousFocus = document.activeElement;
@@ -25,10 +27,12 @@ export function Modal({ titleId, onClose, busy = false, className, children }: P
       if (previousFocus instanceof HTMLElement && previousFocus.isConnected) previousFocus.focus();
     };
   }, []);
+  // O portal coloca a janela diretamente no corpo da página, fora do layout da tela.
   return createPortal(
     <dialog ref={dialog} aria-labelledby={titleId} aria-modal="true" aria-busy={busy}
       className={`modal-dialog ${className}`}
       onKeyDown={event => {
+        // Mantém a navegação com Tab dentro da janela, incluindo Shift+Tab para voltar.
         if (event.key !== 'Tab') return;
         const controls = Array.from(event.currentTarget.querySelectorAll<HTMLElement>(
           'button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), a[href], summary, [tabindex="0"]',

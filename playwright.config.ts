@@ -1,5 +1,6 @@
 import { defineConfig } from '@playwright/test';
 
+// Configura os testes de navegador e inicia o site localmente para executá-los.
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: false,

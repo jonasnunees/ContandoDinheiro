@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 
 export default function App() {
+  // useState guarda valores da tela; chamar o setter faz o React atualizar a interface.
   const currentDate = new Date();
   const [currentView, setCurrentView] = useState<'landing' | 'dashboard'>('landing');
   const [authModalMode, setAuthModalMode] = useState<'login' | 'register'>('login');
@@ -35,6 +36,8 @@ export default function App() {
 
   type AppUser = { id: string; email: string; isDemo: boolean };
   const [user, setUser] = useState<AppUser | null>(null);
+  // useRef guarda controles entre atualizações da tela, sem redesenhá-la.
+  // A versão da busca impede que uma resposta antiga sobrescreva os dados atuais.
   const activeUser = useRef<AppUser | null>(null);
   const requestVersion = useRef(0);
 
@@ -44,15 +47,15 @@ export default function App() {
   const [loadError, setLoadError] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Modals
+  // Controla quais janelas estão abertas e qual lançamento será editado.
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
   const [transactionToEdit, setTransactionToEdit] = useState<Transaction | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
-  // Active view tab for mobile convenience
+  // No celular, mostra apenas a seção escolhida na navegação inferior.
   const [activeTab, setActiveTab] = useState<'dashboard' | 'transactions' | 'charts'>('dashboard');
 
-  // Filters
+  // Guarda as escolhas usadas para selecionar os lançamentos exibidos.
   const [filterState, setFilterState] = useState<FilterState>({
     month: currentMonth,
     year: currentYear,
@@ -66,6 +69,7 @@ export default function App() {
   const client = getSupabaseClient();
   const invalidateRequest = useCallback(() => { requestVersion.current++; }, []);
 
+  // Ao trocar de conta, limpa os dados anteriores antes de carregar os da nova pessoa.
   const applyUser = useCallback((nextUser: AppUser | null) => {
     requestVersion.current++;
     activeUser.current = nextUser;
@@ -80,8 +84,10 @@ export default function App() {
     }
   }, []);
 
+  // Busca os lançamentos do período; async/await permite aguardar a resposta do serviço.
   const loadTransactions = useCallback(async () => {
     if (!user || activeUser.current !== user) return;
+    // Só a busca mais recente poderá atualizar a tela, mesmo se as respostas chegarem fora de ordem.
     const version = ++requestVersion.current;
     setLoading(true);
     setLoadError('');
@@ -101,11 +107,13 @@ export default function App() {
   }, [user, currentMonth, currentYear]);
 
   useEffect(() => {
+    // useEffect repete a busca quando mudam a conta ou o período selecionado.
     void loadTransactions();
     return invalidateRequest;
   }, [loadTransactions, invalidateRequest]);
 
   useEffect(() => {
+    // Recupera o acesso à conta e acompanha login/logout; sem sessão, oferece a demonstração.
     const guestUser: AppUser = { id: 'demo-user-id', email: 'demo@exemplo.com', isDemo: true };
     let disposed = false;
     let authVersion = 0;
@@ -117,13 +125,13 @@ export default function App() {
     const { data: { subscription } } = client.auth.onAuthStateChange((_event, session) => {
       if (disposed) return;
       const version = ++authVersion;
-      // Invalidate pending responses as soon as the auth event arrives.
+      // Descarta buscas anteriores assim que a sessão muda.
       applyUser(null);
       if (!session?.user) {
         applyUser(guestUser);
         return;
       }
-      // Run outside the auth callback lock, and validate identity with the server.
+      // Aguarda o aviso de autenticação terminar antes de confirmar a conta no servidor.
       setTimeout(() => {
         if (disposed || version !== authVersion) return;
         void client.auth.getUser().then(({ data, error }) => {
@@ -147,6 +155,7 @@ export default function App() {
     };
   }, [client, applyUser, invalidateRequest]);
 
+  // Se sair da conta falhar, restaura o usuário anterior e mostra uma mensagem.
   const handleLogout = async () => {
     const previousUser = activeUser.current;
     applyUser(null);
@@ -161,7 +170,7 @@ export default function App() {
     applyUser({ id: 'demo-user-id', email: 'demo@exemplo.com', isDemo: true });
   };
 
-  // CRUD Handlers
+  // Cria, edita e exclui lançamentos; depois busca os dados para atualizar a tela.
   const handleSaveTransaction = async (
     data: Omit<Transaction, 'id' | 'created_at'>,
     id?: string
@@ -192,20 +201,20 @@ export default function App() {
     await loadTransactions();
   };
 
-  // Filtered transactions based on month, year, search, type, and status
+  // useMemo reaproveita a lista filtrada até os dados ou os filtros mudarem.
   const filteredTransactions = useMemo(() => {
     return transactions.filter((t) => {
-      // Month and Year filter
+      // Descarta lançamentos fora do ano e, quando selecionado, do mês.
       if (t.data) {
         const [yStr, mStr] = t.data.split('-');
         const txYear = parseInt(yStr, 10);
-        const txMonth = parseInt(mStr, 10) - 1; // 0-indexed
+        const txMonth = parseInt(mStr, 10) - 1; // No JavaScript, janeiro é 0 e dezembro é 11.
 
         if (txYear !== currentYear) return false;
         if (currentMonth !== -1 && txMonth !== currentMonth) return false;
       }
 
-      // Search term
+      // Procura o texto na descrição, na categoria e na forma de pagamento.
       if (filterState.searchTerm.trim()) {
         const term = filterState.searchTerm.toLowerCase();
         const matchDesc = t.descricao.toLowerCase().includes(term);
@@ -214,12 +223,12 @@ export default function App() {
         if (!matchDesc && !matchCat && !matchPm) return false;
       }
 
-      // Type filter
+      // Mantém receitas, despesas ou ambas, conforme a escolha.
       if (filterState.type !== 'todos' && t.tipo !== filterState.type) {
         return false;
       }
 
-      // Status filter
+      // Mantém lançamentos pagos, pendentes ou ambos.
       if (filterState.status !== 'todos' && t.status !== filterState.status) {
         return false;
       }
@@ -228,7 +237,7 @@ export default function App() {
     });
   }, [transactions, currentMonth, currentYear, filterState]);
 
-  // Compute summary metrics (Etapa 4.2)
+  // Soma apenas os lançamentos filtrados, separando valores pagos dos pendentes.
   const stats: SummaryStats = useMemo(() => {
     let totalEntradas = 0;
     let totalSaidas = 0;
@@ -251,6 +260,7 @@ export default function App() {
       }
     });
 
+    // O saldo considera o dinheiro já recebido e gasto; pendências ficam no resumo separado.
     const saldoAtual = totalEntradas - totalSaidas;
     const taxaEconomia =
       totalEntradas > 0 && saldoAtual > 0 ? (saldoAtual / totalEntradas) * 100 : 0;
@@ -271,7 +281,7 @@ export default function App() {
     await loadTransactions();
   };
 
-  // Wait for session recovery before choosing the visitor or authenticated view.
+  // Aguarda a confirmação da sessão antes de escolher a tela inicial.
   if (!user) {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex items-center justify-center" role="status" aria-live="polite">
@@ -281,7 +291,7 @@ export default function App() {
     );
   }
 
-  // Authenticated users always see their dashboard, including after OAuth or reload.
+  // Visitantes veem a apresentação; quem entrou na conta segue para o painel.
   if (currentView === 'landing' && user.isDemo) {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-sans transition-colors duration-200">
@@ -319,7 +329,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-sans transition-colors duration-200">
-      {/* Top Navigation */}
+      {/* Cabeçalho com período selecionado e ações da conta. */}
       <Header
         currentMonth={currentMonth}
         currentYear={currentYear}
@@ -346,13 +356,13 @@ export default function App() {
         user={user}
       />
 
-      {/* Main Body */}
+      {/* Área principal com os dados financeiros e avisos de carregamento. */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 space-y-6 pb-24 md:pb-12">
         {loadError && <div role="alert" className="rounded-xl border border-rose-400 p-4 text-rose-700 dark:text-rose-300">
           <p>{loadError}</p><button type="button" onClick={handleRefresh} disabled={loading} className="mt-2 underline">Tentar novamente</button>
         </div>}
         {loading && <p role="status">Carregando lançamentos...</p>}
-        {/* Refresh bar & Subheader status */}
+        {/* Mostra o período exibido e permite buscar os dados novamente. */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
             <span className="w-2 h-2 rounded-full bg-emerald-500" />
@@ -389,7 +399,7 @@ export default function App() {
         {/* Etapa 4: Cards de Resumo Financeiro */}
         {!loading && !loadError && <SummaryCards stats={stats} />}
 
-        {/* View Switcher for Mobile Tabs */}
+        {/* Botões que escolhem a seção exibida no celular. */}
         <div className="flex sm:hidden border border-slate-200 dark:border-slate-800 bg-slate-200/80 dark:bg-slate-900 rounded-xl p-1 gap-1 text-xs font-semibold">
           <button
             aria-pressed={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')}
@@ -479,7 +489,7 @@ export default function App() {
         </div>
       </main>
 
-      {/* Floating Action Button (Mobile-First Polish) */}
+      {/* Botão fixo para criar um lançamento no celular. */}
       <button
         onClick={() => {
           setTransactionToEdit(null);
@@ -491,7 +501,7 @@ export default function App() {
         <Plus className="w-7 h-7" />
       </button>
 
-      {/* Footer */}
+      {/* Rodapé com informações do aplicativo. */}
       <footer className="border-t border-slate-200 dark:border-slate-900 bg-white dark:bg-slate-950 py-6 px-4 text-center text-xs text-slate-500 transition-colors">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           <p>ContandoDinheiro — Sistema de Gestão Financeira com Supabase & PWA</p>
@@ -519,7 +529,7 @@ export default function App() {
         initialMode={authModalMode}
       />
 
-      {/* Offline PWA Status Badge */}
+      {/* Aviso de falta de conexão informado pelo navegador. */}
       <OfflineIndicator />
     </div>
   );
