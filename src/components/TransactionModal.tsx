@@ -1,3 +1,5 @@
+import { localDate, parseMoney } from '../services/validation';
+import { Modal } from './Modal';
 import React, { useState, useEffect } from 'react';
 import { Transaction, TransactionType, TransactionStatus, PaymentMethod, Category } from '../types/finance';
 import { X, Plus, Check, ArrowUpCircle, ArrowDownCircle, DollarSign, Calendar as CalendarIcon, CreditCard, Tag, CheckCircle2 } from 'lucide-react';
@@ -41,7 +43,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
   const [descricao, setDescricao] = useState('');
   const [valor, setValor] = useState('');
   const [tipo, setTipo] = useState<TransactionType>('despesa');
-  const [data, setData] = useState(new Date().toISOString().slice(0, 10));
+  const [data, setData] = useState(localDate());
   const [formaPagamento, setFormaPagamento] = useState<PaymentMethod>('Pix');
   const [status, setStatus] = useState<TransactionStatus>('pago');
   const [categoria, setCategoria] = useState<Category>('Alimentação');
@@ -51,7 +53,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
   useEffect(() => {
     if (transactionToEdit) {
       setDescricao(transactionToEdit.descricao);
-      setValor(transactionToEdit.valor.toString());
+      setValor(transactionToEdit.valor.toFixed(2).replace('.', ','));
       setTipo(transactionToEdit.tipo);
       setData(transactionToEdit.data);
       setFormaPagamento(transactionToEdit.forma_pagamento);
@@ -61,7 +63,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
       setDescricao('');
       setValor('');
       setTipo('despesa');
-      setData(new Date().toISOString().slice(0, 10));
+      setData(localDate());
       setFormaPagamento('Pix');
       setStatus('pago');
       setCategoria('Alimentação');
@@ -85,16 +87,16 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
     e.preventDefault();
     setError('');
 
-    const numericValue = parseFloat(valor.replace(',', '.'));
+    if (loading) return;
+    let numericValue: number;
+    try { numericValue = parseMoney(valor); } catch (error) {
+      setError(error instanceof Error ? error.message : 'Valor inválido.');
+      return;
+    }
     if (!descricao.trim()) {
       setError('Informe a descrição da transação.');
       return;
     }
-    if (isNaN(numericValue) || numericValue <= 0) {
-      setError('Informe um valor numérico válido maior que zero.');
-      return;
-    }
-
     setLoading(true);
     try {
       await onSave(
@@ -111,35 +113,34 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
         transactionToEdit ? transactionToEdit.id : undefined
       );
       onClose();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      setError(err.message || 'Erro ao salvar transação.');
+      setError('Não foi possível salvar a transação. Verifique os dados e tente novamente.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 overflow-y-auto">
-      <div className="w-full max-w-lg rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden my-6 text-slate-800 dark:text-slate-100 transition-colors">
+    <Modal titleId="transaction-title" onClose={onClose} busy={loading} className="w-full max-w-lg rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden my-6 text-slate-800 dark:text-slate-100 transition-colors">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60">
-          <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <h2 id="transaction-title" className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
             {transactionToEdit ? (
               <>
-                <Check className="w-5 h-5 text-emerald-500 dark:text-emerald-400" />
+                <Check className="w-5 h-5 text-emerald-700 dark:text-emerald-400" />
                 Editar Lançamento
               </>
             ) : (
               <>
-                <Plus className="w-5 h-5 text-emerald-500 dark:text-emerald-400" />
+                <Plus className="w-5 h-5 text-emerald-700 dark:text-emerald-400" />
                 Nova Transação
               </>
             )}
           </h2>
           <button
-            onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+            onClick={onClose} disabled={loading} aria-label="Fechar formulário"
+            className="p-1.5 rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition"
           >
             <X className="w-5 h-5" />
           </button>
@@ -148,7 +149,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {error && (
-            <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs text-rose-600 dark:text-rose-300">
+            <div id="transaction-error" role="alert" className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs text-rose-700 dark:text-rose-300">
               {error}
             </div>
           )}
@@ -157,44 +158,45 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
           <div className="grid grid-cols-2 gap-3">
             <button
               type="button"
-              onClick={() => handleTypeChange('receita')}
+              aria-pressed={tipo === 'receita'} disabled={loading} onClick={() => handleTypeChange('receita')}
               className={`py-3 px-4 rounded-xl font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 border transition cursor-pointer ${
                 tipo === 'receita'
-                  ? 'bg-emerald-500/15 border-emerald-500 text-emerald-600 dark:text-emerald-400 shadow-sm'
+                  ? 'bg-emerald-500/15 border-emerald-500 text-emerald-700 dark:text-emerald-400 shadow-sm'
                   : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
               }`}
             >
-              <ArrowUpCircle className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
+              <ArrowUpCircle className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
               Receita (Entrada)
             </button>
             <button
               type="button"
-              onClick={() => handleTypeChange('despesa')}
+              aria-pressed={tipo === 'despesa'} disabled={loading} onClick={() => handleTypeChange('despesa')}
               className={`py-3 px-4 rounded-xl font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 border transition cursor-pointer ${
                 tipo === 'despesa'
-                  ? 'bg-rose-500/15 border-rose-500 text-rose-600 dark:text-rose-400 shadow-sm'
+                  ? 'bg-rose-500/15 border-rose-500 text-rose-700 dark:text-rose-400 shadow-sm'
                   : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
               }`}
             >
-              <ArrowDownCircle className="w-4 h-4 text-rose-500 dark:text-rose-400" />
+              <ArrowDownCircle className="w-4 h-4 text-rose-700 dark:text-rose-400" />
               Despesa (Saída)
             </button>
           </div>
 
           {/* Valor */}
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-              <DollarSign className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" />
+            <label htmlFor="tx-valor" className="text-xs font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+              <DollarSign className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
               Valor (R$)
             </label>
             <div className="relative">
-              <span className="absolute left-3.5 top-2.5 text-sm font-bold text-slate-400">
+              <span className="absolute left-3.5 top-2.5 text-sm font-bold text-slate-600 dark:text-slate-400">
                 R$
               </span>
               <input
                 type="text"
                 required
                 inputMode="decimal"
+                id="tx-valor" aria-describedby={error ? "transaction-error" : undefined} disabled={loading}
                 value={valor}
                 onChange={(e) => setValor(e.target.value)}
                 placeholder="0,00"
@@ -205,13 +207,14 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
 
           {/* Descrição */}
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+            <label htmlFor="tx-descricao" className="text-xs font-medium text-slate-700 dark:text-slate-300">
               Descrição
             </label>
             <input
               type="text"
               required
-              value={descricao}
+              id="tx-descricao" aria-describedby={error ? "transaction-error" : undefined} disabled={loading}
+                value={descricao}
               onChange={(e) => setDescricao(e.target.value)}
               placeholder="Ex: Salário, Aluguel, Supermercado, Cinema..."
               className="w-full rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 px-3.5 py-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-emerald-500"
@@ -221,11 +224,12 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
           {/* Categoria & Forma de Pagamento */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                <Tag className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" />
+              <label htmlFor="tx-categoria" className="text-xs font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                <Tag className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
                 Categoria
               </label>
               <select
+                id="tx-categoria" aria-describedby={error ? "transaction-error" : undefined} disabled={loading}
                 value={categoria}
                 onChange={(e) => setCategoria(e.target.value as Category)}
                 className="w-full rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 px-3 py-2.5 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:border-emerald-500 cursor-pointer"
@@ -239,11 +243,12 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                <CreditCard className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" />
+              <label htmlFor="tx-pagamento" className="text-xs font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                <CreditCard className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
                 Forma de Pagamento
               </label>
               <select
+                id="tx-pagamento" aria-describedby={error ? "transaction-error" : undefined} disabled={loading}
                 value={formaPagamento}
                 onChange={(e) => setFormaPagamento(e.target.value as PaymentMethod)}
                 className="w-full rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 px-3 py-2.5 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:border-emerald-500 cursor-pointer"
@@ -260,13 +265,14 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
           {/* Data & Status */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                <CalendarIcon className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" />
+              <label htmlFor="tx-data" className="text-xs font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                <CalendarIcon className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
                 Data
               </label>
               <input
                 type="date"
                 required
+                id="tx-data" aria-describedby={error ? "transaction-error" : undefined} disabled={loading}
                 value={data}
                 onChange={(e) => setData(e.target.value)}
                 className="w-full rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 px-3.5 py-2.5 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:border-emerald-500 cursor-pointer"
@@ -274,17 +280,17 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" />
+              <div id="status-label" className="text-xs font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
                 Situação / Status
-              </label>
-              <div className="grid grid-cols-2 gap-2">
+              </div>
+              <div role="group" aria-labelledby="status-label" className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
-                  onClick={() => setStatus('pago')}
+                  aria-pressed={status === 'pago'} disabled={loading} onClick={() => setStatus('pago')}
                   className={`py-2 px-2 rounded-xl text-xs font-semibold border transition cursor-pointer ${
                     status === 'pago'
-                      ? 'bg-emerald-500/15 border-emerald-500 text-emerald-600 dark:text-emerald-400'
+                      ? 'bg-emerald-500/15 border-emerald-500 text-emerald-700 dark:text-emerald-400'
                       : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                   }`}
                 >
@@ -292,10 +298,10 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                 </button>
                 <button
                   type="button"
-                  onClick={() => setStatus('pendente')}
+                  aria-pressed={status === 'pendente'} disabled={loading} onClick={() => setStatus('pendente')}
                   className={`py-2 px-2 rounded-xl text-xs font-semibold border transition cursor-pointer ${
                     status === 'pendente'
-                      ? 'bg-amber-500/15 border-amber-500 text-amber-600 dark:text-amber-400'
+                      ? 'bg-amber-500/15 border-amber-500 text-amber-800 dark:text-amber-400'
                       : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                   }`}
                 >
@@ -309,7 +315,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
           <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-200 dark:border-slate-800/80">
             <button
               type="button"
-              onClick={onClose}
+              onClick={onClose} disabled={loading}
               className="px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 transition cursor-pointer"
             >
               Cancelar
@@ -317,13 +323,12 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
             <button
               type="submit"
               disabled={loading}
-              className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-xs sm:text-sm font-semibold text-white shadow-lg shadow-emerald-950/20 dark:shadow-emerald-950 transition cursor-pointer disabled:opacity-50"
+              className="px-6 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-xs sm:text-sm font-semibold text-white shadow-lg shadow-emerald-950/20 dark:shadow-emerald-950 transition cursor-pointer disabled:opacity-50"
             >
               {loading ? 'Salvando...' : transactionToEdit ? 'Atualizar Transação' : 'Cadastrar Transação'}
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </Modal>
   );
 };

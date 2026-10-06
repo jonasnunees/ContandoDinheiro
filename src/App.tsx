@@ -18,14 +18,10 @@ import { OfflineIndicator } from './components/OfflineIndicator';
 import { LandingPage } from './components/LandingPage';
 import { 
   Plus, 
-  Database, 
-  Sparkles, 
   RefreshCw, 
-  CheckCircle2, 
   LayoutDashboard, 
   ListOrdered, 
   PieChart, 
-  SlidersHorizontal,
   Home
 } from 'lucide-react';
 
@@ -41,10 +37,11 @@ export default function App() {
   const [user, setUser] = useState<AppUser | null>(null);
   const activeUser = useRef<AppUser | null>(null);
   const requestVersion = useRef(0);
-  const [configurationVersion, refreshConfiguration] = useState(0);
+
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Modals
@@ -67,6 +64,7 @@ export default function App() {
   });
 
   const client = getSupabaseClient();
+  const invalidateRequest = useCallback(() => { requestVersion.current++; }, []);
 
   const applyUser = useCallback((nextUser: AppUser | null) => {
     requestVersion.current++;
@@ -75,6 +73,8 @@ export default function App() {
     setTransactionToEdit(null);
     setIsTransactionModalOpen(false);
     setUser(nextUser);
+    setLoading(true);
+    setLoadError('');
     if (nextUser) {
       setCurrentView(nextUser.isDemo ? 'landing' : 'dashboard');
     }
@@ -83,13 +83,14 @@ export default function App() {
   const loadTransactions = useCallback(async () => {
     if (!user || activeUser.current !== user) return;
     const version = ++requestVersion.current;
+    setLoading(true);
+    setLoadError('');
     try {
-      const data = await fetchTransactionsService(user.id, user.isDemo);
+      const data = await fetchTransactionsService(user.id, user.isDemo, { month: currentMonth, year: currentYear });
       if (version === requestVersion.current) setTransactions(data);
-    } catch (err) {
+    } catch {
       if (version === requestVersion.current) {
-        setTransactions([]);
-        console.error('Falha ao carregar transações:', err);
+        setLoadError('Não foi possível carregar os lançamentos. Os valores exibidos podem estar desatualizados. Tente novamente.');
       }
     } finally {
       if (version === requestVersion.current) {
@@ -97,12 +98,12 @@ export default function App() {
         setIsRefreshing(false);
       }
     }
-  }, [user]);
+  }, [user, currentMonth, currentYear]);
 
   useEffect(() => {
     void loadTransactions();
-    return () => { requestVersion.current++; };
-  }, [loadTransactions]);
+    return invalidateRequest;
+  }, [loadTransactions, invalidateRequest]);
 
   useEffect(() => {
     const guestUser: AppUser = { id: 'demo-user-id', email: 'demo@exemplo.com', isDemo: true };
@@ -141,10 +142,10 @@ export default function App() {
     return () => {
       disposed = true;
       authVersion++;
-      requestVersion.current++;
+      invalidateRequest();
       subscription.unsubscribe();
     };
-  }, [client, applyUser, configurationVersion]);
+  }, [client, applyUser, invalidateRequest]);
 
   const handleLogout = async () => {
     const previousUser = activeUser.current;
@@ -153,7 +154,7 @@ export default function App() {
       const { error } = await client.auth.signOut();
       if (error) {
         applyUser(previousUser);
-        console.error('Não foi possível encerrar a sessão:', error);
+        setLoadError('Não foi possível sair da conta. Tente novamente.');
         return;
       }
     }
@@ -347,6 +348,10 @@ export default function App() {
 
       {/* Main Body */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 space-y-6 pb-24 md:pb-12">
+        {loadError && <div role="alert" className="rounded-xl border border-rose-400 p-4 text-rose-700 dark:text-rose-300">
+          <p>{loadError}</p><button type="button" onClick={handleRefresh} disabled={loading} className="mt-2 underline">Tentar novamente</button>
+        </div>}
+        {loading && <p role="status">Carregando lançamentos...</p>}
         {/* Refresh bar & Subheader status */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
@@ -382,32 +387,32 @@ export default function App() {
         </div>
 
         {/* Etapa 4: Cards de Resumo Financeiro */}
-        <SummaryCards stats={stats} />
+        {!loading && !loadError && <SummaryCards stats={stats} />}
 
         {/* View Switcher for Mobile Tabs */}
         <div className="flex sm:hidden border border-slate-200 dark:border-slate-800 bg-slate-200/80 dark:bg-slate-900 rounded-xl p-1 gap-1 text-xs font-semibold">
           <button
-            onClick={() => setActiveTab('dashboard')}
+            aria-pressed={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')}
             className={`flex-1 py-2 rounded-lg flex items-center justify-center gap-1.5 transition ${
-              activeTab === 'dashboard' ? 'bg-emerald-600 text-white shadow' : 'text-slate-600 dark:text-slate-400'
+              activeTab === 'dashboard' ? 'bg-emerald-700 text-white shadow' : 'text-slate-600 dark:text-slate-400'
             }`}
           >
             <LayoutDashboard className="w-4 h-4" />
             Visão Geral
           </button>
           <button
-            onClick={() => setActiveTab('transactions')}
+            aria-pressed={activeTab === 'transactions'} onClick={() => setActiveTab('transactions')}
             className={`flex-1 py-2 rounded-lg flex items-center justify-center gap-1.5 transition ${
-              activeTab === 'transactions' ? 'bg-emerald-600 text-white shadow' : 'text-slate-600 dark:text-slate-400'
+              activeTab === 'transactions' ? 'bg-emerald-700 text-white shadow' : 'text-slate-600 dark:text-slate-400'
             }`}
           >
             <ListOrdered className="w-4 h-4" />
             Transações
           </button>
           <button
-            onClick={() => setActiveTab('charts')}
+            aria-pressed={activeTab === 'charts'} onClick={() => setActiveTab('charts')}
             className={`flex-1 py-2 rounded-lg flex items-center justify-center gap-1.5 transition ${
-              activeTab === 'charts' ? 'bg-emerald-600 text-white shadow' : 'text-slate-600 dark:text-slate-400'
+              activeTab === 'charts' ? 'bg-emerald-700 text-white shadow' : 'text-slate-600 dark:text-slate-400'
             }`}
           >
             <PieChart className="w-4 h-4" />
@@ -420,13 +425,13 @@ export default function App() {
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
               <PieChart className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-              Gráficos Interativos (Chart.js)
+              Gráficos financeiros
             </h2>
             <span className="text-xs text-slate-500 dark:text-slate-400 hidden sm:inline">
               Categorias, Métodos de Pagamento e Fluxo
             </span>
           </div>
-          <FinancialCharts transactions={filteredTransactions} />
+          {!loading && !loadError && <FinancialCharts transactions={filteredTransactions} />}
         </div>
 
         {/* Etapa 3: Gestão de Transações (CRUD, Filtros, Busca) */}
@@ -444,14 +449,14 @@ export default function App() {
                 setTransactionToEdit(null);
                 setIsTransactionModalOpen(true);
               }}
-              className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 flex items-center gap-1 cursor-pointer"
+              className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 flex items-center gap-1 cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
               + Nova Transação
             </button>
           </div>
 
-          <TransactionList
+          {!loading && !loadError && <TransactionList
             transactions={filteredTransactions}
             onEdit={(tx) => {
               setTransactionToEdit(tx);
@@ -470,7 +475,7 @@ export default function App() {
               setTransactionToEdit(null);
               setIsTransactionModalOpen(true);
             }}
-          />
+          />}
         </div>
       </main>
 
@@ -480,7 +485,7 @@ export default function App() {
           setTransactionToEdit(null);
           setIsTransactionModalOpen(true);
         }}
-        className="md:hidden fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full bg-emerald-600 hover:bg-emerald-500 active:scale-90 text-white flex items-center justify-center shadow-2xl shadow-emerald-950/20 dark:shadow-emerald-950 border border-emerald-400/40 cursor-pointer"
+        className="md:hidden fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full bg-emerald-700 hover:bg-emerald-800 active:scale-90 text-white flex items-center justify-center shadow-2xl shadow-emerald-950/20 dark:shadow-emerald-950 border border-emerald-400/40 cursor-pointer"
         aria-label="Nova Transação"
       >
         <Plus className="w-7 h-7" />

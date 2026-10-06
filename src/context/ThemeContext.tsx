@@ -1,3 +1,4 @@
+import { readStorage, writeStorage } from '../services/storage';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
 type Theme = 'light' | 'dark';
@@ -14,7 +15,7 @@ const THEME_STORAGE_KEY = 'gf_app_theme';
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [theme, setThemeState] = useState<Theme>(() => {
-    const saved = localStorage.getItem(THEME_STORAGE_KEY);
+    const saved = readStorage(THEME_STORAGE_KEY);
     if (saved === 'light' || saved === 'dark') {
       return saved;
     }
@@ -32,7 +33,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       root.classList.add('light');
     }
     root.setAttribute('data-theme', theme);
-    localStorage.setItem(THEME_STORAGE_KEY, theme);
+    try { writeStorage(THEME_STORAGE_KEY, theme); } catch { /* Theme remains usable without persistence. */ }
   }, [theme]);
 
   const toggleTheme = () => {

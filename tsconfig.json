@@ -1,4 +1,5 @@
 {
+  "include": ["src", "vite.config.ts", "playwright.config.ts", "e2e"],
   "compilerOptions": {
     "target": "ES2022",
     "experimentalDecorators": true,
@@ -11,6 +12,7 @@
       "DOM.Iterable"
     ],
     "skipLibCheck": true,
+    "strict": true,
     "moduleResolution": "bundler",
     "isolatedModules": true,
     "moduleDetection": "force",

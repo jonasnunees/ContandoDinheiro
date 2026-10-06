@@ -46,7 +46,7 @@ As categorias disponíveis incluem Alimentação, Moradia, Transporte, Saúde, E
 4. Selecione o período desejado e acompanhe os cartões de resumo e gráficos.
 5. Use os filtros e a busca para encontrar lançamentos. Para levar os dados a uma planilha, utilize o botão **CSV**.
 
-O saldo considera receitas e despesas com status **pago**. Os valores pendentes aparecem separadamente. Os gráficos consideram as transações do recorte selecionado, incluindo pendências; por isso, seus totais podem diferir do saldo realizado.
+O saldo considera receitas e despesas com status **pago**. Os valores pendentes aparecem separadamente. Os gráficos de categorias e fluxo consideram apenas pagamentos e recebimentos realizados. O gráfico de formas de pagamento inclui também pendências. Todos possuem uma tabela alternativa acessível.
 
 ## Tecnologias
 
@@ -76,13 +76,13 @@ O saldo considera receitas e despesas com status **pago**. Os valores pendentes 
 ```bash
 git clone https://github.com/jonasnunees/ContandoDinheiro.git
 cd ContandoDinheiro
-npm install
+npm ci
 npm run dev
 ```
 
 Abra **http://localhost:3000**. A demonstração pode ser usada sem configurar variáveis de ambiente. Nesse modo, as transações ficam no armazenamento local do navegador.
 
-O repositório também contém um arquivo `bun.lock` para quem utiliza Bun. Os exemplos deste guia usam npm.
+O arquivo `package-lock.json` fixa as dependências utilizadas nas verificações. Use npm e `npm ci` para instalações reproduzíveis; o `bun.lock` histórico não representa as novas ferramentas de validação.
 
 ### Variáveis de ambiente
 
@@ -176,16 +176,19 @@ As proteções do banco dependem da aplicação correta do schema e das polític
 | `npm run dev` | Iniciar o servidor de desenvolvimento na porta 3000 |
 | `npm run build` | Gerar a aplicação de produção em `dist/` |
 | `npm run preview` | Servir localmente a compilação de produção |
-| `npm run lint` | Verificar tipos TypeScript, sem emitir arquivos |
+| `npm run lint` | Verificar tipos estritos, regras React e acessibilidade com ESLint |
 | `npm run test:security` | Executar testes das proteções do serviço, CSV e regras de banco |
 | `npm run test:auth` | Executar testes de regressão do fluxo de autenticação e navegação |
+| `npm run test:validation` | Validar valores monetários, datas e armazenamento |
+| `npm run test:e2e` | Testar teclado, persistência e acessibilidade com Playwright e axe |
 
 Antes de propor alterações, execute:
 
 ```bash
 npm run lint
-npm run test:security
-npm run test:auth
+npm test
+npx playwright install chromium
+npm run test:e2e
 npm run build
 ```
 

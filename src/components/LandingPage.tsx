@@ -8,8 +8,6 @@ import {
   TrendingUp, 
   Sparkles, 
   Zap, 
-  LogIn, 
-  UserPlus,
   Wallet,
   Menu,
   X,
@@ -54,7 +52,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               <span className="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight">
                 ContandoDinheiro
               </span>
-              <span className="hidden sm:inline-block ml-2 text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+              <span className="hidden sm:inline-block ml-2 text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
                 100% Gratuito
               </span>
             </div>
@@ -68,7 +66,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             {isLoggedIn ? (
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-2.5 py-1.5 text-xs">
-                  <div className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-[10px]">
+                  <div className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 flex items-center justify-center font-bold text-[10px]">
                     {(userEmail || 'U').charAt(0).toUpperCase()}
                   </div>
                   <span className="font-semibold text-slate-800 dark:text-slate-200 max-w-[150px] truncate">
@@ -77,7 +75,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   {onLogout && (
                     <button
                       onClick={onLogout}
-                      className="text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 p-0.5 ml-1 transition cursor-pointer"
+                      className="text-slate-600 dark:text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 p-0.5 ml-1 transition cursor-pointer"
                       title="Desconectar"
                     >
                       <LogOut className="w-3.5 h-3.5" />
@@ -87,7 +85,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
                 <button
                   onClick={onGoToDashboard}
-                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-xs font-bold text-white shadow-md shadow-emerald-950/20 transition cursor-pointer"
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-xs font-bold text-white shadow-md shadow-emerald-950/20 transition cursor-pointer"
                 >
                   <span>Painel</span>
                   <ArrowRight className="w-3.5 h-3.5" />
@@ -113,7 +111,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           <div className="flex sm:hidden items-center gap-1.5">
             <ThemeToggle />
             <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              aria-expanded={isMobileMenuOpen} aria-controls="landing-mobile-menu" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-800 transition cursor-pointer"
               aria-label={isMobileMenuOpen ? "Fechar menu" : "Abrir menu"}
               title="Menu"
@@ -125,15 +123,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
         {/* Mobile Dropdown Menu Drawer */}
         {isMobileMenuOpen && (
-          <div className="sm:hidden max-w-7xl mx-auto pt-3 pb-2 mt-3 border-t border-slate-200 dark:border-slate-800 space-y-3">
+          <div id="landing-mobile-menu" className="sm:hidden max-w-7xl mx-auto pt-3 pb-2 mt-3 border-t border-slate-200 dark:border-slate-800 space-y-3">
             {isLoggedIn ? (
               <div className="p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 min-w-0">
-                  <div className="w-7 h-7 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-xs flex-shrink-0">
+                  <div className="w-7 h-7 rounded-full bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 flex items-center justify-center font-bold text-xs flex-shrink-0">
                     {(userEmail || 'U').charAt(0).toUpperCase()}
                   </div>
                   <div className="min-w-0">
-                    <p className="text-[10px] uppercase tracking-wider font-bold text-emerald-600 dark:text-emerald-400">Logado</p>
+                    <p className="text-[10px] uppercase tracking-wider font-bold text-emerald-700 dark:text-emerald-400">Logado</p>
                     <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">{userEmail || 'Sessão ativa'}</p>
                   </div>
                 </div>
@@ -144,7 +142,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                         setIsMobileMenuOpen(false);
                         onLogout();
                       }}
-                      className="p-1.5 rounded-xl text-slate-400 hover:text-rose-500 transition cursor-pointer"
+                      className="p-1.5 rounded-xl text-slate-600 dark:text-slate-400 hover:text-rose-500 transition cursor-pointer"
                       title="Sair"
                     >
                       <LogOut className="w-4 h-4" />
@@ -155,7 +153,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                       setIsMobileMenuOpen(false);
                       onGoToDashboard();
                     }}
-                    className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow transition cursor-pointer"
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold shadow transition cursor-pointer"
                   >
                     <span>Painel</span>
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -187,7 +185,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   setIsMobileMenuOpen(false);
                   onGoToDashboard();
                 }}
-                className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-900 text-xs font-semibold text-emerald-600 dark:text-emerald-400 transition cursor-pointer text-left"
+                className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-900 text-xs font-semibold text-emerald-700 dark:text-emerald-400 transition cursor-pointer text-left"
               >
                 <span>Acessar Painel / Demonstração</span>
                 <ArrowRight className="w-4 h-4" />
@@ -195,7 +193,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
               <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-100/70 dark:bg-slate-900/60 text-xs font-medium text-slate-700 dark:text-slate-300">
                 <span className="flex items-center gap-2">
-                  <Smartphone className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  <Smartphone className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
                   Instalar Aplicativo (PWA)
                 </span>
                 <PWAInstallButton />
@@ -213,7 +211,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
         <div className="relative max-w-4xl mx-auto text-center space-y-6">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs sm:text-sm font-semibold">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-xs sm:text-sm font-semibold">
             <Sparkles className="w-3.5 h-3.5" />
             <span>Sistema 100% Gratuito • Login com a Conta Google sem precisar de senha</span>
           </div>
@@ -266,15 +264,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               <span>Login com Google em 1 clique</span>
             </div>
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+              <CheckCircle2 className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
               <span>Sem necessidade de criar senha</span>
             </div>
             <div className="flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+              <ShieldCheck className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
               <span>Dados protegidos via Supabase</span>
             </div>
             <div className="flex items-center gap-2">
-              <Smartphone className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+              <Smartphone className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
               <span>Instalável no Celular e PC (PWA)</span>
             </div>
           </div>
@@ -289,7 +287,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               <span className="w-3 h-3 rounded-full bg-emerald-500" />
               <span className="ml-2 text-xs font-mono text-slate-500 dark:text-slate-400">Painel Financeiro Interativo</span>
             </div>
-            <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold border border-emerald-500/20">
+            <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-semibold border border-emerald-500/20">
               Ao vivo
             </span>
           </div>
@@ -297,22 +295,22 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           {/* 3 mini cards simulation */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-6">
             <div className="rounded-xl bg-slate-50 dark:bg-slate-950 p-4 border border-slate-200 dark:border-slate-800">
-              <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 uppercase">Receitas do Mês</span>
+              <span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 uppercase">Receitas do Mês</span>
               <div className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mt-1">R$ 8.135,50</div>
-              <span className="text-[11px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1 mt-1">
+              <span className="text-[11px] text-emerald-700 dark:text-emerald-400 flex items-center gap-1 mt-1">
                 <TrendingUp className="w-3 h-3" /> +12% vs mês anterior
               </span>
             </div>
 
             <div className="rounded-xl bg-slate-50 dark:bg-slate-950 p-4 border border-slate-200 dark:border-slate-800">
-              <span className="text-[11px] font-semibold text-rose-500 dark:text-rose-400 uppercase">Despesas do Mês</span>
+              <span className="text-[11px] font-semibold text-rose-700 dark:text-rose-400 uppercase">Despesas do Mês</span>
               <div className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mt-1">R$ 3.820,00</div>
               <span className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 block">Alimentação, Moradia, Transporte</span>
             </div>
 
             <div className="rounded-xl bg-slate-50 dark:bg-slate-950 p-4 border border-slate-200 dark:border-slate-800">
               <span className="text-[11px] font-semibold text-blue-600 dark:text-blue-400 uppercase">Saldo Positivo</span>
-              <div className="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1">R$ 4.315,50</div>
+              <div className="text-xl sm:text-2xl font-black text-emerald-700 dark:text-emerald-400 mt-1">R$ 4.315,50</div>
               <span className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 block">53% de economia poupada</span>
             </div>
           </div>
@@ -327,9 +325,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-emerald-500" />
                 <span className="font-semibold text-slate-800 dark:text-white">Salário Mensal</span>
-                <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">Salário</span>
+                <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">Salário</span>
               </div>
-              <span className="font-bold text-emerald-600 dark:text-emerald-400">+ R$ 6.500,00</span>
+              <span className="font-bold text-emerald-700 dark:text-emerald-400">+ R$ 6.500,00</span>
             </div>
             <div className="flex items-center justify-between p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs shadow-sm">
               <div className="flex items-center gap-2">
@@ -337,7 +335,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 <span className="font-semibold text-slate-800 dark:text-white">Aluguel & Condomínio</span>
                 <span className="text-[10px] px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">Moradia</span>
               </div>
-              <span className="font-bold text-rose-500 dark:text-rose-400">- R$ 1.850,00</span>
+              <span className="font-bold text-rose-700 dark:text-rose-400">- R$ 1.850,00</span>
             </div>
           </div>
         </div>
@@ -357,7 +355,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Card 1 */}
           <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 space-y-4 hover:border-slate-300 dark:hover:border-slate-700 transition shadow-sm">
-            <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 flex items-center justify-center">
               <Wallet className="w-6 h-6" />
             </div>
             <h3 className="text-lg font-bold text-slate-900 dark:text-white">1. Lançamentos em 10 Segundos</h3>
@@ -368,7 +366,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
           {/* Card 2 */}
           <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 space-y-4 hover:border-slate-300 dark:hover:border-slate-700 transition shadow-sm">
-            <div className="w-12 h-12 rounded-xl bg-teal-500/10 border border-teal-500/20 text-teal-600 dark:text-teal-400 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-xl bg-teal-500/10 border border-teal-500/20 text-teal-700 dark:text-teal-400 flex items-center justify-center">
               <PieChart className="w-6 h-6" />
             </div>
             <h3 className="text-lg font-bold text-slate-900 dark:text-white">2. Gráficos Visuais Claros</h3>
@@ -394,7 +392,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       <section className="py-12 px-4 sm:px-8 bg-slate-100/60 dark:bg-slate-900/50 border-y border-slate-200 dark:border-slate-900">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-10">
-            <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
+            <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
               Passo a Passo Simples
             </span>
             <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white mt-1">
@@ -407,7 +405,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-emerald-500 text-slate-950 font-black text-sm">
                 1
               </span>
-              <h4 className="font-bold text-slate-900 dark:text-white text-sm">Cadastre-se Grátis</h4>
+              <h3 className="font-bold text-slate-900 dark:text-white text-sm">Cadastre-se Grátis</h3>
               <p className="text-xs text-slate-500 dark:text-slate-400">
                 Informe seu e-mail e crie uma senha. Não pedimos dados bancários nem cartão.
               </p>
@@ -417,7 +415,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-emerald-500 text-slate-950 font-black text-sm">
                 2
               </span>
-              <h4 className="font-bold text-slate-900 dark:text-white text-sm">Faça o Login</h4>
+              <h3 className="font-bold text-slate-900 dark:text-white text-sm">Faça o Login</h3>
               <p className="text-xs text-slate-500 dark:text-slate-400">
                 Acesse seu painel exclusivo e protegido com isolamento seguro de dados.
               </p>
@@ -427,7 +425,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-emerald-500 text-slate-950 font-black text-sm">
                 3
               </span>
-              <h4 className="font-bold text-slate-900 dark:text-white text-sm">Lance seus Gastos</h4>
+              <h3 className="font-bold text-slate-900 dark:text-white text-sm">Lance seus Gastos</h3>
               <p className="text-xs text-slate-500 dark:text-slate-400">
                 Acompanhe o saldo do mês, analise gráficos e conquiste sua tranquilidade financeira.
               </p>
@@ -440,7 +438,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       <section className="py-16 px-4 sm:px-8">
         <div className="max-w-4xl mx-auto rounded-3xl bg-gradient-to-br from-emerald-50 via-slate-50 to-teal-100 dark:from-emerald-950/80 dark:via-slate-900 dark:to-teal-950/80 border border-emerald-300 dark:border-emerald-500/40 p-8 sm:p-12 text-center space-y-6 shadow-2xl relative overflow-hidden">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-xs font-semibold border border-emerald-500/30">
-            <Zap className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+            <Zap className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
             100% Gratuito Para Sempre
           </div>
 
@@ -480,7 +478,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       <footer className="border-t border-slate-200 dark:border-slate-900 bg-white dark:bg-slate-950 py-8 px-4 sm:px-8 text-xs text-slate-500 transition-colors">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-lg bg-emerald-600 flex items-center justify-center text-white font-bold text-xs">
+            <div className="w-6 h-6 rounded-lg bg-emerald-700 flex items-center justify-center text-white font-bold text-xs">
               C
             </div>
             <span className="font-semibold text-slate-800 dark:text-slate-300">ContandoDinheiro</span>

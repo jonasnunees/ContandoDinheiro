@@ -1,3 +1,5 @@
+import { localDate, isTransaction } from './validation';
+import { readStorage, writeStorage } from './storage';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type { Transaction, TransactionStatus } from '../types/finance';
 
@@ -15,7 +17,7 @@ const INITIAL_DEMO_TRANSACTIONS: Transaction[] = [
     descricao: 'Salário Mensal',
     valor: 6500.0,
     tipo: 'receita',
-    data: new Date().toISOString().slice(0, 8) + '05',
+    data: localDate().slice(0, 8) + '05',
     forma_pagamento: 'Pix',
     status: 'pago',
     categoria: 'Salário',
@@ -27,7 +29,7 @@ const INITIAL_DEMO_TRANSACTIONS: Transaction[] = [
     descricao: 'Aluguel do Apartamento',
     valor: 1850.0,
     tipo: 'despesa',
-    data: new Date().toISOString().slice(0, 8) + '10',
+    data: localDate().slice(0, 8) + '10',
     forma_pagamento: 'Boleto',
     status: 'pago',
     categoria: 'Moradia',
@@ -39,7 +41,7 @@ const INITIAL_DEMO_TRANSACTIONS: Transaction[] = [
     descricao: 'Supermercado Mensal',
     valor: 920.45,
     tipo: 'despesa',
-    data: new Date().toISOString().slice(0, 8) + '12',
+    data: localDate().slice(0, 8) + '12',
     forma_pagamento: 'Cartão de Débito',
     status: 'pago',
     categoria: 'Alimentação',
@@ -51,7 +53,7 @@ const INITIAL_DEMO_TRANSACTIONS: Transaction[] = [
     descricao: 'Projeto Freelance Web',
     valor: 1400.0,
     tipo: 'receita',
-    data: new Date().toISOString().slice(0, 8) + '15',
+    data: localDate().slice(0, 8) + '15',
     forma_pagamento: 'Pix',
     status: 'pago',
     categoria: 'Serviços',
@@ -63,7 +65,7 @@ const INITIAL_DEMO_TRANSACTIONS: Transaction[] = [
     descricao: 'Combustível Posto Ipiranga',
     valor: 260.0,
     tipo: 'despesa',
-    data: new Date().toISOString().slice(0, 8) + '18',
+    data: localDate().slice(0, 8) + '18',
     forma_pagamento: 'Cartão de Crédito',
     status: 'pago',
     categoria: 'Transporte',
@@ -75,7 +77,7 @@ const INITIAL_DEMO_TRANSACTIONS: Transaction[] = [
     descricao: 'Fatura Cartão de Crédito',
     valor: 1140.8,
     tipo: 'despesa',
-    data: new Date().toISOString().slice(0, 8) + '22',
+    data: localDate().slice(0, 8) + '22',
     forma_pagamento: 'Boleto',
     status: 'pendente',
     categoria: 'Outros',
@@ -87,7 +89,7 @@ const INITIAL_DEMO_TRANSACTIONS: Transaction[] = [
     descricao: 'Rendimento de Dividendos',
     valor: 235.5,
     tipo: 'receita',
-    data: new Date().toISOString().slice(0, 8) + '25',
+    data: localDate().slice(0, 8) + '25',
     forma_pagamento: 'Transferência',
     status: 'pago',
     categoria: 'Investimentos',
@@ -99,7 +101,7 @@ const INITIAL_DEMO_TRANSACTIONS: Transaction[] = [
     descricao: 'Plano de Saúde e Farmácia',
     valor: 380.0,
     tipo: 'despesa',
-    data: new Date().toISOString().slice(0, 8) + '27',
+    data: localDate().slice(0, 8) + '27',
     forma_pagamento: 'Pix',
     status: 'pendente',
     categoria: 'Saúde',
@@ -116,8 +118,8 @@ export function getSupabaseCredentials() {
   const envKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
   if (envUrl || envKey) return { url: envUrl || '', key: envKey || '' };
   return {
-    url: localStorage.getItem(STORAGE_KEYS.SUPABASE_URL) || DEFAULT_SUPABASE_URL,
-    key: localStorage.getItem(STORAGE_KEYS.SUPABASE_ANON_KEY) || '',
+    url: readStorage(STORAGE_KEYS.SUPABASE_URL) || DEFAULT_SUPABASE_URL,
+    key: readStorage(STORAGE_KEYS.SUPABASE_ANON_KEY) || '',
   };
 }
 
@@ -150,8 +152,8 @@ export function setSupabaseCredentials(url: string, key: string) {
   if (url || key) {
     validateSupabaseCredentials(url.trim(), key.trim());
     const nextClient = createClient(url.trim(), key.trim());
-    localStorage.setItem(STORAGE_KEYS.SUPABASE_URL, url.trim());
-    localStorage.setItem(STORAGE_KEYS.SUPABASE_ANON_KEY, key.trim());
+    writeStorage(STORAGE_KEYS.SUPABASE_URL, url.trim());
+    writeStorage(STORAGE_KEYS.SUPABASE_ANON_KEY, key.trim());
     supabaseClient = nextClient;
   } else {
     localStorage.removeItem(STORAGE_KEYS.SUPABASE_URL);
@@ -191,21 +193,23 @@ async function requireAuthenticatedClient() {
 }
 
 // Local mock storage handlers
+function demoTransactions(): Transaction[] {
+  return INITIAL_DEMO_TRANSACTIONS.map(tx => ({ ...tx }));
+}
+
 export function getLocalTransactions(): Transaction[] {
-  const raw = localStorage.getItem(STORAGE_KEYS.LOCAL_TRANSACTIONS);
-  if (!raw) {
-    localStorage.setItem(STORAGE_KEYS.LOCAL_TRANSACTIONS, JSON.stringify(INITIAL_DEMO_TRANSACTIONS));
-    return INITIAL_DEMO_TRANSACTIONS;
-  }
+  const raw = readStorage(STORAGE_KEYS.LOCAL_TRANSACTIONS);
+  if (!raw) return demoTransactions();
   try {
-    return JSON.parse(raw);
-  } catch {
-    return INITIAL_DEMO_TRANSACTIONS;
-  }
+    const parsed: unknown = JSON.parse(raw);
+    if (Array.isArray(parsed) && parsed.every(isTransaction)) return parsed;
+  } catch { /* Corrupted demo data is replaced in memory; real data stays on the server. */ }
+  return demoTransactions();
 }
 
 export function saveLocalTransactions(transactions: Transaction[]) {
-  localStorage.setItem(STORAGE_KEYS.LOCAL_TRANSACTIONS, JSON.stringify(transactions));
+  if (!transactions.every(isTransaction)) throw new Error('Dados de demonstração inválidos.');
+  writeStorage(STORAGE_KEYS.LOCAL_TRANSACTIONS, JSON.stringify(transactions));
 }
 
 export interface AuthUserState {
@@ -216,7 +220,7 @@ export interface AuthUserState {
   } | null;
 }
 
-export async function signInWithGoogleService(): Promise<{ error?: any; url?: string | null }> {
+export async function signInWithGoogleService(): Promise<{ error?: unknown; url?: string | null }> {
   const client = getSupabaseClient();
   if (client) {
     const { data, error } = await client.auth.signInWithOAuth({
@@ -238,20 +242,28 @@ function editableTransactionFields(input: Partial<Transaction>) {
 }
 
 // Service functions for Transactions
-export async function fetchTransactionsService(userId: string, isDemo: boolean): Promise<Transaction[]> {
+export async function fetchTransactionsService(userId: string, isDemo: boolean, period?: { month: number; year: number }): Promise<Transaction[]> {
   if (!isDemo) {
     const { client, user } = await requireAuthenticatedClient();
-    const { data, error } = await client
-      .from('transacoes')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('data', { ascending: false });
-
-    if (error) {
-      console.error('Erro ao buscar transações do Supabase:', error);
-      throw error;
+    const result: Transaction[] = [];
+    let offset = 0;
+    // Use the actual returned page size, including projects with a smaller API cap.
+    while (true) {
+      let query = client.from('transacoes').select('*').eq('user_id', user.id)
+        .order('data', { ascending: false }).order('id', { ascending: false });
+      if (period) {
+        const start = period.month === -1 ? `${period.year}-01-01` : `${period.year}-${String(period.month + 1).padStart(2, '0')}-01`;
+        const end = period.month === -1 ? `${period.year + 1}-01-01` : localDate(new Date(period.year, period.month + 1, 1));
+        query = query.gte('data', start).lt('data', end);
+      }
+      const { data, error } = await query.range(offset, offset + 499);
+      if (error) throw error;
+      if (!data?.length) break;
+      if (!data.every(isTransaction)) throw new Error('O servidor retornou transações inválidas.');
+      result.push(...data);
+      offset += data.length;
     }
-    return (data as Transaction[]) || [];
+    return result;
   }
 
   // Demo fallback

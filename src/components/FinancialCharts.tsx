@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import { Transaction } from '../types/finance';
 import { useTheme } from '../context/ThemeContext';
 import {
@@ -68,8 +68,8 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ transactions }
   const cashflowChartInstance = useRef<ChartJS | null>(null);
 
   // Filter expenses for category chart
-  const expenses = transactions.filter((t) => t.tipo === 'despesa');
-  const revenues = transactions.filter((t) => t.tipo === 'receita');
+  const expenses = useMemo(() => transactions.filter(t => t.tipo === 'despesa' && t.status === 'pago'), [transactions]);
+  const revenues = useMemo(() => transactions.filter(t => t.tipo === 'receita' && t.status === 'pago'), [transactions]);
 
   const textColor = isLight ? '#475569' : '#94a3b8';
   const gridColor = isLight ? '#e2e8f0' : '#1e293b';
@@ -115,6 +115,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ transactions }
       },
       options: {
         responsive: true,
+        animation: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? false : undefined,
         maintainAspectRatio: false,
         plugins: {
           legend: {
@@ -191,6 +192,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ transactions }
       },
       options: {
         responsive: true,
+        animation: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? false : undefined,
         maintainAspectRatio: false,
         plugins: {
           legend: {
@@ -269,6 +271,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ transactions }
       },
       options: {
         responsive: true,
+        animation: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? false : undefined,
         maintainAspectRatio: false,
         plugins: {
           legend: { display: false },
@@ -306,12 +309,14 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ transactions }
   }, [revenues, expenses, transactions, isLight, textColor, gridColor]);
 
   return (
+    <div>
+      <p className="mb-3 text-sm text-slate-600 dark:text-slate-300">Categorias e fluxo consideram lançamentos pagos ou recebidos. Formas de pagamento incluem também os pendentes.</p>
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* 5.3 Gráfico de Rosca: Despesas por Categoria */}
       <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-sm dark:shadow-xl flex flex-col transition-colors">
         <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800/80">
           <div className="flex items-center gap-2">
-            <div className="p-2 rounded-xl bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20">
+            <div className="p-2 rounded-xl bg-orange-500/10 text-orange-800 dark:text-orange-400 border border-orange-500/20">
               <PieChart className="w-4 h-4" />
             </div>
             <div>
@@ -324,14 +329,14 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ transactions }
           </span>
         </div>
 
-        <div className="flex-1 min-h-[260px] relative flex items-center justify-center pt-3">
+        <div className="h-[300px] relative flex items-center justify-center mt-3">
           {expenses.length === 0 ? (
-            <div className="text-center p-6 text-slate-400 dark:text-slate-500 text-xs flex flex-col items-center gap-2">
+            <div className="text-center p-6 text-slate-600 dark:text-slate-400 text-xs flex flex-col items-center gap-2">
               <AlertCircle className="w-8 h-8 text-slate-300 dark:text-slate-600" />
               <span>Sem registros de despesas no período selecionado.</span>
             </div>
           ) : (
-            <canvas ref={categoryCanvasRef} />
+            <canvas ref={categoryCanvasRef} role="img" aria-label="Despesas pagas por categoria. Valores disponíveis na tabela abaixo." />
           )}
         </div>
       </div>
@@ -353,14 +358,14 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ transactions }
           </span>
         </div>
 
-        <div className="flex-1 min-h-[260px] relative flex items-center justify-center pt-3">
+        <div className="h-[300px] relative flex items-center justify-center mt-3">
           {transactions.length === 0 ? (
-            <div className="text-center p-6 text-slate-400 dark:text-slate-500 text-xs flex flex-col items-center gap-2">
+            <div className="text-center p-6 text-slate-600 dark:text-slate-400 text-xs flex flex-col items-center gap-2">
               <AlertCircle className="w-8 h-8 text-slate-300 dark:text-slate-600" />
               <span>Nenhuma transação cadastrada no período.</span>
             </div>
           ) : (
-            <canvas ref={paymentCanvasRef} />
+            <canvas ref={paymentCanvasRef} role="img" aria-label="Volume por forma de pagamento, incluindo pendentes. Valores disponíveis na tabela abaixo." />
           )}
         </div>
       </div>
@@ -369,12 +374,12 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ transactions }
       <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-sm dark:shadow-xl flex flex-col transition-colors">
         <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800/80">
           <div className="flex items-center gap-2">
-            <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+            <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
               <TrendingUp className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white">Fluxo de Caixa Geral</h3>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">Total de Entradas vs Saídas</p>
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white">Fluxo de Caixa Realizado</h3>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">Entradas recebidas vs despesas pagas</p>
             </div>
           </div>
           <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
@@ -382,17 +387,31 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ transactions }
           </span>
         </div>
 
-        <div className="flex-1 min-h-[260px] relative flex items-center justify-center pt-3">
+        <div className="h-[300px] relative flex items-center justify-center mt-3">
           {transactions.length === 0 ? (
-            <div className="text-center p-6 text-slate-400 dark:text-slate-500 text-xs flex flex-col items-center gap-2">
+            <div className="text-center p-6 text-slate-600 dark:text-slate-400 text-xs flex flex-col items-center gap-2">
               <AlertCircle className="w-8 h-8 text-slate-300 dark:text-slate-600" />
               <span>Sem dados de fluxo para este período.</span>
             </div>
           ) : (
-            <canvas ref={cashflowCanvasRef} />
+            <canvas ref={cashflowCanvasRef} role="img" aria-label="Fluxo realizado: entradas recebidas e despesas pagas. Valores disponíveis na tabela abaixo." />
           )}
         </div>
       </div>
+    </div>
+      <details className="mt-4 rounded-xl border border-slate-300 dark:border-slate-700 p-4">
+        <summary className="cursor-pointer font-semibold">Consultar valores dos gráficos em tabela</summary>
+        <div className="overflow-x-auto mt-3"><table className="w-full text-left text-sm">
+          <caption className="sr-only">Valores agregados dos gráficos financeiros</caption>
+          <thead><tr><th scope="col">Gráfico</th><th scope="col">Grupo</th><th scope="col">Valor</th></tr></thead>
+          <tbody>{[
+            ...Object.entries(expenses.reduce<Record<string, number>>((totals, tx) => ({ ...totals, [tx.categoria]: (totals[tx.categoria] || 0) + tx.valor }), {})).map(([label, value]) => ['Despesas pagas', label, value] as const),
+            ...Object.entries(transactions.reduce<Record<string, number>>((totals, tx) => ({ ...totals, [tx.forma_pagamento]: (totals[tx.forma_pagamento] || 0) + tx.valor }), {})).map(([label, value]) => ['Formas de pagamento', label, value] as const),
+            ['Fluxo realizado', 'Entradas recebidas', revenues.reduce((sum, tx) => sum + tx.valor, 0)] as const,
+            ['Fluxo realizado', 'Despesas pagas', expenses.reduce((sum, tx) => sum + tx.valor, 0)] as const,
+          ].map(([chart, label, value]) => <tr key={`${chart}-${label}`}><td>{chart}</td><th scope="row" className="font-normal">{label}</th><td>{value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td></tr>)}</tbody>
+        </table></div>
+      </details>
     </div>
   );
 };

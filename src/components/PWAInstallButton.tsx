@@ -1,3 +1,4 @@
+import { Modal } from './Modal';
 import React, { useState } from 'react';
 import { usePWAInstall } from '../hooks/usePWAInstall';
 import { Download, Smartphone, X, CheckCircle2 } from 'lucide-react';
@@ -21,7 +22,7 @@ export const PWAInstallButton: React.FC = () => {
     return (
       <button
         onClick={install}
-        className="flex items-center gap-2 rounded-xl bg-emerald-600 px-3.5 py-1.5 text-xs sm:text-sm font-semibold text-white shadow-lg shadow-emerald-950/40 hover:bg-emerald-500 active:scale-95 transition cursor-pointer"
+        className="flex items-center gap-2 rounded-xl bg-emerald-700 px-3.5 py-1.5 text-xs sm:text-sm font-semibold text-white shadow-lg shadow-emerald-950/40 hover:bg-emerald-800 active:scale-95 transition cursor-pointer"
         title="Instalar aplicativo no computador ou celular"
       >
         <Download className="w-4 h-4" />
@@ -43,16 +44,15 @@ export const PWAInstallButton: React.FC = () => {
         </button>
 
         {showIOSGuide && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-            <div className="w-full max-w-sm rounded-2xl bg-slate-900 border border-slate-800 p-6 shadow-2xl text-slate-100">
+          <Modal titleId="install-title" onClose={() => setShowIOSGuide(false)} className="w-full max-w-sm rounded-2xl bg-slate-900 border border-slate-800 p-6 shadow-2xl text-slate-100">
               <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-                <h3 className="text-base font-bold text-white flex items-center gap-2">
+                <h3 id="install-title" className="text-base font-bold text-white flex items-center gap-2">
                   <Smartphone className="w-5 h-5 text-emerald-400" />
                   Como instalar no iPhone / iPad
                 </h3>
                 <button
-                  onClick={() => setShowIOSGuide(false)}
-                  className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
+                  aria-label="Fechar instruções de instalação" onClick={() => setShowIOSGuide(false)}
+                  className="p-1 rounded-lg text-slate-600 dark:text-slate-400 hover:text-white hover:bg-slate-800"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -79,12 +79,11 @@ export const PWAInstallButton: React.FC = () => {
               </div>
               <button
                 onClick={() => setShowIOSGuide(false)}
-                className="mt-6 w-full rounded-xl bg-emerald-600 py-2.5 text-sm font-semibold text-white hover:bg-emerald-500 transition cursor-pointer"
+                className="mt-6 w-full rounded-xl bg-emerald-700 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800 transition cursor-pointer"
               >
                 Entendido
               </button>
-            </div>
-          </div>
+          </Modal>
         )}
       </>
     );

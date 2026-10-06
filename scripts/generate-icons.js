@@ -115,7 +115,6 @@ function drawFinanceIcon(x, y, w, h, isMaskable = false) {
   const inBar3 = relX >= 0.2 && relX <= 0.55 && relY >= -0.65 && relY <= 0.6;
 
   // Trend upward arrow connecting tops
-  const inArrowLine = (relY >= -0.85 && relY <= -0.75 && relX >= -0.6 && relX <= 0.6);
 
   if (inBar1 || inBar2 || inBar3) {
     return [255, 255, 255, 245];

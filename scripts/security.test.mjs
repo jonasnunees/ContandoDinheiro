@@ -7,14 +7,14 @@ import { PGlite } from '@electric-sql/pglite';
 
 const read = path => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 
-async function loadServices({ env = {}, authenticated = true } = {}) {
+async function loadServices({ env = {}, authenticated = true, pages = [[]] } = {}) {
   const calls = [];
   const user = { id: 'account-a', email: 'a@example.invalid' };
   const query = {};
-  for (const method of ['select', 'eq', 'order', 'insert', 'update', 'delete', 'single']) {
+  for (const method of ['select', 'eq', 'order', 'insert', 'update', 'delete', 'single', 'gte', 'lt', 'range']) {
     query[method] = (...args) => { calls.push([method, ...args]); return query; };
   }
-  query.then = resolve => resolve({ data: [], error: null });
+  query.then = resolve => resolve({ data: pages.shift() ?? [], error: null });
   const client = {
     auth: { getUser: async () => ({ data: { user: authenticated ? user : null }, error: null }) },
     from: table => { calls.push(['from', table]); return query; },
@@ -39,7 +39,12 @@ async function loadServices({ env = {}, authenticated = true } = {}) {
     context,
     initializeImportMeta: meta => { meta.env = env; },
   });
-  await module.link(() => dependency);
+  await module.link(async specifier => {
+    if (specifier === '@supabase/supabase-js') return dependency;
+    const helper = new vm.SourceTextModule(stripTypeScriptTypes(read(`src/services/${specifier.slice(2)}.ts`)), { context });
+    await helper.link(() => { throw new Error('Unexpected helper dependency'); });
+    return helper;
+  });
   await module.evaluate();
   return { service: module.namespace, calls, storage };
 }
@@ -106,7 +111,7 @@ test('CRUD vincula consultas à sessão e bloqueia alterações de campos proteg
 
 test('falha ou ausência de OAuth não produz identidade autenticada', async () => {
   const source = read('src/components/AuthModal.tsx');
-  const body = source.match(/const handleGoogleSignIn = async \(\) => \{([\s\S]*?)\n  \};/)[1];
+  const body = source.match(/const handleGoogleSignIn = async \(\) => \{([\s\S]*?)\n {2}\};/)[1];
   const create = new Function('isConfigured', 'signInWithGoogleService', 'setErrorMessage', 'setGoogleLoading', 'window', `return async () => {${body}}`);
   for (const result of [{ error: new Error('falha') }, { url: null }]) {
     const errors = [];
@@ -126,14 +131,14 @@ test('falha ou ausência de OAuth não produz identidade autenticada', async () 
 
 test('resposta iniciada antes da troca de conta não retorna à tela', async () => {
   const source = read('src/App.tsx');
-  const body = source.match(/const loadTransactions = useCallback\(async \(\) => \{([\s\S]*?)\n  \}, \[user\]\);/)[1];
+  const body = source.match(/const loadTransactions = useCallback\(async \(\) => \{([\s\S]*?)\n {2}\}, \[user, currentMonth, currentYear\]\);/)[1];
   let resolveFetch;
   let displayed;
   let fetches = 0;
   const user = { id: 'account-a', isDemo: false };
   const activeUser = { current: user };
   const requestVersion = { current: 0 };
-  const create = new Function('user', 'activeUser', 'requestVersion', 'fetchTransactionsService', 'setTransactions', 'setLoading', 'setIsRefreshing', `return async () => {${body}}`);
+  const create = new Function('user', 'activeUser', 'requestVersion', 'fetchTransactionsService', 'setTransactions', 'setLoading', 'setIsRefreshing', `const currentMonth = 9; const currentYear = 2026; const setLoadError = () => {}; return async () => {${body}}`);
   const load = create(user, activeUser, requestVersion, () => { fetches++; return new Promise(resolve => { resolveFetch = resolve; }); }, data => { displayed = data; }, () => {}, () => {});
   const pending = load();
   activeUser.current = { id: 'account-b', isDemo: false };
@@ -149,6 +154,25 @@ test('SQL entregue e script de configuração permanecem iguais', () => {
   const source = read('src/services/supabase-sql.ts');
   const sql = source.slice(source.indexOf('`') + 1, source.lastIndexOf('`'));
   assert.equal(read('supabase/migrations/20261002210000_security_hardening.sql').trim(), sql.trim());
+});
+
+test('paginação recupera todas as páginas mesmo com limite menor da API e filtra período', async () => {
+  const tx = { id: '1', user_id: 'account-a', descricao: 'Teste', valor: 10, tipo: 'receita', data: '2026-10-05', forma_pagamento: 'Pix', status: 'pago', categoria: 'Salário' };
+  const { service, calls } = await loadServices({ pages: [[tx], [{ ...tx, id: '2' }], []] });
+  const result = await service.fetchTransactionsService('account-a', false, { month: 9, year: 2026 });
+  assert.equal(result.length, 2);
+  assert.deepEqual(calls.filter(call => call[0] === 'range').map(call => call.slice(1)), [[0, 499], [1, 500], [2, 501]]);
+  assert.ok(calls.some(call => call[0] === 'gte' && call[2] === '2026-10-01'));
+  assert.ok(calls.some(call => call[0] === 'lt' && call[2] === '2026-11-01'));
+});
+
+test('JSON válido com estrutura incorreta não quebra a demonstração', async () => {
+  const { service, storage } = await loadServices();
+  for (const raw of ['{}', 'null', '[{"id":"broken"}]', 'invalid']) {
+    storage.set('gf_local_transactions', raw);
+    const result = await service.fetchTransactionsService('demo-user-id', true);
+    assert.ok(Array.isArray(result) && result.length > 0);
+  }
 });
 
 test('migração protege dados e gera auditoria no PostgreSQL local', async t => {

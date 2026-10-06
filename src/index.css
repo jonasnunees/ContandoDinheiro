@@ -8,3 +8,15 @@
     overflow-x: hidden;
   }
 }
+
+.modal-dialog { margin: auto; padding: 0; width: calc(100% - 2rem); max-height: 92dvh; overflow-y: auto; }
+.modal-dialog::backdrop { background: rgb(0 0 0 / 70%); backdrop-filter: blur(4px); }
+:is(button, a, input, select, textarea, summary):focus-visible {
+  outline: 3px solid #059669 !important;
+  outline-offset: 3px;
+}
+button { min-height: 24px; min-width: 24px; }
+button:disabled { cursor: wait; opacity: .6; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+}
