@@ -152,6 +152,14 @@ O service worker armazena os arquivos da aplicação para permitir seu carregame
 
 ## Segurança e dados
 
+### Retenção dos logs por 90 dias
+
+A migração `supabase/migrations/20261006002719_logs_retention_90_days.sql` ativa o Supabase Cron e agenda a limpeza de `public.logs_atividades` a cada minuto. Aplique essa migração também em novas instalações, após criar o schema. O SQL inicial exibido pelo aplicativo não inclui esse agendamento.
+
+Cada registro é apagado somente quando seu `created_at` completa 90 dias (2.160 horas). Por exemplo, um log criado às 14h30 fica elegível à exclusão às 14h30, 90 dias depois, e é removido na próxima execução bem-sucedida. Logs recentes e transações financeiras são preservados. Se o banco ficar indisponível, a rotina remove os logs vencidos quando voltar a executar.
+
+A rotina `logs_atividades_retention_90_days` pode ser consultada em **Integrations → Cron → Jobs** no Supabase. A reaplicação atualiza o mesmo agendamento, sem duplicá-lo. Consulte a [documentação do Supabase Cron](https://supabase.com/docs/guides/cron/quickstart).
+
 - As tabelas utilizam **Row Level Security (RLS)** para restringir o acesso aos registros do proprietário autenticado.
 - O serviço valida a identidade com o Supabase antes das operações autenticadas e determina o proprietário a partir da sessão.
 - Os logs de criação, edição e exclusão são escritos por triggers no banco. Clientes do navegador não têm acesso direto à tabela de auditoria.
