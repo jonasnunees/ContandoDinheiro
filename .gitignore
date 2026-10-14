@@ -18,6 +18,18 @@ supabase/.branches/
 *.tsbuildinfo
 Thumbs.db
 Desktop.ini
+*.local
+
+# Caches, relatórios de testes e arquivos temporários de edição
+.vite/
+.cache/
+.eslintcache
+blob-report/
+playwright/.cache/
+.history/
+*.swp
+*.swo
+*~
 
 # Documentos internos e capturas de configuração (preservados localmente)
 /CORRECOES_SEGURANCA.md

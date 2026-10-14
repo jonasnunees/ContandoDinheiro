@@ -262,4 +262,4 @@ Não inclua credenciais, arquivos `.env.local` ou dados financeiros pessoais em 
 
 ## Licença
 
-O repositório ainda não possui um arquivo de licença. A disponibilidade pública do código não concede automaticamente uma licença de uso, modificação ou redistribuição. Para esses usos, consulte o mantenedor.
+Este projeto está disponível sob a [licença MIT](LICENSE). Copyright (c) 2026 Jonas Nunes.
