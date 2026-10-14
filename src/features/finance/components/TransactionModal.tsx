@@ -11,7 +11,7 @@ interface TransactionModalProps {
   transactionToEdit?: Transaction | null;
 }
 
-// Opções fixas usadas nos campos de categoria e forma de pagamento.
+// Rótulos visuais das categorias; os valores persistidos continuam sendo os nomes de CATEGORIES.
 const CATEGORY_LABELS: Record<Category, string> = {
   Alimentação: '🍔 Alimentação', Moradia: '🏠 Moradia', Transporte: '🚗 Transporte',
   Saúde: '💊 Saúde', Educação: '📚 Educação', Lazer: '🎉 Lazer', Salário: '💼 Salário',
@@ -87,6 +87,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
     }
     setLoading(true);
     try {
+      // Envia apenas o rascunho editável; o ID opcional distingue edição de criação.
       await onSave(
         {
           descricao: descricao.trim(),

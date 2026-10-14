@@ -18,7 +18,10 @@ export async function fetchTransactionsService(userId: string, isDemo: boolean, 
     // Busca em páginas e avança pela quantidade recebida, até não haver mais registros.
     while (true) {
       let query = client.from('transacoes').select('*').eq('user_id', user.id)
+        // O ID desempata datas iguais para manter uma ordem consistente entre páginas.
         .order('data', { ascending: false }).order('id', { ascending: false });
+      // Intervalo com início incluído e fim excluído: dispensa calcular o último dia
+      // de cada mês e também funciona na passagem de dezembro para janeiro.
       if (period) {
         const start = period.month === -1 ? `${period.year}-01-01` : `${period.year}-${String(period.month + 1).padStart(2, '0')}-01`;
         const end = period.month === -1 ? `${period.year + 1}-01-01` : localDate(new Date(period.year, period.month + 1, 1));
@@ -46,6 +49,8 @@ export async function addTransactionService(
 ): Promise<Transaction> {
   if (!isDemo) {
     const { client, user } = await requireAuthenticatedClient(expectedUserId);
+    // O proprietário vem da identidade confirmada, nunca dos campos do formulário.
+    // O filtro do serviço complementa as políticas de acesso aplicadas pelo banco.
     const payload = { ...editableTransactionFields(transactionData), user_id: user.id };
     const { data, error } = await client
       .from('transacoes')

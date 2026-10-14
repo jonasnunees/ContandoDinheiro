@@ -1,6 +1,8 @@
 -- Correção incremental para instalações que já aplicaram o schema inicial.
 BEGIN;
 
+-- Recupera apenas perfis ausentes para que as contas antigas tenham a referência exigida
+-- por transacoes.user_id. ON CONFLICT preserva perfis já cadastrados.
 INSERT INTO public.usuarios (id, email, nome, avatar_url, provider)
 SELECT
     id,

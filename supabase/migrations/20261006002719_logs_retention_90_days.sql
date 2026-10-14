@@ -3,6 +3,8 @@
 -- Usa o índice existente em created_at e as permissões do administrador.
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pg_cron;
+-- O nome identifica o agendamento nas reaplicações; os cinco asteriscos significam a cada minuto.
+-- 2160 horas representa 90 períodos de 24 horas, sem depender da duração de um dia no fuso local.
 SELECT cron.schedule(
     'logs_atividades_retention_90_days',
     '* * * * *',

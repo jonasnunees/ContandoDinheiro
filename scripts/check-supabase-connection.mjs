@@ -1,13 +1,18 @@
 import { loadEnv } from 'vite';
 
+// Execute na raiz do projeto. Lê a configuração local para consultar os serviços reais;
+// não faz login nem altera dados. O argumento opcional substitui o endereço do site original.
 const env = loadEnv('development', process.cwd());
 const origin = process.argv[2] || 'https://contando-dinheiro.vercel.app';
+// Usa a chave pública na consulta e imprime apenas resultados do diagnóstico.
 const headers = { apikey: env.VITE_SUPABASE_ANON_KEY };
 const settings = await fetch(`${env.VITE_SUPABASE_URL}/auth/v1/settings`, { headers });
 const config = await settings.json();
 console.log(JSON.stringify({ authStatus: settings.status, googleEnabled: config.external?.google }));
 const page = await fetch(origin);
 const html = await page.text();
+// Inspeciona o primeiro arquivo JavaScript referenciado pelo HTML gerado pelo Vite.
+// A verificação pressupõe um site já compilado, com esse arquivo disponível.
 const asset = html.match(/src="([^"]+\.js)"/)[1];
 const js = await (await fetch(new URL(asset, origin))).text();
 console.log(JSON.stringify({

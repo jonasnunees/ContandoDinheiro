@@ -4,6 +4,8 @@ import { observeSession } from '../src/features/auth/session.ts';
 
 const account = { id: 'account-a', email: 'a@example.invalid' };
 const settle = () => new Promise(resolve => setTimeout(resolve, 10));
+// Simula eventos de autenticação e permite atrasar a confirmação de identidade.
+// Assim os testes reproduzem trocas de conta e respostas tardias sem login externo.
 function sessionHarness() {
   const users = [], errors = [];
   let callback, response = { data: { user: account }, error: null }, resolveUser, unsubscribed = false;

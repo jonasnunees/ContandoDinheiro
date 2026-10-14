@@ -9,6 +9,8 @@ import { PGlite } from '@electric-sql/pglite';
 const read = path => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 
 const validTx = { id: '1', user_id: 'account-a', descricao: 'Teste', valor: 10, tipo: 'receita', data: '2026-10-05', forma_pagamento: 'Pix', status: 'pago', categoria: 'Salário' };
+// Executa os módulos reais num contexto isolado, substituindo cliente, ambiente e armazenamento.
+// calls registra filtros e cargas enviadas; pages permite simular a paginação sem acessar a rede.
 async function loadServices({ env = {}, authenticated = true, pages = [[]], mutation = validTx, oauth = { url: 'https://example.supabase.co/auth/v1/authorize' } } = {}) {
   const calls = [];
   const user = { id: 'account-a', email: 'a@example.invalid' };
@@ -192,7 +194,7 @@ test('migração protege dados e gera auditoria no PostgreSQL local', async t =>
     });
     await db.query("UPDATE public.usuarios SET nome = 'Nome personalizado' WHERE id = $1", [accountA]);
     await db.exec(read('supabase/migrations/20261002220000_backfill_existing_profiles.sql'));
-    // Simulate permissive policies left by an older configuration.
+    // Simula políticas permissivas que poderiam ter sobrado de uma configuração anterior.
     await db.exec(`
       CREATE POLICY legacy_allow_all ON public.transacoes FOR ALL USING (true) WITH CHECK (true);
       CREATE POLICY legacy_allow_logs ON public.logs_atividades FOR ALL USING (true) WITH CHECK (true);

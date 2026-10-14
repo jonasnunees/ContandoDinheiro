@@ -12,6 +12,7 @@ interface Props {
 // Janela reutilizável: recebe o conteúdo (children) e o comando para fechá-la.
 export function Modal({ titleId, onClose, busy = false, className, children }: Props) {
   const dialog = useRef<HTMLDialogElement>(null);
+  // Mantém o callback de fechamento atualizado sem reabrir a janela a cada renderização.
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
   // Abre a janela e bloqueia a rolagem do fundo; ao fechar, restaura a rolagem e o foco anterior.

@@ -35,11 +35,13 @@ export default function App() {
   }
 
 
+  // Trocar a chave recria o espaço da conta, limpando filtros, modais e dados da anterior.
+  // Renovações da mesma identidade preservam o estado da tela.
   return <AccountWorkspace key={user.id + ':' + user.isDemo} user={user} sessionError={sessionError} onLogout={logout} />;
 }
 
 function AccountWorkspace({ user, sessionError, onLogout }: { user: AppUser; sessionError: string; onLogout: () => Promise<void> }) {
-  // useState guarda valores da tela; chamar o setter faz o React atualizar a interface.
+  // Conta real começa no painel; convidado começa na apresentação, com opção de explorar a demo.
   const currentDate = new Date();
   const [currentView, setCurrentView] = useState<'landing' | 'dashboard'>(user.isDemo ? 'landing' : 'dashboard');
 
@@ -60,6 +62,8 @@ function AccountWorkspace({ user, sessionError, onLogout }: { user: AppUser; ses
 
   // Guarda as escolhas usadas para selecionar os lançamentos exibidos.
   const [filterState, setFilterState] = useState<FilterState>({ type: 'todos', status: 'todos', searchTerm: '' });
+  // Lista, cartões, gráficos e exportação usam o mesmo recorte de dados.
+  // useMemo reaproveita os cálculos enquanto a lista, o período e os filtros não mudarem.
   const filteredTransactions = useMemo(() => filterTransactions(transactions,
     { month: currentMonth, year: currentYear }, filterState), [transactions, currentMonth, currentYear, filterState]);
   const stats = useMemo(() => summarizeTransactions(filteredTransactions), [filteredTransactions]);
@@ -164,7 +168,7 @@ function AccountWorkspace({ user, sessionError, onLogout }: { user: AppUser; ses
           </div>
         </div>
 
-        {/* Etapa 4: Cards de Resumo Financeiro */}
+        {/* Totais do recorte atual; ocultos durante carregamento ou erro de leitura. */}
         {!loading && !loadError && <SummaryCards stats={stats} />}
 
         {/* Botões que escolhem a seção exibida no celular. */}
@@ -198,7 +202,7 @@ function AccountWorkspace({ user, sessionError, onLogout }: { user: AppUser; ses
           </button>
         </div>
 
-        {/* Etapa 5: Dashboard Visual com Chart.js */}
+        {/* Gráficos do mesmo recorte da lista; a aba controla a visibilidade no celular. */}
         <div className={activeTab === 'transactions' ? 'hidden sm:block' : 'block'}>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
@@ -212,7 +216,7 @@ function AccountWorkspace({ user, sessionError, onLogout }: { user: AppUser; ses
           {!loading && !loadError && <FinancialCharts transactions={filteredTransactions} />}
         </div>
 
-        {/* Etapa 3: Gestão de Transações (CRUD, Filtros, Busca) */}
+        {/* Lista de lançamentos com busca, filtros e ações de criação, edição e exclusão. */}
         <div className={activeTab === 'charts' ? 'hidden sm:block' : 'block'}>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
@@ -285,7 +289,7 @@ function AccountWorkspace({ user, sessionError, onLogout }: { user: AppUser; ses
         </div>
       </footer>
 
-      {/* Modals */}
+      {/* Janelas de lançamento e acesso; fechar a edição também limpa o item selecionado. */}
       <TransactionModal
         isOpen={isTransactionModalOpen}
         onClose={() => {

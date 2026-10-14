@@ -7,6 +7,8 @@ import { Sparkles, AlertCircle, Loader2, X, CheckCircle2, ArrowRight } from 'luc
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
+  // Notifica a escolha da demonstração. A sessão real é acompanhada por useSession
+  // após o retorno do Google; este callback não autentica a identidade recebida.
   onAuthSuccess: (user: { id: string; email: string; isDemo: boolean }) => void;
 }
 

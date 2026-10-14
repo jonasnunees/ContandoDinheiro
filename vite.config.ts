@@ -11,6 +11,8 @@ export default defineConfig(() => {
       react(),
       tailwindcss(),
       VitePWA({
+        // Atualiza o service worker automaticamente. O cache é dos arquivos da aplicação;
+        // esta configuração não cria uma fila offline nem um cache de transações da conta.
         registerType: 'autoUpdate',
         includeAssets: ['icon.svg', 'apple-touch-icon.png', 'pwa-192x192.png', 'pwa-512x512.png'],
         // Define nome, ícones e aparência do aplicativo instalado.
@@ -57,10 +59,9 @@ export default defineConfig(() => {
       },
     },
     server: {
-      // HMR is disabled in AI Studio via DISABLE_HMR env var.
-      // Do not modify—file watching is disabled to prevent flickering during agent edits.
+      // DISABLE_HMR=true desativa a atualização automática da tela no desenvolvimento.
       hmr: process.env.DISABLE_HMR !== 'true',
-      // Disable file watching when DISABLE_HMR is true to save CPU during agent edits.
+      // Na mesma condição, para de observar arquivos para reduzir trabalho do servidor.
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
     },
   };

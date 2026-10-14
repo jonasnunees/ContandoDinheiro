@@ -1,6 +1,8 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
+// Exercita a interface real em modo demo: foco, validação, gravação local e alternativa aos gráficos.
+// axe verifica regras automatizáveis; as expectativas de teclado conferem o ciclo de foco do modal.
 test('fluxo demonstrativo acessível: teclado, valores, gráficos e persistência', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));

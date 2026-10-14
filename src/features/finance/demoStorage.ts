@@ -3,6 +3,7 @@ import { readStorage, writeStorage } from '../../services/storage';
 import type { Transaction } from './types';
 const STORAGE_KEYS = { LOCAL_TRANSACTIONS: 'gf_local_transactions' };
 
+// Exemplos datados no mês em que este módulo é carregado. Não são dados de uma conta real.
 const INITIAL_DEMO_TRANSACTIONS: Transaction[] = [
   {
     id: 'demo-1',
@@ -102,11 +103,14 @@ const INITIAL_DEMO_TRANSACTIONS: Transaction[] = [
   },
 ];
 
-// No modo de demonstração, os lançamentos ficam apenas neste navegador.
+// Copia os objetos para que alterações na lista não modifiquem os exemplos originais.
 function demoTransactions(): Transaction[] {
   return INITIAL_DEMO_TRANSACTIONS.map(tx => ({ ...tx }));
 }
 
+// Sem conteúdo salvo, oferece exemplos. Uma lista vazia salva continua vazia:
+// excluir todos os lançamentos não deve recriar a demonstração.
+// JSON inválido gera erro e permanece intacto para permitir recuperação.
 export function getLocalTransactions(): Transaction[] {
   const raw = readStorage(STORAGE_KEYS.LOCAL_TRANSACTIONS);
   if (!raw) return demoTransactions();

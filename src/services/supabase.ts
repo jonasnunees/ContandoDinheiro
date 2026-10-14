@@ -17,7 +17,8 @@ export function getSupabaseCredentials() {
   };
 }
 
-// Restringe o endereço ao projeto permitido e aceita somente formatos de chave pública.
+// Com URL de ambiente, exige o mesmo host; sem ela, aceita hosts de projetos supabase.co.
+// Verifica o formato de chave pública; a validade da chave é confirmada pelo servidor.
 export function validateSupabaseCredentials(url: string, key: string): void {
   const parsed = new URL(url);
   const configuredHost = import.meta.env.VITE_SUPABASE_URL
@@ -88,6 +89,7 @@ export async function requireAuthenticatedClient(expectedUserId?: string) {
   if (!client) throw new Error('Supabase não configurado.');
   const { data, error } = await client.auth.getUser();
   if (error || !data.user) throw new Error('Sessão inválida. Entre novamente com o Google.');
+  // Uma ação iniciada na conta anterior não deve gravar na conta recém-selecionada.
   if (expectedUserId && expectedUserId !== data.user.id) throw new Error('A conta mudou. Tente novamente na conta atual.');
   return { client, user: data.user };
 }

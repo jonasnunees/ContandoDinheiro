@@ -6,7 +6,7 @@
 BEGIN;
 
 -- 1. TABELA DE USUÁRIOS MAPEADOS DO GOOGLE AUTH
--- Armazena os dados públicos do usuário autenticado via Google
+-- Armazena o perfil da conta; os dados não ficam acessíveis publicamente, pois há RLS e grants abaixo.
 CREATE TABLE IF NOT EXISTS public.usuarios (
     id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     email TEXT NOT NULL,
@@ -33,8 +33,10 @@ CREATE POLICY "Usuários podem atualizar seu próprio perfil"
     WITH CHECK (auth.uid() = id);
 
 -- 2. TRIGGER AUTOMÁTICO PARA SINCRONIZAR USUÁRIOS DO GOOGLE AUTH
--- Toda vez que um usuário loga via Google pela 1ª vez (ou atualiza o perfil),
--- o Supabase dispara essa função para mapear os dados em public.usuarios
+-- O trigger reage a INSERT/UPDATE em auth.users, não a um evento de login no navegador.
+-- Copia metadados de apresentação para public.usuarios; eles não decidem permissões de acesso.
+-- SECURITY DEFINER permite gravar o perfil pelo trigger; search_path vazio e REVOKE
+-- restringem o uso da função, sem conceder sua execução direta aos clientes.
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -128,7 +130,7 @@ CREATE POLICY "Usuários podem deletar suas transações"
     ON public.transacoes FOR DELETE
     USING (auth.uid() = user_id);
 
--- Restrictive policies also constrain permissive policies left by older setups.
+-- Políticas restritivas exigem propriedade mesmo se uma política permissiva antiga autorizar acesso.
 DROP POLICY IF EXISTS "Exigir proprietário autenticado" ON public.transacoes;
 CREATE POLICY "Exigir proprietário autenticado"
     ON public.transacoes AS RESTRICTIVE FOR ALL TO authenticated
@@ -141,6 +143,8 @@ CREATE POLICY "Exigir perfil autenticado"
     USING (auth.uid() = id)
     WITH CHECK (auth.uid() = id);
 
+-- Grants definem quais operações o papel pode tentar; RLS restringe as linhas dessas operações.
+-- No perfil, o cliente só pode editar nome/avatar, preservando identidade e e-mail da autenticação.
 REVOKE ALL ON public.transacoes, public.usuarios FROM PUBLIC, anon, authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.transacoes TO authenticated;
 GRANT SELECT ON public.usuarios TO authenticated;
@@ -169,7 +173,7 @@ CREATE INDEX IF NOT EXISTS idx_logs_atividades_created_at ON public.logs_ativida
 -- Ativar Row Level Security (RLS)
 ALTER TABLE public.logs_atividades ENABLE ROW LEVEL SECURITY;
 
--- Audit writes belong exclusively to database triggers, never browser clients.
+-- Somente os triggers escrevem a auditoria; os clientes não podem consultar nem inserir logs.
 DROP POLICY IF EXISTS "Permitir inserção de logs de atividade" ON public.logs_atividades;
 REVOKE ALL ON public.logs_atividades FROM PUBLIC, anon, authenticated;
 DROP POLICY IF EXISTS "Bloquear acesso direto à auditoria" ON public.logs_atividades;
@@ -177,6 +181,9 @@ CREATE POLICY "Bloquear acesso direto à auditoria"
     ON public.logs_atividades AS RESTRICTIVE FOR ALL TO anon, authenticated
     USING (false) WITH CHECK (false);
 
+-- Registra a alteração na mesma transação do lançamento: se ela for revertida, o log também será.
+-- OLD contém a linha excluída; NEW contém a linha criada/editada. O ator vem de auth.uid(),
+-- podendo ficar nulo em operações administrativas sem sessão de usuário.
 CREATE OR REPLACE FUNCTION public.audit_transaction()
 RETURNS TRIGGER
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = ''
@@ -225,7 +232,7 @@ CREATE TRIGGER on_transaction_audit
     FOR EACH ROW EXECUTE FUNCTION public.audit_transaction();
 
 -- IMPORTANTE: Nenhuma política de SELECT pública é criada.
--- Somente você (administrador do projeto) tem acesso a esses registros diretamente pelo painel do Supabase!
+-- A consulta requer acesso administrativo ao banco; não é oferecida aos papéis anon/authenticated.
 
 COMMIT;
 

@@ -4,14 +4,20 @@ import type { Transaction, TransactionDraft, TransactionStatus } from './types';
 import { fetchTransactionsService, addTransactionService, updateTransactionService,
   deleteTransactionService, toggleStatusService } from './transactionsService';
 
+// Coordena leitura, alterações e recarga dos lançamentos da conta e do período selecionados.
+// Os serviços persistem os dados; este hook mantém a interface sincronizada com o resultado.
 export function useTransactions(user: AppUser, month: number, year: number) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
+  // Cada leitura recebe uma versão. Só a mais recente pode atualizar a tela,
+  // mesmo que uma requisição anterior termine depois dela.
   const version = useRef(0);
   const mounted = useRef(true);
   const key = `${user.id}:${user.isDemo}:${month}:${year}`;
+  // A chave identifica conta, modo e período. A ref acompanha a seleção atual
+  // para que callbacks antigos não publiquem dados de outra seleção.
   const activeKey = useRef(key);
   activeKey.current = key;
   const invalidate = useCallback(() => { version.current++; }, []);
@@ -34,11 +40,16 @@ export function useTransactions(user: AppUser, month: number, year: number) {
       }
     }
   }, [key, user.id, user.isDemo, month, year]);
+  // A limpeza invalida respostas pendentes ao trocar o período ou desmontar a tela.
+  // Isso ignora resultados antigos; não cancela a requisição já enviada ao servidor.
   useEffect(() => {
     mounted.current = true;
     void loadTransactions();
     return () => { mounted.current = false; invalidate(); };
   }, [loadTransactions, invalidate]);
+  // Com ID, edita; sem ID, cria. Após cada alteração confirmada, relê a lista
+  // para refletir a persistência e os filtros do período, sem atualização otimista.
+  // Falhas de gravação são propagadas ao formulário; falhas de leitura viram loadError.
   const saveTransaction = async (data: TransactionDraft, id?: string) => {
     if (id) await updateTransactionService(id, data, user.isDemo, user.id);
     else await addTransactionService(data, user.isDemo, user.id);

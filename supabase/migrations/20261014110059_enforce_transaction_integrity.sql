@@ -2,6 +2,8 @@
 -- A transação inteira é revertida caso existam registros incompatíveis.
 BEGIN;
 
+-- btrim remove os espaços/caracteres invisíveis equivalentes ao trim usado no formulário.
+-- NOT VALID adia a conferência das linhas antigas até os VALIDATE abaixo; não transforma dados.
 ALTER TABLE public.transacoes
     ADD CONSTRAINT transacoes_descricao_check CHECK (
         length(btrim(descricao, U&'\0009\000A\000B\000C\000D\0020\00A0\1680\2000\2001\2002\2003\2004\2005\2006\2007\2008\2009\200A\2028\2029\202F\205F\3000\FEFF')) > 0
@@ -19,6 +21,8 @@ ALTER TABLE public.transacoes
         data BETWEEN DATE '0001-01-01' AND DATE '9999-12-31'
     ) NOT VALID;
 
+-- Confere todas as linhas existentes antes do COMMIT. Qualquer incompatibilidade
+-- aborta a migração inteira, preservando os registros e evitando aplicação parcial das regras.
 ALTER TABLE public.transacoes VALIDATE CONSTRAINT transacoes_descricao_check;
 ALTER TABLE public.transacoes VALIDATE CONSTRAINT transacoes_valor_positivo_check;
 ALTER TABLE public.transacoes VALIDATE CONSTRAINT transacoes_forma_pagamento_check;

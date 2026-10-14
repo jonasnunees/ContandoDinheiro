@@ -69,7 +69,8 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ transactions }
   const paymentChartInstance = useRef<ChartJS | null>(null);
   const cashflowChartInstance = useRef<ChartJS | null>(null);
 
-  // Considera apenas receitas e despesas pagas nos gráficos de categoria e fluxo de caixa.
+  // Categorias usam somente despesas pagas. Formas de pagamento somam receitas e
+  // despesas, incluindo pendentes; o fluxo usa entradas/saídas realizadas do resumo.
   const expenses = useMemo(() => transactions.filter(t => t.tipo === 'despesa' && t.status === 'pago'), [transactions]);
 
   const categoryTotals = useMemo(() => groupTransactionValues(expenses, 'categoria'), [expenses]);
@@ -92,7 +93,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ transactions }
 
     if (expenses.length === 0) return;
 
-    // Soma os gastos de cada categoria para definir o tamanho das fatias.
+    // Usa os totais já calculados para definir o tamanho das fatias.
     const catTotals = categoryTotals;
 
     const labels = Object.keys(catTotals);
@@ -312,7 +313,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ transactions }
     <div>
       <p className="mb-3 text-sm text-slate-600 dark:text-slate-300">Categorias e fluxo consideram lançamentos pagos ou recebidos. Formas de pagamento incluem também os pendentes.</p>
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      {/* 5.3 Gráfico de Rosca: Despesas por Categoria */}
+      {/* Distribuição das despesas pagas por categoria. */}
       <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-sm dark:shadow-xl flex flex-col transition-colors">
         <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800/80">
           <div className="flex items-center gap-2">
@@ -341,7 +342,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ transactions }
         </div>
       </div>
 
-      {/* 5.4 Gráfico de Barras: Distribuição por Forma de Pagamento */}
+      {/* Volume de lançamentos por forma de pagamento, incluindo pendentes. */}
       <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-sm dark:shadow-xl flex flex-col transition-colors">
         <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800/80">
           <div className="flex items-center gap-2">
@@ -399,6 +400,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ transactions }
         </div>
       </div>
     </div>
+      {/* Alternativa textual ao canvas, com os mesmos totais para leitura acessível. */}
       <details className="mt-4 rounded-xl border border-slate-300 dark:border-slate-700 p-4">
         <summary className="cursor-pointer font-semibold">Consultar valores dos gráficos em tabela</summary>
         <div className="overflow-x-auto mt-3"><table className="w-full text-left text-sm">

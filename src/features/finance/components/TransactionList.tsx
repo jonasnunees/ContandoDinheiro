@@ -47,9 +47,12 @@ export const TransactionList: React.FC<TransactionListProps> = ({
   onFilterChange,
   onOpenNewModal,
 }) => {
+  // O primeiro clique pede confirmação na própria linha/cartão; o segundo executa a exclusão.
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   // Guarda quais lançamentos estão sendo alterados para impedir cliques repetidos na mesma ação.
+  // A ref bloqueia imediatamente um segundo clique, antes da próxima renderização.
+  // busyIds copia esse conjunto para atualizar os botões; IDs distintos podem operar em paralelo.
   const pending = useRef(new Set<string>());
   const [busyIds, setBusyIds] = useState(new Set<string>());
   const [actionError, setActionError] = useState('');

@@ -2,8 +2,10 @@ import fs from 'fs';
 import path from 'path';
 import zlib from 'zlib';
 
+// Gera um PNG sem biblioteca de imagem: drawFn fornece a cor de cada pixel.
+// O arquivo reúne cabeçalho (IHDR), pixels comprimidos (IDAT) e encerramento (IEND).
 function createPNG(width, height, drawFn) {
-  // RGBA buffer
+  // Cada pixel ocupa quatro bytes: vermelho, verde, azul e transparência (RGBA).
   const buffer = Buffer.alloc(width * height * 4);
   
   for (let y = 0; y < height; y++) {
@@ -17,12 +19,12 @@ function createPNG(width, height, drawFn) {
     }
   }
 
-  // Scanlines with filter byte 0
+  // Cada linha começa com o filtro zero, seguido dos pixels sem transformação.
   const scanlines = Buffer.alloc(height * (width * 4 + 1));
   let srcOffset = 0;
   let dstOffset = 0;
   for (let y = 0; y < height; y++) {
-    scanlines[dstOffset++] = 0; // Filter None
+    scanlines[dstOffset++] = 0; // Sem filtro de linha.
     buffer.copy(scanlines, dstOffset, srcOffset, srcOffset + width * 4);
     dstOffset += width * 4;
     srcOffset += width * 4;
@@ -30,6 +32,7 @@ function createPNG(width, height, drawFn) {
 
   const deflated = zlib.deflateSync(scanlines);
 
+  // Calcula a soma de verificação exigida pelo PNG para detectar corrupção de cada bloco.
   function crc32(buf) {
     let c;
     let crcTable = [];
@@ -47,6 +50,7 @@ function createPNG(width, height, drawFn) {
     return (crc ^ (-1)) >>> 0;
   }
 
+  // Cada bloco contém tamanho, tipo, dados e CRC, nessa ordem.
   function makeChunk(type, data) {
     const len = Buffer.alloc(4);
     len.writeUInt32BE(data.length, 0);
@@ -61,11 +65,11 @@ function createPNG(width, height, drawFn) {
   const ihdrData = Buffer.alloc(13);
   ihdrData.writeUInt32BE(width, 0);
   ihdrData.writeUInt32BE(height, 4);
-  ihdrData.writeUInt8(8, 8); // bit depth
-  ihdrData.writeUInt8(6, 9); // color type RGBA
-  ihdrData.writeUInt8(0, 10); // compression
-  ihdrData.writeUInt8(0, 11); // filter
-  ihdrData.writeUInt8(0, 12); // interlace
+  ihdrData.writeUInt8(8, 8); // 8 bits por canal.
+  ihdrData.writeUInt8(6, 9); // Tipo 6: imagem RGBA.
+  ihdrData.writeUInt8(0, 10); // Método padrão de compressão.
+  ihdrData.writeUInt8(0, 11); // Método padrão de filtragem.
+  ihdrData.writeUInt8(0, 12); // Sem entrelaçamento.
 
   const ihdr = makeChunk('IHDR', ihdrData);
   const idat = makeChunk('IDAT', deflated);
@@ -74,7 +78,7 @@ function createPNG(width, height, drawFn) {
   return Buffer.concat([signature, ihdr, idat, iend]);
 }
 
-// Emerald financial theme drawing
+// Calcula a cor de um pixel do ícone financeiro usando coordenadas proporcionais.
 function drawFinanceIcon(x, y, w, h, isMaskable = false) {
   const nx = x / w;
   const ny = y / h;
@@ -82,45 +86,43 @@ function drawFinanceIcon(x, y, w, h, isMaskable = false) {
   const cy = 0.5;
   const dist = Math.sqrt((nx - cx) ** 2 + (ny - cy) ** 2);
 
-  // Background gradient: Emerald #059669 (5, 150, 105) to Teal #0f766e (15, 118, 110)
+  // Interpola o fundo de RGB (16, 185, 129) a (5, 120, 110), conforme a posição do pixel.
   const grad = nx * 0.4 + ny * 0.6;
   let bgR = Math.round(16 + grad * (5 - 16));
   let bgG = Math.round(185 + grad * (120 - 185));
   let bgB = Math.round(129 + grad * (110 - 129));
 
-  // Outer rounded rect for non-maskable
+  // Ícones comuns têm cantos transparentes; a versão maskable mantém o fundo completo.
   if (!isMaskable) {
     const rx = Math.abs(nx - 0.5);
     const ry = Math.abs(ny - 0.5);
-    // Rounded corner clamp
+    // Pixels além do raio do canto ficam transparentes.
     const cornerR = 0.18;
     const dx = Math.max(0, rx - (0.5 - cornerR));
     const dy = Math.max(0, ry - (0.5 - cornerR));
     if (Math.sqrt(dx * dx + dy * dy) > cornerR) {
-      return [0, 0, 0, 0]; // Transparent outside
+      return [0, 0, 0, 0]; // Transparente fora do contorno.
     }
   }
 
-  // Draw modern financial glyph (Card / Chart trend upward inside safe zone)
+  // Centraliza as barras; a versão maskable reduz o desenho para acomodar recortes do sistema.
   const safeScale = isMaskable ? 0.35 : 0.42;
   const relX = (nx - 0.5) / safeScale;
   const relY = (ny - 0.5) / safeScale;
 
-  // Let's draw 3 ascending growth bars + dollar/wallet symbol
-  // Bar 1: -0.6 to -0.3
+  // Três barras brancas crescentes representam evolução financeira.
+  // Primeira barra: a menor.
   const inBar1 = relX >= -0.7 && relX <= -0.35 && relY >= -0.1 && relY <= 0.6;
-  // Bar 2: -0.2 to 0.15
+  // Segunda barra: altura intermediária.
   const inBar2 = relX >= -0.25 && relX <= 0.1 && relY >= -0.35 && relY <= 0.6;
-  // Bar 3: 0.2 to 0.55
+  // Terceira barra: a maior.
   const inBar3 = relX >= 0.2 && relX <= 0.55 && relY >= -0.65 && relY <= 0.6;
-
-  // Trend upward arrow connecting tops
 
   if (inBar1 || inBar2 || inBar3) {
     return [255, 255, 255, 245];
   }
 
-  // Soft glow accent
+  // Clareia a área central do fundo para criar um brilho suave.
   if (dist < 0.35) {
     return [bgR + 15, Math.min(255, bgG + 25), bgB + 20, 255];
   }
@@ -133,16 +135,16 @@ if (!fs.existsSync(publicDir)) {
   fs.mkdirSync(publicDir, { recursive: true });
 }
 
-// 192x192
+// Ícone pequeno usado pelo manifesto da PWA.
 fs.writeFileSync(path.join(publicDir, 'pwa-192x192.png'), createPNG(192, 192, (x, y, w, h) => drawFinanceIcon(x, y, w, h, false)));
-// 512x512
+// Ícone grande usado na instalação.
 fs.writeFileSync(path.join(publicDir, 'pwa-512x512.png'), createPNG(512, 512, (x, y, w, h) => drawFinanceIcon(x, y, w, h, false)));
-// maskable 512x512
+// Versão com fundo completo e desenho central para recortes do sistema.
 fs.writeFileSync(path.join(publicDir, 'pwa-maskable-512x512.png'), createPNG(512, 512, (x, y, w, h) => drawFinanceIcon(x, y, w, h, true)));
-// apple touch icon 180x180
+// Ícone da tela inicial em dispositivos Apple.
 fs.writeFileSync(path.join(publicDir, 'apple-touch-icon.png'), createPNG(180, 180, (x, y, w, h) => drawFinanceIcon(x, y, w, h, false)));
 
-// SVG icon for desktop browser tab
+// Ícone vetorial da aba; inclui a linha de tendência que não aparece nos PNGs.
 const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
   <defs>
     <linearGradient id="financeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -155,11 +157,11 @@ const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512
   </defs>
   <rect width="512" height="512" rx="110" fill="url(#financeGrad)"/>
   <g filter="url(#shadow)" fill="#ffffff">
-    <!-- Chart Growth Bars -->
+    <!-- Barras de crescimento. -->
     <rect x="110" y="270" width="70" height="150" rx="14" fill="#ffffff" fill-opacity="0.85"/>
     <rect x="220" y="200" width="70" height="220" rx="14" fill="#ffffff" fill-opacity="0.95"/>
     <rect x="330" y="130" width="70" height="290" rx="14" fill="#ffffff"/>
-    <!-- Growth trend line & arrowhead -->
+    <!-- Linha de tendência e ponta da seta. -->
     <path d="M120 220 L240 150 L350 85" stroke="#a7f3d0" stroke-width="20" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
     <polygon points="375,85 335,70 345,110" fill="#a7f3d0"/>
   </g>
