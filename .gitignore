@@ -32,6 +32,7 @@ playwright/.cache/
 *~
 
 # Documentos internos e capturas de configuração (preservados localmente)
+/docs/
 /CORRECOES_SEGURANCA.md
 /RELATORIO_SEGURANCA.md
 /VALIDACAO_SUPABASE.md

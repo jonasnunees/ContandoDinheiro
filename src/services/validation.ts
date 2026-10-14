@@ -28,7 +28,7 @@ export function isTransaction(value: unknown): value is Transaction {
   const tx = value as Record<string, unknown>;
   return typeof tx.id === 'string' && typeof tx.user_id === 'string' &&
     typeof tx.descricao === 'string' && tx.descricao.trim().length > 0 &&
-    typeof tx.valor === 'number' && Number.isFinite(tx.valor) && tx.valor >= 0 && tx.valor <= 9999999999.99 &&
+    typeof tx.valor === 'number' && Number.isFinite(tx.valor) && tx.valor > 0 && tx.valor <= 9999999999.99 &&
     ['receita', 'despesa'].includes(String(tx.tipo)) && ['pago', 'pendente'].includes(String(tx.status)) &&
     typeof tx.data === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(tx.data) &&
     !Number.isNaN(Date.parse(`${tx.data}T12:00:00Z`)) && new Date(`${tx.data}T12:00:00Z`).toISOString().slice(0, 10) === tx.data &&

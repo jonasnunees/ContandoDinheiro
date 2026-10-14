@@ -197,6 +197,7 @@ test('migração protege dados e gera auditoria no PostgreSQL local', async t =>
     await db.query(`INSERT INTO auth.users (id, email, raw_user_meta_data, raw_app_meta_data)
       VALUES ($1, 'a@example.invalid', '{"full_name":"Conta anterior"}', '{"provider":"google"}')`, [accountA]);
     await db.exec(sql);
+    await db.exec(read('supabase/migrations/20261014110059_enforce_transaction_integrity.sql'));
     await t.test('instalação recupera perfil de conta preexistente', async () => {
       const { rows } = await db.query('SELECT id, nome FROM public.usuarios');
       assert.equal(rows[0].id, accountA);
@@ -226,6 +227,27 @@ test('migração protege dados e gera auditoria no PostgreSQL local', async t =>
       (descricao, valor, tipo, forma_pagamento, status, categoria)
       VALUES ('Teste A', 10, 'receita', 'Pix', 'pago', 'Outros') RETURNING id`);
     const transactionA = created[0].id;
+
+    await t.test('API direta rejeita campos inválidos em inserções e atualizações', async () => {
+      const invalidFields = [
+        ['descricao', ''], ['descricao', ' \t\r\n'], ['descricao', '\u00a0\u2003\ufeff'],
+        ['valor', 0], ['valor', -1], ['valor', 'NaN'], ['valor', 10000000000],
+        ['categoria', 'arbitrária'], ['forma_pagamento', 'arbitrária'],
+        ['data', 'infinity'], ['data', '-infinity'], ['data', '10000-01-01'],
+      ];
+      const valid = { descricao: 'Teste', valor: 0.01, tipo: 'receita', forma_pagamento: 'Pix', status: 'pago', categoria: 'Outros', data: '2026-10-14' };
+      for (const [field, value] of invalidFields) {
+        const input = { ...valid, [field]: value };
+        await assert.rejects(db.query(
+          'INSERT INTO public.transacoes (descricao, valor, tipo, forma_pagamento, status, categoria, data) VALUES ($1,$2,$3,$4,$5,$6,$7)',
+          Object.values(input),
+        ), error => ['23514', '22003'].includes(error.code));
+        await assert.rejects(db.query(
+          `UPDATE public.transacoes SET ${field} = $1 WHERE id = $2`, [value, transactionA],
+        ), error => ['23514', '22003'].includes(error.code));
+      }
+      assert.equal((await db.query('SELECT descricao FROM public.transacoes WHERE id = $1', [transactionA])).rows[0].descricao, 'Teste A');
+    });
 
     await t.test('cliente não pode falsificar nem consultar logs', async () => {
       await assert.rejects(db.query("INSERT INTO public.logs_atividades (acao, user_id) VALUES ('falso', 'victim')"), error => error.code === '42501');

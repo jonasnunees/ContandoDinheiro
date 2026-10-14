@@ -53,8 +53,6 @@ Os lançamentos da demonstração ficam no navegador e são separados dos dados 
 
 O projeto utiliza autenticação com Google e políticas de acesso no banco de dados para restringir os registros à conta proprietária. As alterações de transações possuem registro de auditoria, e a exportação CSV inclui tratamento de textos que poderiam ser interpretados como fórmulas em planilhas.
 
-Os detalhes da arquitetura, das políticas e da configuração estão no [guia técnico](docs/GUIA_TECNICO.md#segurança-e-dados).
-
 ## Experimente antes de começar
 
 Abra o [ContandoDinheiro](https://contando-dinheiro.vercel.app/) e escolha **Explorar demonstração sem login** para conhecer o painel, os lançamentos e os gráficos. Quando quiser organizar suas próprias finanças, entre com sua conta Google.
@@ -66,8 +64,6 @@ Abra o [ContandoDinheiro](https://contando-dinheiro.vercel.app/) e escolha **Exp
 ## Tecnologia por trás da experiência
 
 Construído com **React e TypeScript**, o ContandoDinheiro combina **Tailwind CSS** para a interface, **Chart.js** para os gráficos e **Supabase** para autenticação e armazenamento. **Vite** e recursos de **PWA** completam a base da aplicação, publicada na **Vercel**.
-
-Para instalação local, configuração, testes e publicação, consulte o [guia técnico](docs/GUIA_TECNICO.md).
 
 ## Uma construção aberta
 

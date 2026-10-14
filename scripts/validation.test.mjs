@@ -17,7 +17,7 @@ test('data local mantém dia e mês do navegador', () => {
 test('registros inválidos e datas inexistentes são rejeitados', () => {
   const valid = { id: '1', user_id: 'demo-user-id', descricao: 'Teste', valor: 10.5, tipo: 'despesa', data: '2026-10-05', forma_pagamento: 'Pix', status: 'pago', categoria: 'Outros' };
   assert.equal(isTransaction(valid), true);
-  for (const invalid of [null, [], {}, { ...valid, valor: Infinity }, { ...valid, valor: '10' }, { ...valid, data: '2026-02-30' }, { ...valid, descricao: ' ' }, { ...valid, status: 'invalido' }]) assert.equal(isTransaction(invalid), false);
+  for (const invalid of [null, [], {}, { ...valid, valor: Infinity }, { ...valid, valor: 0 }, { ...valid, valor: '10' }, { ...valid, data: '2026-02-30' }, { ...valid, descricao: ' ' }, { ...valid, status: 'invalido' }]) assert.equal(isTransaction(invalid), false);
 });
 
 test('armazenamento bloqueado não derruba leitura e informa falha de gravação', () => {
