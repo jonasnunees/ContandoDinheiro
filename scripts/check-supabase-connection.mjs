@@ -13,7 +13,7 @@ const js = await (await fetch(new URL(asset, origin))).text();
 console.log(JSON.stringify({
   siteStatus: page.status,
   asset,
-  expectedProjectPresent: js.includes('szdipyjehiaupvuqtwvy'),
+  expectedProjectPresent: Boolean(env.VITE_SUPABASE_URL) && js.includes(new URL(env.VITE_SUPABASE_URL).hostname.split('.')[0]),
   configuredPublicKeyPresent: js.includes(env.VITE_SUPABASE_ANON_KEY),
   anyPublicKeyPresent: /sb_publishable_[A-Za-z0-9_-]+|eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/.test(js),
   authenticatedServicePresent: js.includes('Sessão inválida. Entre novamente com o Google.'),

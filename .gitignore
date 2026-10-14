@@ -9,3 +9,28 @@ playwright-report/
 *.log
 .env*
 !.env.example
+
+# Configuração local de hospedagem e ferramentas
+.vercel/
+.supabase/
+supabase/.temp/
+supabase/.branches/
+*.tsbuildinfo
+Thumbs.db
+Desktop.ini
+
+# Documentos internos e capturas de configuração (preservados localmente)
+/CORRECOES_SEGURANCA.md
+/RELATORIO_SEGURANCA.md
+/VALIDACAO_SUPABASE.md
+/supabase-url-config.jpg
+/vercel-publicacao.jpg
+
+# Arquivos privados: dados reais, exportações, backups e credenciais
+/private/
+/backups/
+/exports/
+*.pem
+*.key
+*.p12
+*.pfx

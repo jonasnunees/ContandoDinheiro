@@ -167,7 +167,9 @@ A rotina `logs_atividades_retention_90_days` pode ser consultada em **Integratio
 - A exportação CSV trata textos que poderiam ser interpretados como fórmulas por aplicativos de planilha.
 - Dados de demonstração ficam restritos ao navegador e não são transferidos automaticamente para a conta Google. Limpar os dados do site remove os lançamentos locais.
 
-As proteções do banco dependem da aplicação correta do schema e das políticas na instalação utilizada. Para detalhes das revisões já realizadas, consulte [Correções de segurança](CORRECOES_SEGURANCA.md), [Relatório de segurança](RELATORIO_SEGURANCA.md) e [Validação do Supabase](VALIDACAO_SUPABASE.md). Esses documentos registram verificações e contexto de uma data específica.
+As proteções do banco dependem da aplicação correta do schema e das políticas na instalação utilizada. As migrações em `supabase/migrations/` e os testes de segurança documentam as regras de acesso previstas no projeto. Cada instalação deve verificar suas próprias configurações de autenticação e permissões.
+
+Credenciais, dados reais, exportações, backups e relatórios internos devem permanecer fora do versionamento. O `.env.example` contém apenas exemplos de configuração; use `.env.local` para os valores da sua instalação. As pastas `private/`, `backups/` e `exports/` são ignoradas pelo Git para armazenar arquivos locais. O `.gitignore` não remove conteúdo de commits anteriores.
 
 ## Comandos e verificações
 
