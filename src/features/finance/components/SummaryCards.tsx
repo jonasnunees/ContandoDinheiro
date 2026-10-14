@@ -1,5 +1,5 @@
 import React from 'react';
-import { SummaryStats } from '../types/finance';
+import { SummaryStats } from '../types';
 import { TrendingUp, TrendingDown, Wallet, Clock, PiggyBank, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 
 interface SummaryCardsProps {

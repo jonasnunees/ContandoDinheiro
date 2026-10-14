@@ -1,6 +1,7 @@
+import { groupTransactionValues, summarizeTransactions } from '../calculations';
 import React, { useEffect, useRef, useMemo } from 'react';
-import { Transaction } from '../types/finance';
-import { useTheme } from '../context/ThemeContext';
+import { Transaction } from '../types';
+import { useTheme } from '../../../context/ThemeContext';
 import {
   Chart as ChartJS,
   ArcElement,
@@ -70,7 +71,10 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ transactions }
 
   // Considera apenas receitas e despesas pagas nos gráficos de categoria e fluxo de caixa.
   const expenses = useMemo(() => transactions.filter(t => t.tipo === 'despesa' && t.status === 'pago'), [transactions]);
-  const revenues = useMemo(() => transactions.filter(t => t.tipo === 'receita' && t.status === 'pago'), [transactions]);
+
+  const categoryTotals = useMemo(() => groupTransactionValues(expenses, 'categoria'), [expenses]);
+  const paymentTotals = useMemo(() => groupTransactionValues(transactions, 'forma_pagamento'), [transactions]);
+  const summary = useMemo(() => summarizeTransactions(transactions), [transactions]);
 
   const textColor = isLight ? '#475569' : '#94a3b8';
   const gridColor = isLight ? '#e2e8f0' : '#1e293b';
@@ -89,10 +93,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ transactions }
     if (expenses.length === 0) return;
 
     // Soma os gastos de cada categoria para definir o tamanho das fatias.
-    const catTotals: Record<string, number> = {};
-    expenses.forEach((t) => {
-      catTotals[t.categoria] = (catTotals[t.categoria] || 0) + t.valor;
-    });
+    const catTotals = categoryTotals;
 
     const labels = Object.keys(catTotals);
     const data = Object.values(catTotals);
@@ -152,7 +153,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ transactions }
         categoryChartInstance.current = null;
       }
     };
-  }, [expenses, isLight, textColor, doughnutBorder]);
+  }, [expenses, categoryTotals, isLight, textColor, doughnutBorder]);
 
   // Recria o gráfico que compara as formas de pagamento.
   useEffect(() => {
@@ -166,10 +167,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ transactions }
     if (transactions.length === 0) return;
 
     // Soma os valores por forma de pagamento, incluindo lançamentos pendentes.
-    const pmTotals: Record<string, number> = {};
-    transactions.forEach((t) => {
-      pmTotals[t.forma_pagamento] = (pmTotals[t.forma_pagamento] || 0) + t.valor;
-    });
+    const pmTotals = paymentTotals;
 
     const labels = Object.keys(pmTotals);
     const data = Object.values(pmTotals);
@@ -239,7 +237,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ transactions }
         paymentChartInstance.current = null;
       }
     };
-  }, [transactions, isLight, textColor, gridColor]);
+  }, [transactions, paymentTotals, isLight, textColor, gridColor]);
 
   // Compara os totais já recebidos e pagos em duas barras.
   useEffect(() => {
@@ -252,8 +250,8 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ transactions }
 
     if (transactions.length === 0) return;
 
-    const totalEntradas = revenues.reduce((acc, t) => acc + t.valor, 0);
-    const totalSaidas = expenses.reduce((acc, t) => acc + t.valor, 0);
+    const totalEntradas = summary.totalEntradas;
+    const totalSaidas = summary.totalSaidas;
 
     const ctx = cashflowCanvasRef.current.getContext('2d');
     if (!ctx) return;
@@ -308,7 +306,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ transactions }
         cashflowChartInstance.current = null;
       }
     };
-  }, [revenues, expenses, transactions, isLight, textColor, gridColor]);
+  }, [summary, transactions, isLight, textColor, gridColor]);
 
   return (
     <div>
@@ -407,10 +405,10 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ transactions }
           <caption className="sr-only">Valores agregados dos gráficos financeiros</caption>
           <thead><tr><th scope="col">Gráfico</th><th scope="col">Grupo</th><th scope="col">Valor</th></tr></thead>
           <tbody>{[
-            ...Object.entries(expenses.reduce<Record<string, number>>((totals, tx) => ({ ...totals, [tx.categoria]: (totals[tx.categoria] || 0) + tx.valor }), {})).map(([label, value]) => ['Despesas pagas', label, value] as const),
-            ...Object.entries(transactions.reduce<Record<string, number>>((totals, tx) => ({ ...totals, [tx.forma_pagamento]: (totals[tx.forma_pagamento] || 0) + tx.valor }), {})).map(([label, value]) => ['Formas de pagamento', label, value] as const),
-            ['Fluxo realizado', 'Entradas recebidas', revenues.reduce((sum, tx) => sum + tx.valor, 0)] as const,
-            ['Fluxo realizado', 'Despesas pagas', expenses.reduce((sum, tx) => sum + tx.valor, 0)] as const,
+            ...Object.entries(categoryTotals).map(([label, value]) => ['Despesas pagas', label, value] as const),
+            ...Object.entries(paymentTotals).map(([label, value]) => ['Formas de pagamento', label, value] as const),
+            ['Fluxo realizado', 'Entradas recebidas', summary.totalEntradas] as const,
+            ['Fluxo realizado', 'Despesas pagas', summary.totalSaidas] as const,
           ].map(([chart, label, value]) => <tr key={`${chart}-${label}`}><td>{chart}</td><th scope="row" className="font-normal">{label}</th><td>{value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td></tr>)}</tbody>
         </table></div>
       </details>

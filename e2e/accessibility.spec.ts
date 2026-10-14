@@ -78,3 +78,40 @@ test('acesso com Google tem diálogo nomeado e fecha por teclado', async ({ page
   await page.keyboard.press('Escape');
   await expect(dialog).not.toBeVisible();
 });
+
+test('editar, alterar situação e excluir mantém os dados após recarregar', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: /Explorar.*(?:Demonstração|sem login)/i }).first().click();
+  await page.getByRole('button', { name: 'Editar Salário Mensal', exact: true }).first().click();
+  const dialog = page.getByRole('dialog', { name: 'Editar Lançamento' });
+  await page.getByLabel('Descrição', { exact: true }).fill('Receita editada');
+  await page.getByLabel('Valor (R$)', { exact: true }).fill('777,77');
+  await dialog.getByRole('button', { name: 'Atualizar Transação' }).click();
+  await expect(page.getByRole('cell', { name: 'Receita editada', exact: true })).toBeVisible();
+  const row = page.getByRole('row').filter({ has: page.getByRole('cell', { name: 'Receita editada', exact: true }) });
+  await row.getByRole('button', { name: 'Alterar situação de Receita editada', exact: true }).click();
+  await expect(row.getByText('Pendente', { exact: true })).toBeVisible();
+  await page.reload();
+  await page.getByRole('button', { name: /Explorar.*(?:Demonstração|sem login)/i }).first().click();
+  await expect(row.getByText('Pendente', { exact: true })).toBeVisible();
+  await expect(row.getByRole('cell', { name: /777,77/ })).toBeVisible();
+  await page.getByRole('button', { name: 'Excluir Receita editada', exact: true }).first().click();
+  await page.getByRole('button', { name: 'Confirmar exclusão de Receita editada', exact: true }).first().click();
+  await expect(page.getByText('Receita editada', { exact: true })).toHaveCount(0);
+  await page.reload();
+  await page.getByRole('button', { name: /Explorar.*(?:Demonstração|sem login)/i }).first().click();
+  await expect(page.getByText('Receita editada', { exact: true })).toHaveCount(0);
+});
+
+test('dados locais corrompidos apresentam aviso e não são sobrescritos', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('gf_local_transactions', '{"id":"incompleto"}'));
+  await page.goto('/');
+  await page.getByRole('button', { name: /Explorar.*(?:Demonstração|sem login)/i }).first().click();
+  await expect(page.getByRole('alert')).toContainText('conteúdo salvo foi preservado');
+  await page.getByRole('button', { name: /Nova Transação/ }).first().click();
+  await page.getByLabel('Descrição', { exact: true }).fill('Novo lançamento');
+  await page.getByLabel('Valor (R$)', { exact: true }).fill('10');
+  await page.getByRole('button', { name: 'Cadastrar Transação', exact: true }).click();
+  await expect(page.getByRole('dialog').getByRole('alert')).toBeVisible();
+  expect(await page.evaluate(() => localStorage.getItem('gf_local_transactions'))).toBe('{"id":"incompleto"}');
+});

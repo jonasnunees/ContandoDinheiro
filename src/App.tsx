@@ -1,19 +1,15 @@
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { Transaction, SummaryStats, FilterState, TransactionStatus } from './types/finance';
-import {
-  fetchTransactionsService,
-  addTransactionService,
-  updateTransactionService,
-  deleteTransactionService,
-  toggleStatusService,
-  getSupabaseClient,
-} from './services/supabase';
+import React, { useState, useMemo } from 'react';
+import type { Transaction, FilterState } from './features/finance/types';
+import { useSession } from './features/auth/useSession';
+import type { AppUser } from './features/auth/session';
+import { useTransactions } from './features/finance/useTransactions';
+import { filterTransactions, summarizeTransactions } from './features/finance/calculations';
 import { Header } from './components/Header';
-import { SummaryCards } from './components/SummaryCards';
-import { TransactionList } from './components/TransactionList';
-import { TransactionModal } from './components/TransactionModal';
-import { FinancialCharts } from './components/FinancialCharts';
-import { AuthModal } from './components/AuthModal';
+import { SummaryCards } from './features/finance/components/SummaryCards';
+import { TransactionList } from './features/finance/components/TransactionList';
+import { TransactionModal } from './features/finance/components/TransactionModal';
+import { FinancialCharts } from './features/finance/components/FinancialCharts';
+import { AuthModal } from './features/auth/AuthModal';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { LandingPage } from './components/LandingPage';
 import { 
@@ -26,261 +22,7 @@ import {
 } from 'lucide-react';
 
 export default function App() {
-  // useState guarda valores da tela; chamar o setter faz o React atualizar a interface.
-  const currentDate = new Date();
-  const [currentView, setCurrentView] = useState<'landing' | 'dashboard'>('landing');
-  const [authModalMode, setAuthModalMode] = useState<'login' | 'register'>('login');
-
-  const [currentMonth, setCurrentMonth] = useState<number>(currentDate.getMonth());
-  const [currentYear, setCurrentYear] = useState<number>(currentDate.getFullYear());
-
-  type AppUser = { id: string; email: string; isDemo: boolean };
-  const [user, setUser] = useState<AppUser | null>(null);
-  // useRef guarda controles entre atualizações da tela, sem redesenhá-la.
-  // A versão da busca impede que uma resposta antiga sobrescreva os dados atuais.
-  const activeUser = useRef<AppUser | null>(null);
-  const requestVersion = useRef(0);
-
-
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState('');
-  const [isRefreshing, setIsRefreshing] = useState(false);
-
-  // Controla quais janelas estão abertas e qual lançamento será editado.
-  const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
-  const [transactionToEdit, setTransactionToEdit] = useState<Transaction | null>(null);
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-
-  // No celular, mostra apenas a seção escolhida na navegação inferior.
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'transactions' | 'charts'>('dashboard');
-
-  // Guarda as escolhas usadas para selecionar os lançamentos exibidos.
-  const [filterState, setFilterState] = useState<FilterState>({
-    month: currentMonth,
-    year: currentYear,
-    type: 'todos',
-    status: 'todos',
-    categoria: 'todas',
-    formaPagamento: 'todas',
-    searchTerm: '',
-  });
-
-  const client = getSupabaseClient();
-  const invalidateRequest = useCallback(() => { requestVersion.current++; }, []);
-
-  // Ao trocar de conta, limpa os dados anteriores antes de carregar os da nova pessoa.
-  const applyUser = useCallback((nextUser: AppUser | null) => {
-    requestVersion.current++;
-    activeUser.current = nextUser;
-    setTransactions([]);
-    setTransactionToEdit(null);
-    setIsTransactionModalOpen(false);
-    setUser(nextUser);
-    setLoading(true);
-    setLoadError('');
-    if (nextUser) {
-      setCurrentView(nextUser.isDemo ? 'landing' : 'dashboard');
-    }
-  }, []);
-
-  // Busca os lançamentos do período; async/await permite aguardar a resposta do serviço.
-  const loadTransactions = useCallback(async () => {
-    if (!user || activeUser.current !== user) return;
-    // Só a busca mais recente poderá atualizar a tela, mesmo se as respostas chegarem fora de ordem.
-    const version = ++requestVersion.current;
-    setLoading(true);
-    setLoadError('');
-    try {
-      const data = await fetchTransactionsService(user.id, user.isDemo, { month: currentMonth, year: currentYear });
-      if (version === requestVersion.current) setTransactions(data);
-    } catch {
-      if (version === requestVersion.current) {
-        setLoadError('Não foi possível carregar os lançamentos. Os valores exibidos podem estar desatualizados. Tente novamente.');
-      }
-    } finally {
-      if (version === requestVersion.current) {
-        setLoading(false);
-        setIsRefreshing(false);
-      }
-    }
-  }, [user, currentMonth, currentYear]);
-
-  useEffect(() => {
-    // useEffect repete a busca quando mudam a conta ou o período selecionado.
-    void loadTransactions();
-    return invalidateRequest;
-  }, [loadTransactions, invalidateRequest]);
-
-  useEffect(() => {
-    // Recupera o acesso à conta e acompanha login/logout; sem sessão, oferece a demonstração.
-    const guestUser: AppUser = { id: 'demo-user-id', email: 'demo@exemplo.com', isDemo: true };
-    let disposed = false;
-    let authVersion = 0;
-    if (!client) {
-      applyUser(guestUser);
-      return;
-    }
-    applyUser(null);
-    const { data: { subscription } } = client.auth.onAuthStateChange((_event, session) => {
-      if (disposed) return;
-      const version = ++authVersion;
-      // Descarta buscas anteriores assim que a sessão muda.
-      applyUser(null);
-      if (!session?.user) {
-        applyUser(guestUser);
-        return;
-      }
-      // Aguarda o aviso de autenticação terminar antes de confirmar a conta no servidor.
-      setTimeout(() => {
-        if (disposed || version !== authVersion) return;
-        void client.auth.getUser().then(({ data, error }) => {
-          if (disposed || version !== authVersion) return;
-          if (error || !data.user) {
-            applyUser(guestUser);
-            return;
-          }
-          applyUser({ id: data.user.id, email: data.user.email || '', isDemo: false });
-          setIsAuthModalOpen(false);
-        }).catch(() => {
-          if (!disposed && version === authVersion) applyUser(guestUser);
-        });
-      }, 0);
-    });
-    return () => {
-      disposed = true;
-      authVersion++;
-      invalidateRequest();
-      subscription.unsubscribe();
-    };
-  }, [client, applyUser, invalidateRequest]);
-
-  // Se sair da conta falhar, restaura o usuário anterior e mostra uma mensagem.
-  const handleLogout = async () => {
-    const previousUser = activeUser.current;
-    applyUser(null);
-    if (client) {
-      const { error } = await client.auth.signOut();
-      if (error) {
-        applyUser(previousUser);
-        setLoadError('Não foi possível sair da conta. Tente novamente.');
-        return;
-      }
-    }
-    applyUser({ id: 'demo-user-id', email: 'demo@exemplo.com', isDemo: true });
-  };
-
-  // Cria, edita e exclui lançamentos; depois busca os dados para atualizar a tela.
-  const handleSaveTransaction = async (
-    data: Omit<Transaction, 'id' | 'created_at'>,
-    id?: string
-  ) => {
-    if (!user) throw new Error('Aguarde a validação da sessão.');
-    const isDemo = user.isDemo;
-    const userId = user.id;
-
-    if (id) {
-      await updateTransactionService(id, { ...data, user_id: userId }, isDemo);
-    } else {
-      await addTransactionService({ ...data, user_id: userId }, isDemo);
-    }
-    await loadTransactions();
-  };
-
-  const handleDeleteTransaction = async (id: string) => {
-    if (!user) throw new Error('Aguarde a validação da sessão.');
-    const isDemo = user.isDemo;
-    await deleteTransactionService(id, isDemo);
-    await loadTransactions();
-  };
-
-  const handleToggleStatus = async (id: string, currentStatus: TransactionStatus) => {
-    if (!user) throw new Error('Aguarde a validação da sessão.');
-    const isDemo = user.isDemo;
-    await toggleStatusService(id, currentStatus, isDemo);
-    await loadTransactions();
-  };
-
-  // useMemo reaproveita a lista filtrada até os dados ou os filtros mudarem.
-  const filteredTransactions = useMemo(() => {
-    return transactions.filter((t) => {
-      // Descarta lançamentos fora do ano e, quando selecionado, do mês.
-      if (t.data) {
-        const [yStr, mStr] = t.data.split('-');
-        const txYear = parseInt(yStr, 10);
-        const txMonth = parseInt(mStr, 10) - 1; // No JavaScript, janeiro é 0 e dezembro é 11.
-
-        if (txYear !== currentYear) return false;
-        if (currentMonth !== -1 && txMonth !== currentMonth) return false;
-      }
-
-      // Procura o texto na descrição, na categoria e na forma de pagamento.
-      if (filterState.searchTerm.trim()) {
-        const term = filterState.searchTerm.toLowerCase();
-        const matchDesc = t.descricao.toLowerCase().includes(term);
-        const matchCat = t.categoria.toLowerCase().includes(term);
-        const matchPm = t.forma_pagamento.toLowerCase().includes(term);
-        if (!matchDesc && !matchCat && !matchPm) return false;
-      }
-
-      // Mantém receitas, despesas ou ambas, conforme a escolha.
-      if (filterState.type !== 'todos' && t.tipo !== filterState.type) {
-        return false;
-      }
-
-      // Mantém lançamentos pagos, pendentes ou ambos.
-      if (filterState.status !== 'todos' && t.status !== filterState.status) {
-        return false;
-      }
-
-      return true;
-    });
-  }, [transactions, currentMonth, currentYear, filterState]);
-
-  // Soma apenas os lançamentos filtrados, separando valores pagos dos pendentes.
-  const stats: SummaryStats = useMemo(() => {
-    let totalEntradas = 0;
-    let totalSaidas = 0;
-    let totalPendentesReceber = 0;
-    let totalPendentesPagar = 0;
-
-    filteredTransactions.forEach((t) => {
-      if (t.tipo === 'receita') {
-        if (t.status === 'pago') {
-          totalEntradas += t.valor;
-        } else {
-          totalPendentesReceber += t.valor;
-        }
-      } else if (t.tipo === 'despesa') {
-        if (t.status === 'pago') {
-          totalSaidas += t.valor;
-        } else {
-          totalPendentesPagar += t.valor;
-        }
-      }
-    });
-
-    // O saldo considera o dinheiro já recebido e gasto; pendências ficam no resumo separado.
-    const saldoAtual = totalEntradas - totalSaidas;
-    const taxaEconomia =
-      totalEntradas > 0 && saldoAtual > 0 ? (saldoAtual / totalEntradas) * 100 : 0;
-
-    return {
-      totalEntradas,
-      totalSaidas,
-      saldoAtual,
-      totalPendentesReceber,
-      totalPendentesPagar,
-      taxaEconomia,
-      quantidadeTransacoes: filteredTransactions.length,
-    };
-  }, [filteredTransactions]);
-
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    await loadTransactions();
-  };
-
+  const { user, sessionError, logout } = useSession();
   // Aguarda a confirmação da sessão antes de escolher a tela inicial.
   if (!user) {
     return (
@@ -291,35 +33,62 @@ export default function App() {
     );
   }
 
+
+  return <AccountWorkspace key={user.id + ':' + user.isDemo} user={user} sessionError={sessionError} onLogout={logout} />;
+}
+
+function AccountWorkspace({ user, sessionError, onLogout }: { user: AppUser; sessionError: string; onLogout: () => Promise<void> }) {
+  // useState guarda valores da tela; chamar o setter faz o React atualizar a interface.
+  const currentDate = new Date();
+  const [currentView, setCurrentView] = useState<'landing' | 'dashboard'>(user.isDemo ? 'landing' : 'dashboard');
+
+  const [currentMonth, setCurrentMonth] = useState<number>(currentDate.getMonth());
+  const [currentYear, setCurrentYear] = useState<number>(currentDate.getFullYear());
+
+  const { transactions, loading, loadError, isRefreshing,
+    saveTransaction: handleSaveTransaction, deleteTransaction: handleDeleteTransaction,
+    toggleStatus: handleToggleStatus, refresh: handleRefresh } = useTransactions(user, currentMonth, currentYear);
+
+  // Controla quais janelas estão abertas e qual lançamento será editado.
+  const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
+  const [transactionToEdit, setTransactionToEdit] = useState<Transaction | null>(null);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
+  // No celular, mostra apenas a seção escolhida na navegação inferior.
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'transactions' | 'charts'>('dashboard');
+
+  // Guarda as escolhas usadas para selecionar os lançamentos exibidos.
+  const [filterState, setFilterState] = useState<FilterState>({ type: 'todos', status: 'todos', searchTerm: '' });
+  const filteredTransactions = useMemo(() => filterTransactions(transactions,
+    { month: currentMonth, year: currentYear }, filterState), [transactions, currentMonth, currentYear, filterState]);
+  const stats = useMemo(() => summarizeTransactions(filteredTransactions), [filteredTransactions]);
+
   // Visitantes veem a apresentação; quem entrou na conta segue para o painel.
   if (currentView === 'landing' && user.isDemo) {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-sans transition-colors duration-200">
         <LandingPage
           onOpenLogin={() => {
-            setAuthModalMode('login');
             setIsAuthModalOpen(true);
           }}
           onOpenRegister={() => {
-            setAuthModalMode('register');
             setIsAuthModalOpen(true);
           }}
           onGoToDashboard={() => {
             setCurrentView('dashboard');
           }}
-          onLogout={handleLogout}
+          onLogout={onLogout}
           isLoggedIn={Boolean(user && !user.isDemo)}
           userEmail={user?.email}
         />
 
+        {sessionError && <p role="alert" className="p-4 text-rose-700 dark:text-rose-300">{sessionError}</p>}
         <AuthModal
           isOpen={isAuthModalOpen}
           onClose={() => setIsAuthModalOpen(false)}
-          onAuthSuccess={(authUser) => {
-            applyUser(authUser);
+          onAuthSuccess={() => {
             setCurrentView('dashboard');
           }}
-          initialMode={authModalMode}
         />
 
         <OfflineIndicator />
@@ -335,21 +104,18 @@ export default function App() {
         currentYear={currentYear}
         onMonthChange={(m) => {
           setCurrentMonth(m);
-          setFilterState((prev) => ({ ...prev, month: m }));
         }}
         onYearChange={(y) => {
           setCurrentYear(y);
-          setFilterState((prev) => ({ ...prev, year: y }));
         }}
         onOpenNewTransaction={() => {
           setTransactionToEdit(null);
           setIsTransactionModalOpen(true);
         }}
         onOpenAuth={() => {
-          setAuthModalMode('login');
           setIsAuthModalOpen(true);
         }}
-        onLogout={handleLogout}
+        onLogout={onLogout}
         onOpenLanding={user.isDemo ? () => {
           setCurrentView('landing');
         } : undefined}
@@ -358,6 +124,7 @@ export default function App() {
 
       {/* Área principal com os dados financeiros e avisos de carregamento. */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 space-y-6 pb-24 md:pb-12">
+        {sessionError && <p role="alert" className="rounded-xl border border-rose-400 p-4 text-rose-700 dark:text-rose-300">{sessionError}</p>}
         {loadError && <div role="alert" className="rounded-xl border border-rose-400 p-4 text-rose-700 dark:text-rose-300">
           <p>{loadError}</p><button type="button" onClick={handleRefresh} disabled={loading} className="mt-2 underline">Tentar novamente</button>
         </div>}
@@ -477,7 +244,6 @@ export default function App() {
             filterState={{
               type: filterState.type,
               status: filterState.status,
-              categoria: filterState.categoria,
               searchTerm: filterState.searchTerm,
             }}
             onFilterChange={(updates) => setFilterState((prev) => ({ ...prev, ...updates }))}
@@ -522,11 +288,9 @@ export default function App() {
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
-        onAuthSuccess={(authUser) => {
-          applyUser(authUser);
+        onAuthSuccess={() => {
           setCurrentView('dashboard');
         }}
-        initialMode={authModalMode}
       />
 
       {/* Aviso de falta de conexão informado pelo navegador. */}

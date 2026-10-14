@@ -1,13 +1,13 @@
-import { Modal } from './Modal';
+import { signInWithGoogleService } from './authService';
+import { Modal } from '../../components/Modal';
 import React, { useState } from 'react';
-import { getSupabaseClient, isSupabaseConfigured, signInWithGoogleService } from '../services/supabase';
+import { getSupabaseClient, isSupabaseConfigured } from '../../services/supabase';
 import { Sparkles, AlertCircle, Loader2, X, CheckCircle2, ArrowRight } from 'lucide-react';
 
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAuthSuccess: (user: { id: string; email: string; isDemo: boolean }) => void;
-  initialMode?: 'login' | 'register';
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({

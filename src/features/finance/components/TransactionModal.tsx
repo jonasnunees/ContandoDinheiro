@@ -1,39 +1,23 @@
-import { localDate, parseMoney } from '../services/validation';
-import { Modal } from './Modal';
+import { localDate, parseMoney } from '../validation';
+import { Modal } from '../../../components/Modal';
 import React, { useState, useEffect } from 'react';
-import { Transaction, TransactionType, TransactionStatus, PaymentMethod, Category } from '../types/finance';
+import { Transaction, TransactionDraft, TransactionType, TransactionStatus, PaymentMethod, Category, PAYMENT_METHODS, CATEGORIES } from '../types';
 import { X, Plus, Check, ArrowUpCircle, ArrowDownCircle, DollarSign, Calendar as CalendarIcon, CreditCard, Tag, CheckCircle2 } from 'lucide-react';
 
 interface TransactionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (data: Omit<Transaction, 'id' | 'created_at'>, id?: string) => Promise<void>;
+  onSave: (data: TransactionDraft, id?: string) => Promise<void>;
   transactionToEdit?: Transaction | null;
 }
 
 // Opções fixas usadas nos campos de categoria e forma de pagamento.
-const CATEGORIES: { name: Category; label: string }[] = [
-  { name: 'Alimentação', label: '🍔 Alimentação' },
-  { name: 'Moradia', label: '🏠 Moradia' },
-  { name: 'Transporte', label: '🚗 Transporte' },
-  { name: 'Saúde', label: '💊 Saúde' },
-  { name: 'Educação', label: '📚 Educação' },
-  { name: 'Lazer', label: '🎉 Lazer' },
-  { name: 'Salário', label: '💼 Salário' },
-  { name: 'Investimentos', label: '📈 Investimentos' },
-  { name: 'Serviços', label: '⚡ Serviços / Contas' },
-  { name: 'Outros', label: '📦 Outros' },
-];
+const CATEGORY_LABELS: Record<Category, string> = {
+  Alimentação: '🍔 Alimentação', Moradia: '🏠 Moradia', Transporte: '🚗 Transporte',
+  Saúde: '💊 Saúde', Educação: '📚 Educação', Lazer: '🎉 Lazer', Salário: '💼 Salário',
+  Investimentos: '📈 Investimentos', Serviços: '⚡ Serviços / Contas', Outros: '📦 Outros',
+};
 
-const PAYMENT_METHODS: PaymentMethod[] = [
-  'Pix',
-  'Cartão de Crédito',
-  'Cartão de Débito',
-  'Dinheiro',
-  'Boleto',
-  'Transferência',
-  'Outro',
-];
 
 export const TransactionModal: React.FC<TransactionModalProps> = ({
   isOpen,
@@ -112,7 +96,6 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
           forma_pagamento: formaPagamento,
           status,
           categoria,
-          user_id: '', // O código que salva os dados preenche o usuário responsável.
         },
         transactionToEdit ? transactionToEdit.id : undefined
       );
@@ -238,9 +221,9 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                 onChange={(e) => setCategoria(e.target.value as Category)}
                 className="w-full rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 px-3 py-2.5 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:border-emerald-500 cursor-pointer"
               >
-                {CATEGORIES.map((c) => (
-                  <option key={c.name} value={c.name} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">
-                    {c.label}
+                {CATEGORIES.map((category) => (
+                  <option key={category} value={category} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">
+                    {CATEGORY_LABELS[category]}
                   </option>
                 ))}
               </select>

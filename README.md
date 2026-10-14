@@ -84,6 +84,8 @@ Construído com **React e TypeScript**, o ContandoDinheiro combina **Tailwind CS
 
 ## Uma construção aberta
 
+Para executar o projeto, entender a organização e verificar os fluxos, consulte o [guia de desenvolvimento](DEVELOPMENT.md).
+
 Criado por [Jonas Nunes](https://github.com/jonasnunees), o projeto recebe sugestões, correções e contribuições da comunidade. Compartilhe sua ideia em uma [issue](https://github.com/jonasnunees/ContandoDinheiro/issues) ou envie um pull request.
 
 Disponível sob a [licença MIT](LICENSE).

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { parseMoney, localDate, isTransaction } from '../src/services/validation.ts';
+import { parseMoney, localDate, isTransaction } from '../src/features/finance/validation.ts';
 import { readStorage, writeStorage } from '../src/services/storage.ts';
 
 test('valores brasileiros e decimais são convertidos sem truncamento', () => {

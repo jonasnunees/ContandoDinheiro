@@ -14,7 +14,8 @@
     "test:auth": "node --test scripts/auth-navigation.test.mjs",
     "test:validation": "node --test scripts/validation.test.mjs",
     "test:e2e": "playwright test",
-    "test": "npm run test:validation && npm run test:security && npm run test:auth"
+    "test": "npm run test:validation && npm run test:finance && npm run test:security && npm run test:auth",
+    "test:finance": "node --test scripts/finance.test.mjs"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

@@ -1,7 +1,7 @@
-import { localDate } from '../services/validation';
+import { localDate } from '../validation';
 import React, { useState, useRef } from 'react';
-import { Transaction, TransactionStatus, TransactionType } from '../types/finance';
-import { serializeCSV } from '../services/csv';
+import { Transaction, TransactionStatus, FilterState } from '../types';
+import { serializeCSV } from '../csv';
 import { 
   Search, 
   Trash2, 
@@ -19,12 +19,7 @@ interface TransactionListProps {
   onEdit: (transaction: Transaction) => void;
   onDelete: (id: string) => Promise<void>;
   onToggleStatus: (id: string, currentStatus: TransactionStatus) => Promise<void>;
-  filterState: {
-    type: 'todos' | TransactionType;
-    status: 'todos' | TransactionStatus;
-    categoria: string;
-    searchTerm: string;
-  };
+  filterState: FilterState;
   onFilterChange: (updates: Partial<TransactionListProps['filterState']>) => void;
   onOpenNewModal: () => void;
 }

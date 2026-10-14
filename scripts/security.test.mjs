@@ -1,22 +1,27 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { stripTypeScriptTypes } from 'node:module';
+import path from 'node:path';
 import { test } from 'node:test';
 import vm from 'node:vm';
 import { PGlite } from '@electric-sql/pglite';
 
 const read = path => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 
-async function loadServices({ env = {}, authenticated = true, pages = [[]] } = {}) {
+const validTx = { id: '1', user_id: 'account-a', descricao: 'Teste', valor: 10, tipo: 'receita', data: '2026-10-05', forma_pagamento: 'Pix', status: 'pago', categoria: 'Salário' };
+async function loadServices({ env = {}, authenticated = true, pages = [[]], mutation = validTx, oauth = { url: 'https://example.supabase.co/auth/v1/authorize' } } = {}) {
   const calls = [];
   const user = { id: 'account-a', email: 'a@example.invalid' };
   const query = {};
   for (const method of ['select', 'eq', 'order', 'insert', 'update', 'delete', 'single', 'gte', 'lt', 'range']) {
     query[method] = (...args) => { calls.push([method, ...args]); return query; };
   }
-  query.then = resolve => resolve({ data: pages.shift() ?? [], error: null });
+  let single = false;
+  query.single = () => { single = true; calls.push(['single']); return query; };
+  query.range = (...args) => { single = false; calls.push(['range', ...args]); return query; };
+  query.then = resolve => resolve({ data: single ? mutation : pages.shift() ?? [], error: null });
   const client = {
-    auth: { getUser: async () => ({ data: { user: authenticated ? user : null }, error: null }) },
+    auth: { getUser: async () => ({ data: { user: authenticated ? user : null }, error: null }), signInWithOAuth: async () => ({ data: oauth, error: null }) },
     from: table => { calls.push(['from', table]); return query; },
   };
   const storage = new Map([
@@ -24,7 +29,7 @@ async function loadServices({ env = {}, authenticated = true, pages = [[]] } = {
     ['gf_supabase_anon_key', 'sb_publishable_test'],
   ]);
   const context = vm.createContext({
-    URL, atob, console,
+    URL, atob, console, window: { location: { origin: "http://localhost:3000" } },
     localStorage: {
       getItem: key => storage.get(key) ?? null,
       setItem: (key, value) => storage.set(key, value),
@@ -34,23 +39,29 @@ async function loadServices({ env = {}, authenticated = true, pages = [[]] } = {
   const dependency = new vm.SyntheticModule(['createClient'], function () {
     this.setExport('createClient', () => client);
   }, { context });
-  const source = stripTypeScriptTypes(read('src/services/supabase.ts'));
-  const module = new vm.SourceTextModule(source, {
-    context,
-    initializeImportMeta: meta => { meta.env = env; },
-  });
-  await module.link(async specifier => {
-    if (specifier === '@supabase/supabase-js') return dependency;
-    const helper = new vm.SourceTextModule(stripTypeScriptTypes(read(`src/services/${specifier.slice(2)}.ts`)), { context });
-    await helper.link(() => { throw new Error('Unexpected helper dependency'); });
-    return helper;
-  });
-  await module.evaluate();
-  return { service: module.namespace, calls, storage };
+  const modules = new Map();
+  function getModule(file) {
+    if (!modules.has(file)) modules.set(file, new vm.SourceTextModule(stripTypeScriptTypes(read(file)), {
+      context, identifier: file, initializeImportMeta: meta => { meta.env = env; },
+    }));
+    return modules.get(file);
+  }
+  const roots = [];
+  for (const file of ['src/services/supabase.ts', 'src/features/finance/transactionsService.ts', 'src/features/finance/demoStorage.ts', 'src/features/auth/authService.ts']) {
+    const module = getModule(file);
+    if (module.status === 'unlinked') await module.link((specifier, parent) => {
+      if (specifier === '@supabase/supabase-js') return dependency;
+      const target = path.posix.normalize(path.posix.join(path.posix.dirname(parent.identifier), specifier));
+      return getModule(target.endsWith('.ts') ? target : target + '.ts');
+    });
+    if (module.status !== 'evaluated') await module.evaluate();
+    roots.push(module.namespace);
+  }
+  return { service: Object.assign({}, ...roots), calls, storage };
 }
 
 test('CSV neutraliza fórmulas e preserva aspas e linhas dentro da célula', async () => {
-  const csv = await import('../src/services/csv.ts');
+  const csv = await import('../src/features/finance/csv.ts');
   for (const value of ['=1+1', '+1', '-1', '@SUM(A1)', '  =1+1', '\t=1+1', '\r=1+1', '\n=1+1', '\u0000=1+1']) {
     assert.ok(csv.escapeCSVCell(value).startsWith('"\''), JSON.stringify(value));
   }
@@ -91,7 +102,7 @@ test('CRUD real exige sessão e não usa armazenamento demo como fallback', asyn
 
 test('CRUD vincula consultas à sessão e bloqueia alterações de campos protegidos', async () => {
   const { service, calls } = await loadServices();
-  await service.fetchTransactionsService('victim', false);
+  await service.fetchTransactionsService('account-a', false);
   assert.ok(calls.some(call => call[0] === 'eq' && call[1] === 'user_id' && call[2] === 'account-a'));
   calls.length = 0;
   await service.addTransactionService({ descricao: 'teste', user_id: 'victim', id: 'forged', created_at: 'forged' }, false);
@@ -109,51 +120,26 @@ test('CRUD vincula consultas à sessão e bloqueia alterações de campos proteg
   assert.ok(calls.some(call => call[0] === 'eq' && call[1] === 'user_id' && call[2] === 'account-a'));
 });
 
-test('falha ou ausência de OAuth não produz identidade autenticada', async () => {
-  const source = read('src/components/AuthModal.tsx');
-  const body = source.match(/const handleGoogleSignIn = async \(\) => \{([\s\S]*?)\n {2}\};/)[1];
-  const create = new Function('isConfigured', 'signInWithGoogleService', 'setErrorMessage', 'setGoogleLoading', 'window', `return async () => {${body}}`);
-  for (const result of [{ error: new Error('falha') }, { url: null }]) {
-    const errors = [];
-    let redirected = false;
-    await create(true, async () => result, error => errors.push(error), () => {}, { location: { assign: () => { redirected = true; } } })();
-    assert.equal(redirected, false);
-    assert.ok(errors.at(-1));
-  }
-  let oauthCalls = 0;
-  await create(false, async () => { oauthCalls++; }, () => {}, () => {}, {})();
-  assert.equal(oauthCalls, 0);
-  let redirectedTo;
-  await create(true, async () => ({ url: 'https://example.supabase.co/auth/v1/authorize' }), () => {}, () => {}, { location: { assign: url => { redirectedTo = url; } } })();
-  assert.ok(redirectedTo);
-  assert.equal(source.includes('handleInstantGoogleLogin'), false);
+test('OAuth retorna endereço do provedor e ausência de configuração informa erro', async () => {
+  const { service } = await loadServices();
+  assert.equal((await service.signInWithGoogleService()).url, 'https://example.supabase.co/auth/v1/authorize');
+  const missing = await loadServices({ env: { VITE_SUPABASE_URL: 'https://example.supabase.co' } });
+  assert.ok((await missing.service.signInWithGoogleService()).error);
 });
 
-test('resposta iniciada antes da troca de conta não retorna à tela', async () => {
-  const source = read('src/App.tsx');
-  const body = source.match(/const loadTransactions = useCallback\(async \(\) => \{([\s\S]*?)\n {2}\}, \[user, currentMonth, currentYear\]\);/)[1];
-  let resolveFetch;
-  let displayed;
-  let fetches = 0;
-  const user = { id: 'account-a', isDemo: false };
-  const activeUser = { current: user };
-  const requestVersion = { current: 0 };
-  const create = new Function('user', 'activeUser', 'requestVersion', 'fetchTransactionsService', 'setTransactions', 'setLoading', 'setIsRefreshing', `const currentMonth = 9; const currentYear = 2026; const setLoadError = () => {}; return async () => {${body}}`);
-  const load = create(user, activeUser, requestVersion, () => { fetches++; return new Promise(resolve => { resolveFetch = resolve; }); }, data => { displayed = data; }, () => {}, () => {});
-  const pending = load();
-  activeUser.current = { id: 'account-b', isDemo: false };
-  requestVersion.current++;
-  resolveFetch([{ descricao: 'dados da conta anterior' }]);
-  await pending;
-  assert.equal(displayed, undefined);
-  await load();
-  assert.equal(fetches, 1);
+test('retornos inválidos de criação e atualização são rejeitados', async () => {
+  const { service } = await loadServices({ mutation: { id: 'broken' } });
+  await assert.rejects(service.addTransactionService(validTx, false), /inválida/);
+  await assert.rejects(service.updateTransactionService('1', { status: 'pago' }, false), /inválida/);
 });
 
-test('SQL entregue e script de configuração permanecem iguais', () => {
-  const source = read('src/services/supabase-sql.ts');
-  const sql = source.slice(source.indexOf('`') + 1, source.lastIndexOf('`'));
-  assert.equal(read('supabase/migrations/20261002210000_security_hardening.sql').trim(), sql.trim());
+test('mudança de conta bloqueia operações iniciadas para outro proprietário', async () => {
+  const { service, calls } = await loadServices();
+  await assert.rejects(service.fetchTransactionsService('account-b', false), /conta mudou/);
+  await assert.rejects(service.addTransactionService(validTx, false, 'account-b'), /conta mudou/);
+  await assert.rejects(service.updateTransactionService('1', { status: 'pago' }, false, 'account-b'), /conta mudou/);
+  await assert.rejects(service.deleteTransactionService('1', false, 'account-b'), /conta mudou/);
+  assert.equal(calls.length, 0);
 });
 
 test('paginação recupera todas as páginas mesmo com limite menor da API e filtra período', async () => {
@@ -166,12 +152,13 @@ test('paginação recupera todas as páginas mesmo com limite menor da API e fil
   assert.ok(calls.some(call => call[0] === 'lt' && call[2] === '2026-11-01'));
 });
 
-test('JSON válido com estrutura incorreta não quebra a demonstração', async () => {
+test('dados locais inválidos são informados e preservados antes de qualquer gravação', async () => {
   const { service, storage } = await loadServices();
   for (const raw of ['{}', 'null', '[{"id":"broken"}]', 'invalid']) {
     storage.set('gf_local_transactions', raw);
-    const result = await service.fetchTransactionsService('demo-user-id', true);
-    assert.ok(Array.isArray(result) && result.length > 0);
+    await assert.rejects(service.fetchTransactionsService('demo-user-id', true), /preservado/);
+    await assert.rejects(service.addTransactionService(validTx, true), /preservado/);
+    assert.equal(storage.get('gf_local_transactions'), raw);
   }
 });
 

@@ -1,4 +1,4 @@
-import type { Transaction } from '../types/finance';
+import { CATEGORIES, PAYMENT_METHODS, type Transaction } from './types.ts';
 
 // Monta a data no formato ano-mês-dia usando o horário local, sem mudar o dia por causa do fuso.
 export function localDate(date = new Date()): string {
@@ -26,12 +26,12 @@ export function parseMoney(input: string): number {
 export function isTransaction(value: unknown): value is Transaction {
   if (!value || typeof value !== 'object') return false;
   const tx = value as Record<string, unknown>;
-  return typeof tx.id === 'string' && typeof tx.user_id === 'string' &&
+  return (tx.created_at === undefined || typeof tx.created_at === 'string') && typeof tx.id === 'string' && typeof tx.user_id === 'string' &&
     typeof tx.descricao === 'string' && tx.descricao.trim().length > 0 &&
     typeof tx.valor === 'number' && Number.isFinite(tx.valor) && tx.valor > 0 && tx.valor <= 9999999999.99 &&
     ['receita', 'despesa'].includes(String(tx.tipo)) && ['pago', 'pendente'].includes(String(tx.status)) &&
     typeof tx.data === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(tx.data) &&
     !Number.isNaN(Date.parse(`${tx.data}T12:00:00Z`)) && new Date(`${tx.data}T12:00:00Z`).toISOString().slice(0, 10) === tx.data &&
-    ['Pix', 'Cartão de Crédito', 'Cartão de Débito', 'Dinheiro', 'Boleto', 'Transferência', 'Outro'].includes(String(tx.forma_pagamento)) &&
-    ['Alimentação', 'Moradia', 'Transporte', 'Saúde', 'Educação', 'Lazer', 'Salário', 'Investimentos', 'Serviços', 'Outros'].includes(String(tx.categoria));
+    PAYMENT_METHODS.some(method => method === tx.forma_pagamento) &&
+    CATEGORIES.some(category => category === tx.categoria);
 }

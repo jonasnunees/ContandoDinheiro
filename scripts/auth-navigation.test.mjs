@@ -1,123 +1,91 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
-import vm from 'node:vm';
-import { transformSync } from 'esbuild';
-
-// Exercise App with controlled auth events and deferred server validation.
-function mountApp() {
-  const slots = [];
-  const effects = [];
-  let cursor = 0;
-  let authCallback;
-  let validatedUser;
-  let signOutError = null;
-  const react = {
-    createElement: (type, props, ...children) => ({ type, props: { ...props, children } }),
-    useState(initial) {
-      const index = cursor++;
-      if (!(index in slots)) slots[index] = typeof initial === 'function' ? initial() : initial;
-      return [slots[index], value => { slots[index] = typeof value === 'function' ? value(slots[index]) : value; }];
-    },
-    useRef(initial) {
-      const index = cursor++;
-      return slots[index] ??= { current: initial };
-    },
-    useMemo(callback, deps) {
-      const index = cursor++;
-      const previous = slots[index];
-      if (!previous || deps.some((dep, i) => dep !== previous.deps[i])) slots[index] = { deps, value: callback() };
-      return slots[index].value;
-    },
-    useCallback(callback, deps) { return react.useMemo(() => callback, deps); },
-    useEffect(callback, deps) {
-      const index = cursor++;
-      const previous = slots[index];
-      if (!previous || deps.some((dep, i) => dep !== previous.deps[i])) {
-        effects.push(() => { previous?.cleanup?.(); slots[index] = { deps, cleanup: callback() }; });
-      }
-    },
-  };
-  const client = { auth: {
-    onAuthStateChange(callback) { authCallback = callback; return { data: { subscription: { unsubscribe() {} } } }; },
-    getUser: async () => ({ data: { user: validatedUser }, error: null }),
-    signOut: async () => {
-      if (!signOutError) authCallback('SIGNED_OUT', null);
-      return { error: signOutError };
-    },
-  } };
-  const service = { getSupabaseClient: () => client, fetchTransactionsService: async () => [] };
-  const compiled = transformSync(readFileSync(new URL('../src/App.tsx', import.meta.url), 'utf8'), { loader: 'tsx', format: 'cjs' }).code;
-  const context = {
-    module: { exports: {} }, setTimeout, console: { error() {} },
-    require(name) {
-      if (name === 'react') return react;
-      if (name === './services/supabase') return service;
-      return new Proxy({}, { get: (_, key) => key });
-    },
-  };
-  vm.runInNewContext(compiled, context);
-  const render = () => {
-    cursor = 0;
-    const tree = context.module.exports.default();
-    effects.splice(0).forEach(effect => effect());
-    return tree;
-  };
-  return {
-    render,
-    async event(event, user = null) {
-      validatedUser = user;
-      authCallback(event, user ? { user } : null);
-      const pending = render();
-      await new Promise(resolve => setTimeout(resolve, 5));
-      return { pending, settled: render() };
-    },
-    failSignOut() { signOutError = new Error('offline'); },
-  };
-}
-
-function find(tree, type) {
-  if (!tree || typeof tree !== 'object') return undefined;
-  if (tree.type === type) return tree;
-  for (const child of tree.props?.children?.flat(Infinity) ?? []) {
-    const found = find(child, type);
-    if (found) return found;
-  }
-}
+import { observeSession } from '../src/features/auth/session.ts';
 
 const account = { id: 'account-a', email: 'a@example.invalid' };
-
-for (const event of ['INITIAL_SESSION', 'SIGNED_IN', 'TOKEN_REFRESHED']) {
-  test(`${event}: sessão validada abre painel sem exibir landing durante recuperação`, async () => {
-    const app = mountApp();
-    assert.equal(app.render().props.role, 'status');
-    const { pending, settled } = await app.event(event, account);
-    assert.equal(pending.props.role, 'status');
-    assert.equal(find(settled, 'LandingPage'), undefined);
-    assert.equal(find(settled, 'Header').props.user.id, account.id);
-    assert.equal(find(settled, 'Header').props.onOpenLanding, undefined);
-    assert.equal(find(settled, 'Home'), undefined);
-  });
+const settle = () => new Promise(resolve => setTimeout(resolve, 10));
+function sessionHarness() {
+  const users = [], errors = [];
+  let callback, response = { data: { user: account }, error: null }, resolveUser, unsubscribed = false;
+  let deferred = false;
+  const client = { auth: {
+    onAuthStateChange(fn) { callback = fn; return { data: { subscription: { unsubscribe() { unsubscribed = true; } } } }; },
+    getUser() { return deferred ? new Promise(resolve => { resolveUser = resolve; }) : Promise.resolve(response); },
+  } };
+  const stop = observeSession(client, user => users.push(user), error => errors.push(error));
+  return { users, errors, stop,
+    event(event, user = account) { callback(event, user ? { user } : null); },
+    response(value) { response = value; },
+    defer() { deferred = true; },
+    resolve(value) { deferred = false; resolveUser(value); },
+    get unsubscribed() { return unsubscribed; },
+  };
 }
 
-test('visitante acessa landing e demonstração; sair retorna à landing', async () => {
-  const app = mountApp();
-  app.render();
-  const { settled } = await app.event('INITIAL_SESSION');
-  find(settled, 'LandingPage').props.onGoToDashboard();
-  const demo = app.render();
-  assert.equal(find(demo, 'Header').props.user.isDemo, true);
-  assert.equal(typeof find(demo, 'Header').props.onOpenLanding, 'function');
-  const loggedIn = (await app.event('SIGNED_IN', account)).settled;
-  await find(loggedIn, 'Header').props.onLogout();
-  assert.ok(find(app.render(), 'LandingPage'));
+test('sessão inicial só apresenta a conta confirmada no servidor', async () => {
+  const h = sessionHarness();
+  h.event('INITIAL_SESSION');
+  assert.equal(h.users.length, 0);
+  await settle();
+  assert.equal(h.users.at(-1).id, account.id);
+  h.stop();
 });
 
-test('falha ao sair preserva usuário autenticado no painel', async () => {
-  const app = mountApp();
-  app.render();
-  const { settled } = await app.event('INITIAL_SESSION', account);
-  app.failSignOut();
-  await find(settled, 'Header').props.onLogout();
-  assert.equal(find(app.render(), 'Header').props.user.id, account.id);
+test('renovação e SIGNED_IN repetido preservam a identidade e não reiniciam a tela', async () => {
+  const h = sessionHarness();
+  h.event('INITIAL_SESSION'); await settle();
+  const initial = h.users[0];
+  for (const event of ['TOKEN_REFRESHED', 'SIGNED_IN', 'USER_UPDATED']) {
+    h.event(event); await settle();
+    assert.equal(h.users.length, 1);
+    assert.equal(h.users.at(-1), initial);
+  }
+  h.stop();
+});
+
+test('troca de conta oculta a anterior imediatamente e descarta validações antigas', async () => {
+  const h = sessionHarness();
+  h.event('INITIAL_SESSION'); await settle();
+  h.defer(); h.event('TOKEN_REFRESHED'); await settle();
+  const other = { id: 'account-b', email: 'b@example.invalid' };
+  h.event('SIGNED_IN', other);
+  assert.equal(h.users.at(-1), null);
+  h.resolve({ data: { user: account }, error: null });
+  h.response({ data: { user: other }, error: null });
+  await settle();
+  assert.equal(h.users.at(-1).id, other.id);
+  h.stop();
+});
+
+test('falha transitória na renovação informa erro e preserva a conta', async () => {
+  const h = sessionHarness();
+  h.event('INITIAL_SESSION'); await settle();
+  h.response({ data: { user: null }, error: new Error('offline') });
+  h.event('TOKEN_REFRESHED'); await settle();
+  assert.equal(h.users.length, 1);
+  assert.match(h.errors.at(-1), /confirmar/);
+  h.stop();
+});
+
+test('logout impede que uma validação pendente restaure a conta anterior', async () => {
+  const h = sessionHarness();
+  h.defer(); h.event('INITIAL_SESSION'); await settle();
+  h.event('SIGNED_OUT', null);
+  h.resolve({ data: { user: account }, error: null }); await settle();
+  assert.equal(h.users.at(-1).isDemo, true);
+  h.stop();
+});
+
+test('desmontagem cancela validação pendente e remove inscrição', async () => {
+  const h = sessionHarness();
+  h.defer(); h.event('INITIAL_SESSION'); await settle(); h.stop();
+  h.resolve({ data: { user: account }, error: null }); await settle();
+  assert.equal(h.users.length, 0);
+  assert.equal(h.unsubscribed, true);
+});
+
+test('sem configuração disponibiliza apenas demonstração', () => {
+  let user;
+  observeSession(null, value => { user = value; }, () => {})();
+  assert.equal(user.isDemo, true);
 });
