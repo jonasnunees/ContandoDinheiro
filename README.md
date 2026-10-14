@@ -37,9 +37,22 @@ Com lançamentos organizados, indicadores e gráficos, você pode identificar os
 
 Acompanhe entradas recebidas, despesas pagas, saldo do período e taxa de economia em cartões de resumo. Consulte um mês específico ou o ano inteiro para entender suas finanças em diferentes períodos.
 
+![Painel no computador com resumo do mês e gráficos de despesas, formas de pagamento e fluxo de caixa](public/screenshots/painel-desktop.png)
+
+*As capturas desta página utilizam dados fictícios da demonstração.*
+
 ### Receitas e despesas bem organizadas
 
 Registre, edite e exclua lançamentos com descrição, valor, data, categoria e forma de pagamento. Classifique gastos como alimentação, moradia, transporte, saúde e lazer, e identifique pagamentos por Pix, cartão, dinheiro, boleto ou transferência.
+
+![Lista de lançamentos com busca, filtros, valores e status de pagamento](public/screenshots/lancamentos.png)
+
+<details>
+  <summary>Veja o formulário de uma nova transação</summary>
+
+![Formulário para cadastrar receitas e despesas com categoria, data e status](public/screenshots/nova-transacao.png)
+
+</details>
 
 ### Pendências sempre à vista
 
@@ -66,6 +79,12 @@ Use a busca por descrição, categoria ou forma de pagamento e os filtros por ti
 
 Os lançamentos da demonstração ficam no navegador e são separados dos dados da sua conta. Para consultar e salvar dados com uma conta Google, é necessária conexão com a internet.
 
+<p align="center">
+  <img src="public/screenshots/painel-mobile-escuro.png" alt="Painel no celular em tema escuro, com cartões de receitas, despesas e saldo" width="320">
+  <br>
+  <em>Seu resumo financeiro também no celular, com opção de tema escuro.</em>
+</p>
+
 ## Seus dados merecem cuidado
 
 O projeto utiliza autenticação com Google e políticas de acesso no banco de dados para restringir os registros à conta proprietária. As alterações de transações possuem registro de auditoria, e a exportação CSV inclui tratamento de textos que poderiam ser interpretados como fórmulas em planilhas.
@@ -83,8 +102,6 @@ Abra o <a href="https://contando-dinheiro.vercel.app/" target="_blank" rel="noop
 Construído com **React e TypeScript**, o ContandoDinheiro combina **Tailwind CSS** para a interface, **Chart.js** para os gráficos e **Supabase** para autenticação e armazenamento. **Vite** e recursos de **PWA** completam a base da aplicação, publicada na **Vercel**.
 
 ## Uma construção aberta
-
-Para executar o projeto, entender a organização e verificar os fluxos, consulte o [guia de desenvolvimento](DEVELOPMENT.md).
 
 Criado por [Jonas Nunes](https://github.com/jonasnunees), o projeto recebe sugestões, correções e contribuições da comunidade. Compartilhe sua ideia em uma [issue](https://github.com/jonasnunees/ContandoDinheiro/issues) ou envie um pull request.
 
