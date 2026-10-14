@@ -1,6 +1,0 @@
-{
-  "name": "Gestão Financeira & Controle de Gastos",
-  "description": "Dashboard financeiro completo com Supabase, gestão de receitas e despesas, gráficos interativos em Chart.js e suporte PWA.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}
