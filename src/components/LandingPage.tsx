@@ -11,7 +11,8 @@ import {
   Wallet,
   Menu,
   X,
-  LogOut
+  LogOut,
+  Github
 } from 'lucide-react';
 import { PWAInstallButton } from './PWAInstallButton';
 import { ThemeToggle } from './ThemeToggle';
@@ -487,7 +488,18 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             <span>— Gestão Financeira Pessoal Gratuita</span>
           </div>
 
-          <div className="flex items-center gap-4 text-slate-500 dark:text-slate-400">
+          <div className="flex flex-wrap items-center justify-center gap-4 text-slate-500 dark:text-slate-400">
+            <a
+              href="https://github.com/jonasnunees/ContandoDinheiro"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded hover:text-emerald-600 dark:hover:text-emerald-400 transition focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-600"
+              aria-label="Projeto no GitHub (abre em uma nova aba)"
+            >
+              <Github className="w-4 h-4 shrink-0" aria-hidden="true" />
+              Projeto no GitHub
+            </a>
+            <span aria-hidden="true">•</span>
             <button
               onClick={onOpenLogin}
               className="hover:text-emerald-600 dark:hover:text-emerald-400 transition cursor-pointer"

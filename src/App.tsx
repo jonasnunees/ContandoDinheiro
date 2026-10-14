@@ -18,7 +18,8 @@ import {
   LayoutDashboard, 
   ListOrdered, 
   PieChart, 
-  Home
+  Home,
+  Github
 } from 'lucide-react';
 
 export default function App() {
@@ -271,6 +272,16 @@ function AccountWorkspace({ user, sessionError, onLogout }: { user: AppUser; ses
       <footer className="border-t border-slate-200 dark:border-slate-900 bg-white dark:bg-slate-950 py-6 px-4 text-center text-xs text-slate-500 transition-colors">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           <p>ContandoDinheiro — Sistema de Gestão Financeira com Supabase & PWA</p>
+          <a
+            href="https://github.com/jonasnunees/ContandoDinheiro"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 rounded text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-600"
+            aria-label="Projeto no GitHub (abre em uma nova aba)"
+          >
+            <Github className="w-4 h-4 shrink-0" aria-hidden="true" />
+            Projeto no GitHub
+          </a>
         </div>
       </footer>
 
