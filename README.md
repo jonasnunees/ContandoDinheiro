@@ -1,4 +1,14 @@
-# ContandoDinheiro
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/readme-header-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="docs/assets/readme-header.svg">
+  <img src="docs/assets/readme-header.svg" alt="Contando Dinheiro — logo com gráfico e seta circular" width="480">
+</picture>
+
+# Controle financeiro pessoal
+
+[![Licença MIT](https://img.shields.io/badge/licen%C3%A7a-MIT-16a34a)](LICENSE)
+![Idioma português](https://img.shields.io/badge/idioma-portugu%C3%AAs-2563eb)
+[![Acessar aplicativo](https://img.shields.io/badge/aplicativo-acessar-16a34a)](https://contando-dinheiro.vercel.app/)
 
 **Seu dinheiro, sob controle. Suas decisões, com mais clareza.**
 
