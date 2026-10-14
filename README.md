@@ -1,14 +1,21 @@
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/readme-header-dark.svg">
-  <source media="(prefers-color-scheme: light)" srcset="docs/assets/readme-header.svg">
-  <img src="docs/assets/readme-header.svg" alt="Contando Dinheiro — logo com gráfico e seta circular" width="480">
+  <source media="(prefers-color-scheme: dark)" srcset="public/branding/readme-header-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="public/branding/readme-header.svg">
+  <img src="public/branding/readme-header.svg" alt="Contando Dinheiro — logo com gráfico e seta circular" width="480">
 </picture>
 
 # Controle financeiro pessoal
 
 [![Licença MIT](https://img.shields.io/badge/licen%C3%A7a-MIT-16a34a)](LICENSE)
 ![Idioma português](https://img.shields.io/badge/idioma-portugu%C3%AAs-2563eb)
-[![Acessar aplicativo](https://img.shields.io/badge/aplicativo-acessar-16a34a)](https://contando-dinheiro.vercel.app/)
+![React](https://img.shields.io/badge/React-20232a?logo=react&logoColor=61dafb)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178c6?logo=typescript&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-0f172a?logo=tailwindcss&logoColor=38bdf8)
+![Chart.js](https://img.shields.io/badge/Chart.js-ff6384?logo=chartdotjs&logoColor=white)
+![Supabase](https://img.shields.io/badge/Supabase-181818?logo=supabase&logoColor=3ecf8e)
+![Vite](https://img.shields.io/badge/Vite-646cff?logo=vite&logoColor=white)
+![Vercel](https://img.shields.io/badge/Vercel-000000?logo=vercel&logoColor=white)
+<a href="https://contando-dinheiro.vercel.app/" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/badge/aplicativo-acessar-16a34a" alt="Acessar aplicativo"></a>
 
 **Seu dinheiro, sob controle. Suas decisões, com mais clareza.**
 
@@ -16,7 +23,7 @@ O ContandoDinheiro transforma os registros do dia a dia em uma visão clara da s
 
 **Menos dúvidas sobre os gastos. Mais informação para planejar o próximo passo.**
 
-[**Conheça o ContandoDinheiro →**](https://contando-dinheiro.vercel.app/)
+<a href="https://contando-dinheiro.vercel.app/" target="_blank" rel="noopener noreferrer"><strong>Conheça o ContandoDinheiro →</strong></a>
 
 ## Clareza para cuidar do que é seu
 
@@ -65,11 +72,11 @@ O projeto utiliza autenticação com Google e políticas de acesso no banco de d
 
 ## Experimente antes de começar
 
-Abra o [ContandoDinheiro](https://contando-dinheiro.vercel.app/) e escolha **Explorar demonstração sem login** para conhecer o painel, os lançamentos e os gráficos. Quando quiser organizar suas próprias finanças, entre com sua conta Google.
+Abra o <a href="https://contando-dinheiro.vercel.app/" target="_blank" rel="noopener noreferrer">ContandoDinheiro</a> e escolha **Explorar demonstração sem login** para conhecer o painel, os lançamentos e os gráficos. Quando quiser organizar suas próprias finanças, entre com sua conta Google.
 
 **Dê mais clareza ao seu orçamento, um lançamento de cada vez.**
 
-[**Acessar o aplicativo →**](https://contando-dinheiro.vercel.app/)
+<a href="https://contando-dinheiro.vercel.app/" target="_blank" rel="noopener noreferrer"><strong>Acessar o aplicativo →</strong></a>
 
 ## Tecnologia por trás da experiência
 

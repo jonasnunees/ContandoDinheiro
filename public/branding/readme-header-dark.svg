@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="88" viewBox="0 0 480 88" fill="none">
+  <title>Contando Dinheiro</title>
+  <g transform="translate(0 4)">
+    <path d="M57 17a29 29 0 1 0 0 46" stroke="#16a34a" stroke-width="9" stroke-linecap="round"/>
+    <path d="M57 8v18H39" stroke="#16a34a" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M30 49v-8m11 8V33m11 16V37" stroke="#16a34a" stroke-width="7" stroke-linecap="round"/>
+  </g>
+  <text x="94" y="56" fill="#f0f6fc" font-family="Arial, Helvetica, sans-serif" font-size="36" font-weight="700" letter-spacing="-1">Contando Dinheiro</text>
+</svg>
