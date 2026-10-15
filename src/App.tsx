@@ -31,6 +31,19 @@ function subscribeToNavigation(callback: () => void) {
   return () => window.removeEventListener('hashchange', callback);
 }
 
+function subscribeToScroll(callback: () => void) {
+  window.addEventListener('scroll', callback, { passive: true });
+  window.addEventListener('resize', callback);
+  return () => {
+    window.removeEventListener('scroll', callback);
+    window.removeEventListener('resize', callback);
+  };
+}
+
+function hasScrolledPastFirstScreen() {
+  return window.scrollY >= window.innerHeight;
+}
+
 export default function App() {
   const hash = useSyncExternalStore(subscribeToNavigation, () => window.location.hash);
   if (hash === '#notas-da-versao') return <Suspense fallback={<main className="p-6"><p role="status">Carregando notas da versão...</p></main>}><ReleaseNotes /></Suspense>;
@@ -58,6 +71,7 @@ function FinanceApp() {
 }
 
 function AccountWorkspace({ user, sessionError, onLogout }: { user: AppUser; sessionError: string; onLogout: () => Promise<void> }) {
+  const showBackToTop = useSyncExternalStore(subscribeToScroll, hasScrolledPastFirstScreen, () => false);
   // Conta real começa no painel; convidado começa na apresentação, com opção de explorar a demo.
   const currentDate = new Date();
   const [currentView, setCurrentView] = useState<'landing' | 'dashboard'>(user.isDemo ? 'landing' : 'dashboard');
@@ -145,7 +159,7 @@ function AccountWorkspace({ user, sessionError, onLogout }: { user: AppUser; ses
       />
 
       {/* Área principal com os dados financeiros e avisos de carregamento. */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 space-y-6 pb-24 md:pb-12">
+      <main id="dashboard-content" tabIndex={-1} className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 space-y-6 pb-24 md:pb-12">
         {sessionError && <p role="alert" className="rounded-xl border border-rose-400 p-4 text-rose-700 dark:text-rose-300">{sessionError}</p>}
         {loadError && <div role="alert" className="rounded-xl border border-rose-400 p-4 text-rose-700 dark:text-rose-300">
           <p>{loadError}</p><button type="button" onClick={handleRefresh} disabled={loading} className="mt-2 underline">Tentar novamente</button>
@@ -280,11 +294,17 @@ function AccountWorkspace({ user, sessionError, onLogout }: { user: AppUser; ses
       {/* Atalhos fixos para voltar ao topo e criar um lançamento no celular. */}
       <button
         type="button"
-        onClick={() => window.scrollTo({
+        onClick={() => {
+          document.getElementById('dashboard-content')?.focus({ preventScroll: true });
+          window.scrollTo({
           top: 0,
           behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth',
-        })}
-        className="md:hidden fixed bottom-24 right-6 z-40 w-14 h-14 rounded-full bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-700 shadow-lg flex items-center justify-center cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-600"
+          });
+        }}
+        inert={!showBackToTop}
+        aria-hidden={!showBackToTop}
+        tabIndex={showBackToTop ? 0 : -1}
+        className={`md:hidden fixed bottom-[calc(6rem+env(safe-area-inset-bottom))] right-6 z-30 w-14 h-14 rounded-full bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-500 dark:border-slate-400 shadow-lg flex items-center justify-center cursor-pointer transition-[opacity,transform,visibility] duration-200 ease-out motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-600 ${showBackToTop ? 'visible opacity-100 translate-y-0' : 'invisible opacity-0 translate-y-2 pointer-events-none'}`}
         aria-label="Voltar ao topo"
         title="Voltar ao topo"
       >
@@ -295,14 +315,14 @@ function AccountWorkspace({ user, sessionError, onLogout }: { user: AppUser; ses
           setTransactionToEdit(null);
           setIsTransactionModalOpen(true);
         }}
-        className="md:hidden fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full bg-emerald-700 hover:bg-emerald-800 active:scale-90 text-white flex items-center justify-center shadow-2xl shadow-emerald-950/20 dark:shadow-emerald-950 border border-emerald-400/40 cursor-pointer"
+        className="md:hidden fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom))] right-6 z-30 w-14 h-14 rounded-full bg-emerald-700 hover:bg-emerald-800 active:scale-90 text-white flex items-center justify-center shadow-2xl shadow-emerald-950/20 dark:shadow-emerald-950 border border-emerald-400/40 cursor-pointer"
         aria-label="Nova Transação"
       >
         <Plus className="w-7 h-7" />
       </button>
 
       {/* Rodapé com informações do aplicativo. */}
-      <footer className="border-t border-slate-200 dark:border-slate-900 bg-white dark:bg-slate-950 py-6 px-4 text-center text-xs text-slate-500 transition-colors">
+      <footer className="border-t border-slate-200 dark:border-slate-900 bg-white dark:bg-slate-950 pt-6 pb-[calc(11rem+env(safe-area-inset-bottom))] md:pb-6 px-4 text-center text-xs text-slate-500 transition-colors">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           <p>ContandoDinheiro — Sistema de Gestão Financeira com Supabase & PWA</p>
           <div className="flex flex-wrap items-center justify-center gap-4">

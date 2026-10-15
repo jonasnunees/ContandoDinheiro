@@ -1,0 +1,27 @@
+import { test, expect } from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
+
+test('atalho mobile aparece após uma tela e retorna o foco ao conteúdo', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 500 });
+  await page.goto('/');
+  await page.getByRole('button', { name: /Explorar.*(?:Demonstração|sem login)/i }).first().click();
+  const button = page.locator('button[aria-label="Voltar ao topo"]');
+  await expect(button).toBeHidden();
+  await expect(button).toHaveAttribute('tabindex', '-1');
+  await page.evaluate(() => window.scrollTo(0, 200));
+  await expect(button).toBeHidden();
+  await page.evaluate(() => window.scrollTo(0, innerHeight + 20));
+  await expect(button).toBeVisible();
+  await expect(button).toHaveAttribute('tabindex', '0');
+  const topBounds = await button.boundingBox();
+  const addBounds = await page.getByRole('button', { name: 'Nova Transação', exact: true }).last().boundingBox();
+  expect(topBounds!.height).toBeGreaterThanOrEqual(44);
+  expect(topBounds!.y + topBounds!.height).toBeLessThan(addBounds!.y);
+  const accessibility = await new AxeBuilder({ page }).include('button[aria-label="Voltar ao topo"]').analyze();
+  expect(accessibility.violations).toEqual([]);
+  await button.focus();
+  await page.keyboard.press('Enter');
+  await expect.poll(() => page.evaluate(() => scrollY)).toBe(0);
+  await expect(button).toBeHidden();
+  await expect(page.locator('#dashboard-content')).toBeFocused();
+});
