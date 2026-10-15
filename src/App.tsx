@@ -13,6 +13,7 @@ import { OfflineIndicator } from './components/OfflineIndicator';
 import { LandingPage } from './components/LandingPage';
 import { 
   Plus, 
+  ArrowUp,
   RefreshCw, 
   LayoutDashboard, 
   ListOrdered, 
@@ -276,7 +277,19 @@ function AccountWorkspace({ user, sessionError, onLogout }: { user: AppUser; ses
         </div>
       </main>
 
-      {/* Botão fixo para criar um lançamento no celular. */}
+      {/* Atalhos fixos para voltar ao topo e criar um lançamento no celular. */}
+      <button
+        type="button"
+        onClick={() => window.scrollTo({
+          top: 0,
+          behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth',
+        })}
+        className="md:hidden fixed bottom-24 right-6 z-40 w-14 h-14 rounded-full bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-700 shadow-lg flex items-center justify-center cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-600"
+        aria-label="Voltar ao topo"
+        title="Voltar ao topo"
+      >
+        <ArrowUp className="w-6 h-6" aria-hidden="true" />
+      </button>
       <button
         onClick={() => {
           setTransactionToEdit(null);

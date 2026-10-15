@@ -164,14 +164,6 @@ export const Header: React.FC<HeaderProps> = ({
           <div className="flex items-center gap-1.5 sm:hidden">
             <ThemeToggle />
             <button
-              onClick={onOpenNewTransaction}
-              className="p-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-white shadow-md shadow-emerald-950/20 cursor-pointer"
-              title="Nova Transação"
-              aria-label="Nova Transação"
-            >
-              <Plus className="w-4 h-4" />
-            </button>
-            <button
               aria-expanded={isMobileMenuOpen} aria-controls="mobile-menu" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-800 transition cursor-pointer"
               title={isMobileMenuOpen ? "Fechar menu" : "Abrir menu"}
@@ -300,20 +292,6 @@ export const Header: React.FC<HeaderProps> = ({
                   </button>
                 </div>
               )}
-            </div>
-
-            {/* Atalhos para criar lançamentos e voltar ao período atual. */}
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                onClick={() => {
-                  setIsMobileMenuOpen(false);
-                  onOpenNewTransaction();
-                }}
-                className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold shadow-md shadow-emerald-950/20 transition cursor-pointer"
-              >
-                <Plus className="w-4 h-4" />
-                <span>+ Transação</span>
-              </button>
             </div>
 
             {/* Atalhos de navegação e instalação do aplicativo. */}
