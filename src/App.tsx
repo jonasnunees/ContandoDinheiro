@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useSyncExternalStore } from 'react';
+import { ReleaseNotes } from './components/ReleaseNotes';
 import type { Transaction, FilterState } from './features/finance/types';
 import { useSession } from './features/auth/useSession';
 import type { AppUser } from './features/auth/session';
@@ -22,7 +23,18 @@ import {
   Github
 } from 'lucide-react';
 
+function subscribeToNavigation(callback: () => void) {
+  window.addEventListener('hashchange', callback);
+  return () => window.removeEventListener('hashchange', callback);
+}
+
 export default function App() {
+  const hash = useSyncExternalStore(subscribeToNavigation, () => window.location.hash);
+  if (hash === '#notas-da-versao') return <ReleaseNotes />;
+  return <FinanceApp />;
+}
+
+function FinanceApp() {
   const { user, sessionError, logout } = useSession();
   // Aguarda a confirmação da sessão antes de escolher a tela inicial.
   if (!user) {
@@ -276,6 +288,8 @@ function AccountWorkspace({ user, sessionError, onLogout }: { user: AppUser; ses
       <footer className="border-t border-slate-200 dark:border-slate-900 bg-white dark:bg-slate-950 py-6 px-4 text-center text-xs text-slate-500 transition-colors">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           <p>ContandoDinheiro — Sistema de Gestão Financeira com Supabase & PWA</p>
+          <div className="flex flex-wrap items-center justify-center gap-4">
+          <a href="#notas-da-versao" className="rounded text-slate-600 dark:text-slate-400 hover:text-emerald-700 dark:hover:text-emerald-400">Notas da versão</a>
           <a
             href="https://github.com/jonasnunees/ContandoDinheiro"
             target="_blank"
@@ -286,6 +300,7 @@ function AccountWorkspace({ user, sessionError, onLogout }: { user: AppUser; ses
             <Github className="w-4 h-4 shrink-0" aria-hidden="true" />
             Projeto no GitHub
           </a>
+          </div>
         </div>
       </footer>
 
