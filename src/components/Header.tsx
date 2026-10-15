@@ -150,9 +150,6 @@ export const Header: React.FC<HeaderProps> = ({
                 <h1 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition">
                   ContandoDinheiro
                 </h1>
-                <span className="hidden md:inline-block text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
-                  Supabase + PWA
-                </span>
               </div>
               <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">Controle Financeiro & Dashboard</p>
             </div>
