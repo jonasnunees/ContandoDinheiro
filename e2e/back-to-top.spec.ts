@@ -19,6 +19,18 @@ test('atalho mobile aparece após uma tela e retorna o foco ao conteúdo', async
   expect(topBounds!.y + topBounds!.height).toBeLessThan(addBounds!.y);
   const accessibility = await new AxeBuilder({ page }).include('button[aria-label="Voltar ao topo"]').analyze();
   expect(accessibility.violations).toEqual([]);
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  await expect.poll(async () => {
+    const back = await button.boundingBox();
+    const add = await page.getByRole('button', { name: 'Nova Transação', exact: true }).last().boundingBox();
+    return Math.abs(back!.y - add!.y) < 1 && back!.x + back!.width < add!.x;
+  }).toBe(true);
+  await page.evaluate(() => window.scrollTo(0, innerHeight + 20));
+  await expect.poll(async () => {
+    const back = await button.boundingBox();
+    const add = await page.getByRole('button', { name: 'Nova Transação', exact: true }).last().boundingBox();
+    return back!.y + back!.height < add!.y && Math.abs(back!.x - add!.x) < 1;
+  }).toBe(true);
   await button.focus();
   await page.keyboard.press('Enter');
   await expect.poll(() => page.evaluate(() => scrollY)).toBe(0);
