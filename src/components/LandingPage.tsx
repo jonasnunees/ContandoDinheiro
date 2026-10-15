@@ -207,6 +207,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       </nav>
 
       {/* Apresentação inicial com a proposta do aplicativo e botões de acesso. */}
+      <main>
       <section className="relative overflow-hidden pt-12 pb-16 sm:pt-20 sm:pb-24 px-4 sm:px-8 border-b border-slate-200 dark:border-slate-900">
         {/* Efeitos decorativos de iluminação no fundo. */}
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 sm:w-[600px] h-96 sm:h-[600px] bg-emerald-500/10 blur-[120px] rounded-full pointer-events-none" />
@@ -214,7 +215,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
         <div className="relative max-w-4xl mx-auto text-center space-y-6">
           {/* Selo que destaca uma característica do aplicativo. */}
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-xs sm:text-sm font-semibold">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-800 dark:text-emerald-400 text-xs sm:text-sm font-semibold">
             <Sparkles className="w-3.5 h-3.5" />
             <span>Sistema 100% Gratuito • Login com a Conta Google sem precisar de senha</span>
           </div>
@@ -256,7 +257,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           </div>
 
           {/* Informações curtas sobre o acesso e o uso do aplicativo. */}
-          <div className="pt-6 flex flex-wrap items-center justify-center gap-6 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+          <div className="pt-6 flex flex-wrap items-center justify-center gap-6 text-xs sm:text-sm text-slate-600 dark:text-slate-400">
             <div className="flex items-center gap-2">
               <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -320,7 +321,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
           {/* Lista ilustrativa com lançamentos de exemplo. */}
           <div className="rounded-xl bg-slate-100/70 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800/80 p-3 sm:p-4 space-y-2.5">
-            <div className="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400 px-2">
+            <div className="flex items-center justify-between text-xs font-semibold text-slate-600 dark:text-slate-400 px-2">
               <span>ÚLTIMOS LANÇAMENTOS</span>
               <span>VALOR</span>
             </div>
@@ -477,8 +478,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         </div>
       </section>
 
+      </main>
       {/* Rodapé com informações do aplicativo. */}
-      <footer className="border-t border-slate-200 dark:border-slate-900 bg-white dark:bg-slate-950 py-8 px-4 sm:px-8 text-xs text-slate-500 transition-colors">
+      <footer className="border-t border-slate-200 dark:border-slate-900 bg-white dark:bg-slate-950 py-8 px-4 sm:px-8 text-xs text-slate-600 dark:text-slate-400 transition-colors">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-lg bg-emerald-700 flex items-center justify-center text-white font-bold text-xs">

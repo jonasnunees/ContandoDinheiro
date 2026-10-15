@@ -1,5 +1,4 @@
-import React, { useState, useMemo, useSyncExternalStore } from 'react';
-import { ReleaseNotes } from './components/ReleaseNotes';
+import React, { lazy, Suspense, useState, useMemo, useSyncExternalStore } from 'react';
 import type { Transaction, FilterState } from './features/finance/types';
 import { useSession } from './features/auth/useSession';
 import type { AppUser } from './features/auth/session';
@@ -9,7 +8,6 @@ import { Header } from './components/Header';
 import { SummaryCards } from './features/finance/components/SummaryCards';
 import { TransactionList } from './features/finance/components/TransactionList';
 import { TransactionModal } from './features/finance/components/TransactionModal';
-import { FinancialCharts } from './features/finance/components/FinancialCharts';
 import { AuthModal } from './features/auth/AuthModal';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { LandingPage } from './components/LandingPage';
@@ -23,6 +21,10 @@ import {
   Github
 } from 'lucide-react';
 
+// Os gráficos e o histórico de versões só são baixados quando essas telas são usadas.
+const FinancialCharts = lazy(() => import('./features/finance/components/FinancialCharts').then(module => ({ default: module.FinancialCharts })));
+const ReleaseNotes = lazy(() => import('./components/ReleaseNotes').then(module => ({ default: module.ReleaseNotes })));
+
 function subscribeToNavigation(callback: () => void) {
   window.addEventListener('hashchange', callback);
   return () => window.removeEventListener('hashchange', callback);
@@ -30,7 +32,7 @@ function subscribeToNavigation(callback: () => void) {
 
 export default function App() {
   const hash = useSyncExternalStore(subscribeToNavigation, () => window.location.hash);
-  if (hash === '#notas-da-versao') return <ReleaseNotes />;
+  if (hash === '#notas-da-versao') return <Suspense fallback={<main className="p-6"><p role="status">Carregando notas da versão...</p></main>}><ReleaseNotes /></Suspense>;
   return <FinanceApp />;
 }
 
@@ -39,10 +41,12 @@ function FinanceApp() {
   // Aguarda a confirmação da sessão antes de escolher a tela inicial.
   if (!user) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex items-center justify-center" role="status" aria-live="polite">
-        <RefreshCw className="w-5 h-5 animate-spin mr-2 text-emerald-500" aria-hidden="true" />
-        <span>Carregando sua sessão...</span>
-      </div>
+      <main className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex items-center justify-center">
+        <div role="status" aria-live="polite" className="flex items-center">
+          <RefreshCw className="w-5 h-5 animate-spin mr-2 text-emerald-500" aria-hidden="true" />
+          <span>Carregando sua sessão...</span>
+        </div>
+      </main>
     );
   }
 
@@ -225,7 +229,7 @@ function AccountWorkspace({ user, sessionError, onLogout }: { user: AppUser; ses
               Categorias, Métodos de Pagamento e Fluxo
             </span>
           </div>
-          {!loading && !loadError && <FinancialCharts transactions={filteredTransactions} />}
+          {!loading && !loadError && <Suspense fallback={<p role="status" className="min-h-96 p-6">Carregando gráficos...</p>}><FinancialCharts transactions={filteredTransactions} /></Suspense>}
         </div>
 
         {/* Lista de lançamentos com busca, filtros e ações de criação, edição e exclusão. */}

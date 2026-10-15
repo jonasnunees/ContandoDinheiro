@@ -10,7 +10,7 @@ export const PWAInstallButton: React.FC = () => {
   // Se já está instalado, mostra essa informação no lugar do convite.
   if (isInstalled) {
     return (
-      <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-400 font-medium">
+      <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-800 dark:text-emerald-400 font-medium">
         <CheckCircle2 className="w-3.5 h-3.5" />
         <span>PWA Instalado</span>
       </div>
@@ -37,7 +37,7 @@ export const PWAInstallButton: React.FC = () => {
       <>
         <button
           onClick={() => setShowIOSGuide(true)}
-          className="flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800/80 px-3 py-1.5 text-xs font-medium text-slate-300 hover:bg-slate-700 hover:text-white transition cursor-pointer"
+          className="flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-300 hover:bg-slate-700 hover:text-white transition cursor-pointer"
         >
           <Smartphone className="w-3.5 h-3.5 text-emerald-400" />
           <span>Instalar no iPhone</span>
@@ -52,7 +52,7 @@ export const PWAInstallButton: React.FC = () => {
                 </h3>
                 <button
                   aria-label="Fechar instruções de instalação" onClick={() => setShowIOSGuide(false)}
-                  className="p-1 rounded-lg text-slate-600 dark:text-slate-400 hover:text-white hover:bg-slate-800"
+                  className="p-1 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -95,7 +95,7 @@ export const PWAInstallButton: React.FC = () => {
       onClick={() => {
         alert('Para instalar o app:\n• No Chrome/Edge: Clique no ícone de instalar no canto superior direito da barra de endereço.\n• No celular Android: Toque nos três pontos do navegador e selecione "Adicionar à tela inicial" ou "Instalar aplicativo".');
       }}
-      className="hidden md:flex items-center gap-1.5 rounded-xl border border-slate-800 bg-slate-900/60 px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white hover:border-slate-700 transition cursor-pointer"
+      className="hidden md:flex items-center gap-1.5 rounded-xl border border-slate-800 bg-slate-900 px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white hover:border-slate-700 transition cursor-pointer"
       title="Dica de instalação"
     >
       <Download className="w-3.5 h-3.5 text-emerald-400" />

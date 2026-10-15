@@ -10,10 +10,36 @@ export default defineConfig(() => {
     plugins: [
       react(),
       tailwindcss(),
+      {
+        name: 'inline-app-styles',
+        // O estilo da primeira tela acompanha o HTML, evitando uma espera extra na rede.
+        apply: 'build',
+        transformIndexHtml: {
+          order: 'post',
+          handler(html, context) {
+            return html.replace(/<link\b[^>]*rel="stylesheet"[^>]*>/g, tag => {
+              const href = tag.match(/href="([^"]+)"/)?.[1];
+              const asset = href && context.bundle?.[href.replace(/^\//, '')];
+              if (!asset || asset.type !== 'asset' || typeof asset.source !== 'string') return tag;
+              return `<style>${asset.source.replace(/<\/style/gi, '<\\/style')}</style>`;
+            });
+          },
+        },
+      },
       VitePWA({
         // Atualiza o service worker automaticamente. O cache é dos arquivos da aplicação;
         // esta configuração não cria uma fila offline nem um cache de transações da conta.
         registerType: 'autoUpdate',
+        workbox: {
+          // Essas telas são guardadas para uso offline após o primeiro acesso,
+          // em vez de disputar a conexão com a página inicial na instalação.
+          globIgnores: ['**/FinancialCharts-*.js', '**/ReleaseNotes-*.js', '**/*.css'],
+          runtimeCaching: [{
+            urlPattern: /\/assets\/(?:FinancialCharts|ReleaseNotes)-[^/]+\.js$/,
+            handler: 'CacheFirst',
+            options: { cacheName: 'optional-screens', expiration: { maxEntries: 10 } },
+          }],
+        },
         includeAssets: ['icon.svg', 'apple-touch-icon.png', 'pwa-192x192.png', 'pwa-512x512.png'],
         // Define nome, ícones e aparência do aplicativo instalado.
         manifest: {

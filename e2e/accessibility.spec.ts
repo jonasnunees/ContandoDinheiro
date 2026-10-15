@@ -1,6 +1,26 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
+for (const theme of ['light', 'dark']) {
+  for (const width of [390, 1280]) {
+    test(`página inicial acessível no tema ${theme} com largura ${width}`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 844 });
+      await page.addInitScript(value => localStorage.setItem('gf_app_theme', value), theme);
+      const chartRequests: string[] = [];
+      page.on('request', request => {
+        if (request.url().includes('FinancialCharts')) chartRequests.push(request.url());
+      });
+      await page.goto('/');
+      await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+      await expect(page.getByRole('main')).toHaveCount(1);
+      const results = await new AxeBuilder({ page }).analyze();
+      expect(results.violations.map(v => ({ id: v.id, nodes: v.nodes.map(n => n.html) }))).toEqual([]);
+      expect(chartRequests).toEqual([]);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    });
+  }
+}
+
 // Exercita a interface real em modo demo: foco, validação, gravação local e alternativa aos gráficos.
 // axe verifica regras automatizáveis; as expectativas de teclado conferem o ciclo de foco do modal.
 test('fluxo demonstrativo acessível: teclado, valores, gráficos e persistência', async ({ page }) => {

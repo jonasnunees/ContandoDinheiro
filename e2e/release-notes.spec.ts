@@ -8,6 +8,8 @@ test('notas públicas em modo claro com navegação e preferência de tema prese
   await page.getByRole('link', { name: 'Notas da versão', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Notas da versão', exact: true })).toBeFocused();
   await expect(page.getByRole('heading', { name: 'Versão 1.0', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Versão 1.0.1', exact: true })).toBeVisible();
+  await expect(page.locator('article').first()).toHaveAccessibleName('Versão 1.0.1');
   await expect(page.locator('main').locator('..')).toHaveCSS('color-scheme', 'light');
   await expect(page.locator('main').locator('..')).toHaveCSS('background-color', 'oklch(0.984 0.003 247.858)');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
