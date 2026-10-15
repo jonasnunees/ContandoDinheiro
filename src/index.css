@@ -26,3 +26,17 @@ button:disabled { cursor: wait; opacity: .6; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
 }
+
+/* Anima apenas o cartão sob o ponteiro, sem deslocar a grade ao redor. */
+.card-lift {
+  transition: translate 250ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 250ms ease, border-color 250ms ease,
+    background-color 250ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .card-lift:hover {
+    translate: 0 -5px;
+    box-shadow: 0 12px 24px -12px rgb(15 23 42 / 25%);
+  }
+}

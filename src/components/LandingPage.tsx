@@ -297,7 +297,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
           {/* Cartões de exemplo que mostram como os totais aparecerão no painel. */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-6">
-            <div className="rounded-xl bg-slate-50 dark:bg-slate-950 p-4 border border-slate-200 dark:border-slate-800">
+            <div className="card-lift rounded-xl bg-slate-50 dark:bg-slate-950 p-4 border border-slate-200 dark:border-slate-800">
               <span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 uppercase">Receitas do Mês</span>
               <div className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mt-1">R$ 8.135,50</div>
               <span className="text-[11px] text-emerald-700 dark:text-emerald-400 flex items-center gap-1 mt-1">
@@ -305,13 +305,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               </span>
             </div>
 
-            <div className="rounded-xl bg-slate-50 dark:bg-slate-950 p-4 border border-slate-200 dark:border-slate-800">
+            <div className="card-lift rounded-xl bg-slate-50 dark:bg-slate-950 p-4 border border-slate-200 dark:border-slate-800">
               <span className="text-[11px] font-semibold text-rose-700 dark:text-rose-400 uppercase">Despesas do Mês</span>
               <div className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mt-1">R$ 3.820,00</div>
               <span className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 block">Alimentação, Moradia, Transporte</span>
             </div>
 
-            <div className="rounded-xl bg-slate-50 dark:bg-slate-950 p-4 border border-slate-200 dark:border-slate-800">
+            <div className="card-lift rounded-xl bg-slate-50 dark:bg-slate-950 p-4 border border-slate-200 dark:border-slate-800">
               <span className="text-[11px] font-semibold text-blue-600 dark:text-blue-400 uppercase">Saldo Positivo</span>
               <div className="text-xl sm:text-2xl font-black text-emerald-700 dark:text-emerald-400 mt-1">R$ 4.315,50</div>
               <span className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 block">53% de economia poupada</span>
@@ -357,7 +357,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Explica o primeiro benefício. */}
-          <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 space-y-4 hover:border-slate-300 dark:hover:border-slate-700 transition shadow-sm">
+          <div className="card-lift rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 space-y-4 hover:border-slate-300 dark:hover:border-slate-700 transition shadow-sm">
             <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 flex items-center justify-center">
               <Wallet className="w-6 h-6" />
             </div>
@@ -368,7 +368,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           </div>
 
           {/* Explica o segundo benefício. */}
-          <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 space-y-4 hover:border-slate-300 dark:hover:border-slate-700 transition shadow-sm">
+          <div className="card-lift rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 space-y-4 hover:border-slate-300 dark:hover:border-slate-700 transition shadow-sm">
             <div className="w-12 h-12 rounded-xl bg-teal-500/10 border border-teal-500/20 text-teal-700 dark:text-teal-400 flex items-center justify-center">
               <PieChart className="w-6 h-6" />
             </div>
@@ -379,7 +379,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           </div>
 
           {/* Explica o terceiro benefício. */}
-          <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 space-y-4 hover:border-slate-300 dark:hover:border-slate-700 transition shadow-sm">
+          <div className="card-lift rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 space-y-4 hover:border-slate-300 dark:hover:border-slate-700 transition shadow-sm">
             <div className="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center">
               <Smartphone className="w-6 h-6" />
             </div>
@@ -404,7 +404,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center sm:text-left">
-            <div className="p-4 rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm">
+            <div className="card-lift p-4 rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm">
               <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-emerald-500 text-slate-950 font-black text-sm">
                 1
               </span>
@@ -414,7 +414,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               </p>
             </div>
 
-            <div className="p-4 rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm">
+            <div className="card-lift p-4 rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm">
               <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-emerald-500 text-slate-950 font-black text-sm">
                 2
               </span>
@@ -424,7 +424,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               </p>
             </div>
 
-            <div className="p-4 rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm">
+            <div className="card-lift p-4 rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm">
               <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-emerald-500 text-slate-950 font-black text-sm">
                 3
               </span>
