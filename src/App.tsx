@@ -76,16 +76,29 @@ function AccountWorkspace({ user, sessionError, onLogout }: { user: AppUser; ses
   const currentDate = new Date();
   const [currentView, setCurrentView] = useState<'landing' | 'dashboard'>(user.isDemo ? 'landing' : 'dashboard');
   const footerRef = useRef<HTMLElement>(null);
-  const [isFooterVisible, setIsFooterVisible] = useState(false);
+  const [footerClearance, setFooterClearance] = useState(0);
+  const isFooterVisible = footerClearance > 0;
+  const floatingButtonStyle = {
+    bottom: `max(calc(1.5rem + env(safe-area-inset-bottom)), ${footerClearance}px)`,
+  };
 
   useEffect(() => {
     const footer = footerRef.current;
     if (!footer) return;
-    const observer = new IntersectionObserver(([entry]) => {
-      setIsFooterVisible(entry.isIntersecting);
-    });
-    observer.observe(footer);
-    return () => observer.disconnect();
+    const updatePosition = () => {
+      const top = footer.getBoundingClientRect().top;
+      setFooterClearance(top < window.innerHeight ? window.innerHeight - top + 16 : 0);
+    };
+    const observer = new ResizeObserver(updatePosition);
+    observer.observe(document.body);
+    window.addEventListener('scroll', updatePosition, { passive: true });
+    window.addEventListener('resize', updatePosition);
+    updatePosition();
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('scroll', updatePosition);
+      window.removeEventListener('resize', updatePosition);
+    };
   }, [currentView]);
 
   const [currentMonth, setCurrentMonth] = useState<number>(currentDate.getMonth());
@@ -316,25 +329,27 @@ function AccountWorkspace({ user, sessionError, onLogout }: { user: AppUser; ses
         inert={!showBackToTop}
         aria-hidden={!showBackToTop}
         tabIndex={showBackToTop ? 0 : -1}
-        className={`md:hidden fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom))] right-6 z-30 w-14 h-14 rounded-full bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-500 dark:border-slate-400 shadow-lg flex items-center justify-center cursor-pointer transition-[opacity,translate,visibility] duration-300 ease-in-out motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-600 ${isFooterVisible ? '-translate-x-18 translate-y-0' : 'translate-x-0 -translate-y-18'} ${showBackToTop ? 'visible opacity-100' : 'invisible opacity-0 pointer-events-none'}`}
+        style={floatingButtonStyle}
+        className={`md:hidden fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom))] right-6 z-30 w-14 h-14 rounded-full bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-500 dark:border-slate-400 shadow-lg flex items-center justify-center cursor-pointer transition-[opacity,translate,visibility,bottom] duration-300 ease-in-out motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-600 ${isFooterVisible ? '-translate-x-18 translate-y-0' : 'translate-x-0 -translate-y-18'} ${showBackToTop ? 'visible opacity-100' : 'invisible opacity-0 pointer-events-none'}`}
         aria-label="Voltar ao topo"
         title="Voltar ao topo"
       >
         <ArrowUp className="w-6 h-6" aria-hidden="true" />
       </button>
       <button
+        style={floatingButtonStyle}
         onClick={() => {
           setTransactionToEdit(null);
           setIsTransactionModalOpen(true);
         }}
-        className="md:hidden fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom))] right-6 z-30 w-14 h-14 rounded-full bg-emerald-700 hover:bg-emerald-800 active:scale-90 text-white flex items-center justify-center shadow-2xl shadow-emerald-950/20 dark:shadow-emerald-950 border border-emerald-400/40 cursor-pointer"
+        className="md:hidden fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom))] right-6 z-30 w-14 h-14 rounded-full bg-emerald-700 hover:bg-emerald-800 active:scale-90 text-white flex items-center justify-center shadow-2xl shadow-emerald-950/20 dark:shadow-emerald-950 border border-emerald-400/40 cursor-pointer transition-[bottom] duration-300 ease-in-out motion-reduce:transition-none"
         aria-label="Nova Transação"
       >
         <Plus className="w-7 h-7" />
       </button>
 
       {/* Rodapé com informações do aplicativo. */}
-      <footer ref={footerRef} className="border-t border-slate-200 dark:border-slate-900 bg-white dark:bg-slate-950 pt-6 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-6 px-4 text-center text-xs text-slate-500 transition-colors">
+      <footer ref={footerRef} className="border-t border-slate-200 dark:border-slate-900 bg-white dark:bg-slate-950 py-6 px-4 text-center text-xs text-slate-500 transition-colors">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           <p>ContandoDinheiro — Sistema de Gestão Financeira com Supabase & PWA</p>
           <div className="flex flex-wrap items-center justify-center gap-4">

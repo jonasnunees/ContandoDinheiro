@@ -23,7 +23,9 @@ test('atalho mobile aparece após uma tela e retorna o foco ao conteúdo', async
   await expect.poll(async () => {
     const back = await button.boundingBox();
     const add = await page.getByRole('button', { name: 'Nova Transação', exact: true }).last().boundingBox();
-    return Math.abs(back!.y - add!.y) < 1 && back!.x + back!.width < add!.x;
+    const footer = await page.locator('footer').boundingBox();
+    return Math.abs(back!.y - add!.y) < 1 && back!.x + back!.width < add!.x
+      && Math.abs(footer!.y - (add!.y + add!.height) - 16) < 1;
   }).toBe(true);
   await page.evaluate(() => window.scrollTo(0, innerHeight + 20));
   await expect.poll(async () => {
