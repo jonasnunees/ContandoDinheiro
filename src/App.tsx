@@ -76,10 +76,48 @@ function AccountWorkspace({ user, sessionError, onLogout }: { user: AppUser; ses
   const currentDate = new Date();
   const [currentView, setCurrentView] = useState<'landing' | 'dashboard'>(user.isDemo ? 'landing' : 'dashboard');
   const footerRef = useRef<HTMLElement>(null);
+  const scrollAnimation = useRef<number | null>(null);
   const [footerClearance, setFooterClearance] = useState(0);
   const isFooterVisible = footerClearance > 0;
   const floatingButtonStyle = {
     bottom: `max(calc(1.5rem + env(safe-area-inset-bottom)), ${footerClearance}px)`,
+  };
+
+  useEffect(() => {
+    const cancelScroll = () => {
+      if (scrollAnimation.current !== null) cancelAnimationFrame(scrollAnimation.current);
+      scrollAnimation.current = null;
+    };
+    window.addEventListener('wheel', cancelScroll, { passive: true });
+    window.addEventListener('touchstart', cancelScroll, { passive: true });
+    window.addEventListener('keydown', cancelScroll);
+    return () => {
+      cancelScroll();
+      window.removeEventListener('wheel', cancelScroll);
+      window.removeEventListener('touchstart', cancelScroll);
+      window.removeEventListener('keydown', cancelScroll);
+    };
+  }, []);
+
+  const scrollBackToTop = () => {
+    document.getElementById('dashboard-content')?.focus({ preventScroll: true });
+    if (scrollAnimation.current !== null) cancelAnimationFrame(scrollAnimation.current);
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      scrollAnimation.current = null;
+      window.scrollTo({ top: 0, behavior: 'instant' });
+      return;
+    }
+    const startY = window.scrollY;
+    const duration = Math.min(1800, 1200 + startY * 0.15);
+    const startTime = performance.now();
+    const animate = (now: number) => {
+      const progress = Math.min(1, (now - startTime) / duration);
+      // Curva cosseno: começa devagar e freia gradualmente ao chegar ao topo.
+      const eased = (1 - Math.cos(Math.PI * progress)) / 2;
+      window.scrollTo({ top: startY * (1 - eased), behavior: 'instant' });
+      scrollAnimation.current = progress < 1 ? requestAnimationFrame(animate) : null;
+    };
+    scrollAnimation.current = requestAnimationFrame(animate);
   };
 
   useEffect(() => {
@@ -319,13 +357,7 @@ function AccountWorkspace({ user, sessionError, onLogout }: { user: AppUser; ses
       {/* Atalhos fixos para voltar ao topo e criar um lançamento no celular. */}
       <button
         type="button"
-        onClick={() => {
-          document.getElementById('dashboard-content')?.focus({ preventScroll: true });
-          window.scrollTo({
-          top: 0,
-          behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth',
-          });
-        }}
+        onClick={scrollBackToTop}
         inert={!showBackToTop}
         aria-hidden={!showBackToTop}
         tabIndex={showBackToTop ? 0 : -1}

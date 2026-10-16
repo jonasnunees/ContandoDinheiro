@@ -39,3 +39,25 @@ test('atalho mobile aparece após uma tela e retorna o foco ao conteúdo', async
   await expect(button).toBeHidden();
   await expect(page.locator('#dashboard-content')).toBeFocused();
 });
+
+test('retorno animado sobe gradualmente e permite interromper com toque', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.setViewportSize({ width: 390, height: 500 });
+  await page.goto('/');
+  await page.getByRole('button', { name: /Explorar.*(?:Demonstração|sem login)/i }).first().click();
+  await page.evaluate(() => window.scrollTo(0, 600));
+  const button = page.getByRole('button', { name: 'Voltar ao topo', exact: true });
+  await button.click();
+  await expect.poll(() => page.evaluate(() => scrollY)).toBeLessThan(590);
+  expect(await page.evaluate(() => scrollY)).toBeGreaterThan(0);
+  await expect.poll(() => page.evaluate(() => scrollY)).toBe(0);
+  await page.evaluate(() => window.scrollTo(0, 600));
+  await button.click();
+  await expect.poll(() => page.evaluate(() => scrollY)).toBeLessThan(590);
+  const stoppedAt = await page.evaluate(() => {
+    window.dispatchEvent(new Event('touchstart'));
+    return scrollY;
+  });
+  await page.waitForTimeout(250);
+  expect(await page.evaluate(() => scrollY)).toBe(stoppedAt);
+});
