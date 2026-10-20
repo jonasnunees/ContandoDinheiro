@@ -1,6 +1,6 @@
 import { localDate, isTransaction } from './validation';
 import { readStorage, writeStorage } from '../../services/storage';
-import type { Transaction } from './types';
+import type { Transaction, TransactionSeries } from './types';
 const STORAGE_KEYS = { LOCAL_TRANSACTIONS: 'gf_local_transactions' };
 
 // Exemplos datados no mês em que este módulo é carregado. Não são dados de uma conta real.
@@ -111,18 +111,32 @@ function demoTransactions(): Transaction[] {
 // Sem conteúdo salvo, oferece exemplos. Uma lista vazia salva continua vazia:
 // excluir todos os lançamentos não deve recriar a demonstração.
 // JSON inválido gera erro e permanece intacto para permitir recuperação.
-export function getLocalTransactions(): Transaction[] {
+export function getLocalState(): { transactions: Transaction[]; series: TransactionSeries[] } {
   const raw = readStorage(STORAGE_KEYS.LOCAL_TRANSACTIONS);
-  if (!raw) return demoTransactions();
+  if (!raw) return { transactions: demoTransactions(), series: [] };
   try {
     const parsed: unknown = JSON.parse(raw);
-    if (Array.isArray(parsed) && parsed.every(isTransaction)) return parsed;
+    if (Array.isArray(parsed) && parsed.every(isTransaction)) return { transactions: parsed, series: [] };
+    if (parsed && typeof parsed === 'object' && 'transactions' in parsed && 'series' in parsed &&
+      Array.isArray(parsed.transactions) && parsed.transactions.every(isTransaction) && Array.isArray(parsed.series) && parsed.series.every(s => s && typeof s.id === 'string' &&
+        ['monthly', 'installments'].includes(s.mode) && Number.isInteger(s.next) && s.next >= 0 &&
+        (s.base === undefined || Number.isInteger(s.base) && s.base >= 0) &&
+        (s.mode !== 'installments' || Number.isInteger(s.count) && s.count >= 2 && s.count <= 360) &&
+        (s.end === undefined || typeof s.end === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s.end)) &&
+        isTransaction({ ...s.template, id: s.id, user_id: 'demo-user-id' }))) {
+      return parsed as { transactions: Transaction[]; series: TransactionSeries[] };
+    }
   } catch { /* Preserva o conteúdo original para permitir recuperação. */ }
   throw new Error('Os dados da demonstração estão inválidos. O conteúdo salvo foi preservado; não foi substituído por exemplos.');
 }
 
 // Verifica os lançamentos e os transforma em texto JSON para salvar no navegador.
+export function getLocalTransactions(): Transaction[] { return getLocalState().transactions; }
+export function saveLocalState(state: ReturnType<typeof getLocalState>) {
+  if (!state.transactions.every(isTransaction)) throw new Error('Dados de demonstração inválidos.');
+  writeStorage(STORAGE_KEYS.LOCAL_TRANSACTIONS, JSON.stringify(state));
+}
 export function saveLocalTransactions(transactions: Transaction[]) {
   if (!transactions.every(isTransaction)) throw new Error('Dados de demonstração inválidos.');
-  writeStorage(STORAGE_KEYS.LOCAL_TRANSACTIONS, JSON.stringify(transactions));
+  saveLocalState({ ...getLocalState(), transactions });
 }

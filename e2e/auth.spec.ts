@@ -10,7 +10,7 @@ window.addEventListener('test-auth', event => {
   failSignOut = detail.failSignOut || false;
   callback(detail.event, user ? { user } : null);
 });
-const client = { auth: {
+const client = { async rpc() { return { data: null, error: null }; }, auth: {
   onAuthStateChange(fn) {
     callback = fn;
     setTimeout(() => fn('INITIAL_SESSION', user ? { user } : null), 0);

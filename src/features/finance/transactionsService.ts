@@ -1,7 +1,8 @@
+import { materialize, editFollowing, validateSchedule } from './scheduling';
 import { localDate, isTransaction } from './validation';
 import { requireAuthenticatedClient } from '../../services/supabase';
-import { getLocalTransactions, saveLocalTransactions } from './demoStorage';
-import type { Transaction, TransactionDraft, TransactionUpdate, TransactionStatus, TransactionPeriod } from './types';
+import { getLocalTransactions, saveLocalTransactions, getLocalState, saveLocalState } from './demoStorage';
+import type { Transaction, TransactionDraft, TransactionUpdate, TransactionStatus, TransactionPeriod, ScheduleOptions, TransactionSeries } from './types';
 
 // Separa apenas os campos editáveis, evitando que a atualização troque o dono ou o ID.
 function editableTransactionFields(input: TransactionUpdate) {
@@ -13,6 +14,8 @@ function editableTransactionFields(input: TransactionUpdate) {
 export async function fetchTransactionsService(userId: string, isDemo: boolean, period?: TransactionPeriod): Promise<Transaction[]> {
   if (!isDemo) {
     const { client, user } = await requireAuthenticatedClient(userId);
+    const { error: scheduleError } = await client.rpc('materialize_transaction_series');
+    if (scheduleError) throw scheduleError;
     const result: Transaction[] = [];
     let offset = 0;
     // Busca em páginas e avança pela quantidade recebida, até não haver mais registros.
@@ -38,7 +41,14 @@ export async function fetchTransactionsService(userId: string, isDemo: boolean, 
   }
 
   // Na demonstração, usa a lista salva neste navegador.
-  return getLocalTransactions().filter(t => t.user_id === userId || userId === 'demo-user-id');
+  const state = getLocalState();
+  let changed = false;
+  for (const series of state.series) {
+    const generated = materialize(series);
+    if (generated.length) { state.transactions.push(...generated); changed = true; }
+  }
+  if (changed) saveLocalState(state);
+  return state.transactions.filter(t => t.user_id === userId || userId === 'demo-user-id');
 }
 
 // Cria um lançamento no banco ou na lista local, conforme o modo de acesso.
@@ -148,4 +158,31 @@ export async function toggleStatusService(
   const nextStatus: TransactionStatus = currentStatus === 'pago' ? 'pendente' : 'pago';
   await updateTransactionService(id, { status: nextStatus }, isDemo, expectedUserId);
   return nextStatus;
+}
+
+// Série e ocorrências são persistidas juntas; erros revertem a operação inteira.
+export async function saveScheduledTransaction(draft: TransactionDraft, options: ScheduleOptions, isDemo: boolean, userId: string, id?: string): Promise<void> {
+  validateSchedule(draft, options);
+  if (!id && options.mode === 'single') { await addTransactionService(draft, isDemo, userId); return; }
+  if (id && options.scope !== 'following' && !options.cancel) { await updateTransactionService(id, draft, isDemo, userId); return; }
+  if (!isDemo) {
+    const { client } = await requireAuthenticatedClient(userId);
+    const { error } = await client.rpc('save_transaction_series', {
+      draft: editableTransactionFields(draft), options, transaction_id: id ?? null,
+    });
+    if (error) throw error;
+    return;
+  }
+  const state = getLocalState();
+  if (id) {
+    const selected = state.transactions.find(row => row.id === id);
+    const series = state.series.find(row => row.id === selected?.serie_id);
+    if (!selected || !series) throw new Error('Série não encontrada.');
+    state.transactions = editFollowing(state.transactions, series, selected, draft, options.cancel);
+  } else {
+    const series: TransactionSeries = { id: crypto.randomUUID(), template: draft, mode: options.mode as TransactionSeries['mode'], count: options.count, end: options.end, next: 0 };
+    state.series.push(series);
+    state.transactions.push(...materialize(series));
+  }
+  saveLocalState(state);
 }

@@ -106,3 +106,27 @@ Construído com **React e TypeScript**, o ContandoDinheiro combina **Tailwind CS
 Criado por [Jonas Nunes](https://github.com/jonasnunees), o projeto recebe sugestões, correções e contribuições da comunidade. Compartilhe sua ideia em uma [issue](https://github.com/jonasnunees/ContandoDinheiro/issues) ou envie um pull request.
 
 Disponível sob a [licença MIT](LICENSE).
+
+
+## Lançamentos recorrentes e parcelados
+
+No formulário de nova transação, escolha **Mensal** ou **Parcelado mensalmente** em Repetição.
+No parcelamento, informe o valor total e de 2 a 360 parcelas. Os centavos são distribuídos sem alterar o total.
+Na edição, o valor corresponde a uma ocorrência; escolha alterar somente ela ou ela e as próximas pendentes.
+A mesma tela permite cancelar as próximas pendências, preservando as ocorrências pagas.
+
+Datas no fim do mês são ajustadas ao último dia disponível, mantendo o dia original nos meses seguintes.
+Ocorrências futuras começam pendentes e não alteram o saldo realizado. Recorrências sem término mantêm
+12 meses disponíveis a partir do mês atual, atualizados ao carregar o painel. Recorrências com término
+(até 30 anos) e compras parceladas geram todas as ocorrências no cadastro.
+
+Para instalar esta versão em outro ambiente, aplique as migrações
+`supabase/migrations/20261020173827_recurring_transactions.sql` e
+`supabase/migrations/20261020173940_index_transaction_series.sql`, após as migrações anteriores.
+Ela cria a estrutura de séries, as regras de acesso por proprietário e as operações atômicas de geração,
+edição e cancelamento. A aplicação depende dessa migração para carregar lançamentos de contas reais.
+As duas migrações foram aplicadas ao Supabase do ContandoDinheiro em 20/10/2026.
+O modo de demonstração migra automaticamente os dados locais existentes, preservando-os.
+
+Verificações: `npm test` (inclui regras de recorrência e PostgreSQL local), `npm run test:e2e`
+(fluxos no navegador), `npm run lint` e `npm run build`.

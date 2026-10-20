@@ -1,3 +1,4 @@
+import { occurrenceLabel } from '../scheduling';
 import { localDate } from '../validation';
 import React, { useState, useRef } from 'react';
 import { Transaction, TransactionStatus, FilterState } from '../types';
@@ -85,7 +86,7 @@ export const TransactionList: React.FC<TransactionListProps> = ({
   // Monta uma tabela dos lançamentos exibidos e cria um arquivo CSV para baixar.
   const handleExportCSV = () => {
     if (transactions.length === 0) return;
-    const header = ['ID', 'Data', 'Descrição', 'Tipo', 'Categoria', 'Forma de Pagamento', 'Valor', 'Status'];
+    const header = ['ID', 'Data', 'Descrição', 'Tipo', 'Categoria', 'Forma de Pagamento', 'Valor', 'Status', 'Recorrência / Parcela'];
     const rows = transactions.map((t) => [
       t.id,
       t.data,
@@ -95,6 +96,7 @@ export const TransactionList: React.FC<TransactionListProps> = ({
       t.forma_pagamento,
       t.valor.toFixed(2),
       t.status,
+      occurrenceLabel(t),
     ]);
     const objectUrl = URL.createObjectURL(new Blob([serializeCSV([header, ...rows])], { type: 'text/csv;charset=utf-8' }));
     const link = document.createElement('a');
@@ -228,7 +230,7 @@ export const TransactionList: React.FC<TransactionListProps> = ({
 
                       {/* Descrição */}
                       <td className="py-3.5 px-4 font-semibold text-slate-900 dark:text-white">
-                        {tx.descricao}
+                        {tx.descricao}{tx.serie_id && <span className="ml-2 text-xs font-normal">({occurrenceLabel(tx)})</span>}
                       </td>
 
                       {/* Selo colorido que identifica a categoria. */}
@@ -354,7 +356,7 @@ export const TransactionList: React.FC<TransactionListProps> = ({
                         )}
                       </div>
                       <div>
-                        <h3 className="text-sm font-bold text-slate-900 dark:text-white">{tx.descricao}</h3>
+                        <h3 className="text-sm font-bold text-slate-900 dark:text-white">{tx.descricao}{tx.serie_id && <span className="ml-2 text-xs font-normal">({occurrenceLabel(tx)})</span>}</h3>
                         <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                           <span>{formatDate(tx.data)}</span>
                           <span>•</span>

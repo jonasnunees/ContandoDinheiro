@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AppUser } from '../auth/session';
-import type { Transaction, TransactionDraft, TransactionStatus } from './types';
-import { fetchTransactionsService, addTransactionService, updateTransactionService,
+import type { Transaction, TransactionDraft, TransactionStatus, ScheduleOptions } from './types';
+import { fetchTransactionsService, saveScheduledTransaction,
   deleteTransactionService, toggleStatusService } from './transactionsService';
 
 // Coordena leitura, alterações e recarga dos lançamentos da conta e do período selecionados.
@@ -50,9 +50,8 @@ export function useTransactions(user: AppUser, month: number, year: number) {
   // Com ID, edita; sem ID, cria. Após cada alteração confirmada, relê a lista
   // para refletir a persistência e os filtros do período, sem atualização otimista.
   // Falhas de gravação são propagadas ao formulário; falhas de leitura viram loadError.
-  const saveTransaction = async (data: TransactionDraft, id?: string) => {
-    if (id) await updateTransactionService(id, data, user.isDemo, user.id);
-    else await addTransactionService(data, user.isDemo, user.id);
+  const saveTransaction = async (data: TransactionDraft, id?: string, options: ScheduleOptions = { mode: 'single' }) => {
+    await saveScheduledTransaction(data, options, user.isDemo, user.id, id);
     await loadTransactions();
   };
   const deleteTransaction = async (id: string) => {

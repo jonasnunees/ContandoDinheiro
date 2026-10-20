@@ -26,7 +26,11 @@ export function parseMoney(input: string): number {
 export function isTransaction(value: unknown): value is Transaction {
   if (!value || typeof value !== 'object') return false;
   const tx = value as Record<string, unknown>;
-  return (tx.created_at === undefined || typeof tx.created_at === 'string') && typeof tx.id === 'string' && typeof tx.user_id === 'string' &&
+  const seriesValid = tx.serie_id == null
+    ? tx.ocorrencia == null && tx.parcelas == null
+    : typeof tx.serie_id === 'string' && Number.isInteger(tx.ocorrencia) && Number(tx.ocorrencia) >= 0 &&
+      (tx.parcelas == null || Number.isInteger(tx.parcelas) && Number(tx.parcelas) >= 2 && Number(tx.parcelas) <= 360 && Number(tx.ocorrencia) < Number(tx.parcelas));
+  return seriesValid && (tx.created_at === undefined || typeof tx.created_at === 'string') && typeof tx.id === 'string' && typeof tx.user_id === 'string' &&
     typeof tx.descricao === 'string' && tx.descricao.trim().length > 0 &&
     typeof tx.valor === 'number' && Number.isFinite(tx.valor) && tx.valor > 0 && tx.valor <= 9999999999.99 &&
     ['receita', 'despesa'].includes(String(tx.tipo)) && ['pago', 'pendente'].includes(String(tx.status)) &&

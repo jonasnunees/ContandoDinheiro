@@ -23,6 +23,7 @@ async function loadServices({ env = {}, authenticated = true, pages = [[]], muta
   query.range = (...args) => { single = false; calls.push(['range', ...args]); return query; };
   query.then = resolve => resolve({ data: single ? mutation : pages.shift() ?? [], error: null });
   const client = {
+    rpc: async (...args) => { calls.push(['rpc', ...args]); return { data: null, error: null }; },
     auth: { getUser: async () => ({ data: { user: authenticated ? user : null }, error: null }), signInWithOAuth: async () => ({ data: oauth, error: null }) },
     from: table => { calls.push(['from', table]); return query; },
   };

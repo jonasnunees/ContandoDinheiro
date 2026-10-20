@@ -19,6 +19,9 @@ export interface Transaction {
   status: TransactionStatus;
   categoria: Category;
   created_at?: string;
+  serie_id?: string | null;
+  ocorrencia?: number | null;
+  parcelas?: number | null;
 }
 
 // Agrupa os totais calculados para os cartões do painel.
@@ -40,7 +43,24 @@ export interface FilterState {
 }
 
 // Um formulário só envia campos editáveis: identidade, proprietário e criação vêm do serviço/banco.
-export type TransactionDraft = Omit<Transaction, 'id' | 'created_at' | 'user_id'>;
+export type TransactionDraft = Omit<Transaction, 'id' | 'created_at' | 'user_id' | 'serie_id' | 'ocorrencia' | 'parcelas'>;
+export interface ScheduleOptions {
+  mode: 'single' | 'monthly' | 'installments';
+  count?: number;
+  end?: string;
+  scope?: 'one' | 'following';
+  cancel?: boolean;
+}
+export interface TransactionSeries {
+  id: string;
+  template: TransactionDraft;
+  mode: 'monthly' | 'installments';
+  count?: number;
+  end?: string;
+  next: number;
+  base?: number;
+  cancelled?: boolean;
+}
 // Uma atualização pode enviar apenas parte desses campos, como a mudança de status.
 export type TransactionUpdate = Partial<TransactionDraft>;
 // Janeiro = 0, dezembro = 11; -1 representa todos os meses do ano escolhido.
