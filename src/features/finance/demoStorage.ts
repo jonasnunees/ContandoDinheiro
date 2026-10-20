@@ -1,6 +1,7 @@
+import { createDemoExamples, upgradeDemoExamples, type DemoState } from './demoExamples';
 import { localDate, isTransaction } from './validation';
 import { readStorage, writeStorage } from '../../services/storage';
-import type { Transaction, TransactionSeries } from './types';
+import type { Transaction } from './types';
 const STORAGE_KEYS = { LOCAL_TRANSACTIONS: 'gf_local_transactions' };
 
 // Exemplos datados no mês em que este módulo é carregado. Não são dados de uma conta real.
@@ -111,20 +112,25 @@ function demoTransactions(): Transaction[] {
 // Sem conteúdo salvo, oferece exemplos. Uma lista vazia salva continua vazia:
 // excluir todos os lançamentos não deve recriar a demonstração.
 // JSON inválido gera erro e permanece intacto para permitir recuperação.
-export function getLocalState(): { transactions: Transaction[]; series: TransactionSeries[] } {
+export function getLocalState(): DemoState {
   const raw = readStorage(STORAGE_KEYS.LOCAL_TRANSACTIONS);
-  if (!raw) return { transactions: demoTransactions(), series: [] };
+  if (!raw) {
+    const examples = createDemoExamples();
+    // A versão só é confirmada quando a leitura inicial persiste os exemplos.
+    return { ...examples, examplesVersion: undefined, transactions: [...demoTransactions(), ...examples.transactions] };
+  }
   try {
     const parsed: unknown = JSON.parse(raw);
-    if (Array.isArray(parsed) && parsed.every(isTransaction)) return { transactions: parsed, series: [] };
+    if (Array.isArray(parsed) && parsed.every(isTransaction)) return upgradeDemoExamples({ transactions: parsed, series: [] });
     if (parsed && typeof parsed === 'object' && 'transactions' in parsed && 'series' in parsed &&
+      (!('examplesVersion' in parsed) || Number.isInteger(parsed.examplesVersion) && Number(parsed.examplesVersion) >= 0) &&
       Array.isArray(parsed.transactions) && parsed.transactions.every(isTransaction) && Array.isArray(parsed.series) && parsed.series.every(s => s && typeof s.id === 'string' &&
         ['monthly', 'installments'].includes(s.mode) && Number.isInteger(s.next) && s.next >= 0 &&
         (s.base === undefined || Number.isInteger(s.base) && s.base >= 0) &&
         (s.mode !== 'installments' || Number.isInteger(s.count) && s.count >= 2 && s.count <= 360) &&
         (s.end === undefined || typeof s.end === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s.end)) &&
         isTransaction({ ...s.template, id: s.id, user_id: 'demo-user-id' }))) {
-      return parsed as { transactions: Transaction[]; series: TransactionSeries[] };
+      return upgradeDemoExamples(parsed as DemoState);
     }
   } catch { /* Preserva o conteúdo original para permitir recuperação. */ }
   throw new Error('Os dados da demonstração estão inválidos. O conteúdo salvo foi preservado; não foi substituído por exemplos.');

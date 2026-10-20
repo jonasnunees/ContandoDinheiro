@@ -32,7 +32,7 @@ async function loadServices({ env = {}, authenticated = true, pages = [[]], muta
     ['gf_supabase_anon_key', 'sb_publishable_test'],
   ]);
   const context = vm.createContext({
-    URL, atob, console, window: { location: { origin: "http://localhost:3000" } },
+    URL, atob, console, crypto: globalThis.crypto, window: { location: { origin: "http://localhost:3000" } },
     localStorage: {
       getItem: key => storage.get(key) ?? null,
       setItem: (key, value) => storage.set(key, value),
@@ -279,4 +279,45 @@ test('migração protege dados e gera auditoria no PostgreSQL local', async t =>
   } finally {
     await db.close();
   }
+});
+
+
+test('demonstração mantém CRUD, parcelas e cancelamento locais mesmo com sessão real disponível', async () => {
+  const { service, calls, storage } = await loadServices({ authenticated: true });
+  const account='demo-user-id';
+  const draft={descricao:'Somente local',valor:100,tipo:'despesa',data:'2026-10-20',forma_pagamento:'Pix',status:'pendente',categoria:'Outros'};
+  const rows=await service.fetchTransactionsService(account,true);
+  const removed=rows.find(row=>row.id==='demo-1');
+  await service.deleteTransactionService(removed.id,true,account);
+  assert.ok(!service.getLocalTransactions().some(row=>row.id===removed.id));
+  const created=await service.addTransactionService(draft,true,account);
+  await service.updateTransactionService(created.id,{valor:120},true,account);
+  await service.toggleStatusService(created.id,'pendente',true,account);
+  await service.saveScheduledTransaction(draft,{mode:'installments',count:3},true,account);
+  const state=service.getLocalState();
+  const series=state.series.find(s=>s.template.descricao===draft.descricao);
+  const selected=state.transactions.find(row=>row.serie_id===series.id);
+  await service.saveScheduledTransaction({...draft,valor:60},{mode:'single',scope:'following'},true,account,selected.id);
+  await service.saveScheduledTransaction(draft,{mode:'single',scope:'following',cancel:true},true,account,selected.id);
+  assert.ok(!service.getLocalTransactions().some(row=>row.serie_id===series.id));
+  assert.ok(storage.has('gf_local_transactions'));
+  assert.equal(calls.length,0,'Nenhuma consulta ou RPC pode chegar ao banco');
+});
+
+test('identidade e IDs da demonstração são bloqueados antes do acesso remoto, mesmo com modo incorreto', async () => {
+  const { service, calls } = await loadServices({ authenticated:true });
+  const account='demo-user-id';
+  const draft={descricao:'Teste',valor:10,tipo:'despesa',data:'2026-10-20',forma_pagamento:'Pix',status:'pendente',categoria:'Outros'};
+  await assert.rejects(service.requireAuthenticatedClient(account), /demonstração/);
+  await assert.rejects(service.fetchTransactionsService(account,false), /demonstração/);
+  await assert.rejects(service.addTransactionService(draft,false,account), /demonstração/);
+  await assert.rejects(service.updateTransactionService('demo-1',draft,false), /demonstração/);
+  await assert.rejects(service.deleteTransactionService('demo-1',false,'account-a'), /demonstração/);
+  await assert.rejects(service.deleteTransactionService('tx-123-local',false), /demonstração/);
+  await assert.rejects(service.toggleStatusService('demo-1','pago',false), /demonstração/);
+  await assert.rejects(service.saveScheduledTransaction(draft,{mode:'monthly'},false,account), /demonstração/);
+  await assert.rejects(service.saveScheduledTransaction(draft,{mode:'single',scope:'following',cancel:true},false,'account-a','demo-series-internet-0'), /demonstração/);
+  await assert.rejects(service.deleteTransactionService('id',undefined,'account-a'), /Modo de acesso/);
+  await assert.rejects(service.deleteTransactionService('id',true,'account-a'), /identidade local/);
+  assert.equal(calls.length,0);
 });

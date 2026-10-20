@@ -130,3 +130,29 @@ O modo de demonstração migra automaticamente os dados locais existentes, prese
 
 Verificações: `npm test` (inclui regras de recorrência e PostgreSQL local), `npm run test:e2e`
 (fluxos no navegador), `npm run lint` e `npm run build`.
+
+
+## Exemplos da demonstração sem login
+
+Além dos lançamentos avulsos, a demonstração inclui internet mensal, receita de aulas particulares,
+academia com término definido, notebook em 10 parcelas (a terceira no mês atual) e curso em 6 parcelas.
+As datas acompanham o mês de criação dos exemplos, com histórico pago e compromissos futuros pendentes.
+Os atalhos do painel permitem abrir uma conta mensal, consultar as parcelas e explorar o próximo mês.
+Todos esses exemplos podem ser editados, marcados como pagos, cancelados e exportados pelo fluxo normal.
+
+A atualização acrescenta os novos exemplos uma única vez aos dados já salvos no navegador, preservando
+alterações anteriores. Exemplos excluídos depois da atualização não reaparecem ao recarregar; uma lista
+que já havia sido esvaziada permanece vazia. Nenhum desses dados é gravado no Supabase.
+
+
+### Isolamento dos dados de demonstração
+
+Criar, editar, excluir, marcar pagamentos e cancelar séries na demonstração afeta somente o
+armazenamento local do navegador. A identidade `demo-user-id` e os IDs locais são bloqueados antes
+de obter um cliente autenticado se forem encaminhados por engano ao caminho do banco. Modos de
+acesso inválidos também são rejeitados. A proteção complementa as políticas de acesso por proprietário
+já existentes no Supabase.
+
+Os testes de segurança exercitam esse isolamento mesmo com sessão real disponível. O teste
+`e2e/demo-isolation.spec.ts` monitora a API do banco durante operações na interface e exige zero
+requisições, inclusive ao excluir um registro local cujo ID tenha o mesmo formato dos IDs reais.

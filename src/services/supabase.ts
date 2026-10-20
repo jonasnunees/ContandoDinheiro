@@ -85,6 +85,7 @@ export function getSupabaseClient(): SupabaseClient | null {
 
 // Confirma a identidade no servidor antes de acessar os dados de uma conta real.
 export async function requireAuthenticatedClient(expectedUserId?: string) {
+  if (expectedUserId === 'demo-user-id') throw new Error('A demonstração não pode acessar o banco.');
   const client = getSupabaseClient();
   if (!client) throw new Error('Supabase não configurado.');
   const { data, error } = await client.auth.getUser();

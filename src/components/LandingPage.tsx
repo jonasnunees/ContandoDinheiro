@@ -256,6 +256,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             </button>
           </div>
 
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">A demonstração inclui contas recorrentes, compras parceladas e compromissos dos próximos meses para você experimentar.</p>
+
           {/* Informações curtas sobre o acesso e o uso do aplicativo. */}
           <div className="pt-6 flex flex-wrap items-center justify-center gap-6 text-xs sm:text-sm text-slate-600 dark:text-slate-400">
             <div className="flex items-center gap-2">

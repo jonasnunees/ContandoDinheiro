@@ -1,8 +1,19 @@
+import { DEMO_EXAMPLES_VERSION } from './demoExamples';
 import { materialize, editFollowing, validateSchedule } from './scheduling';
 import { localDate, isTransaction } from './validation';
 import { requireAuthenticatedClient } from '../../services/supabase';
 import { getLocalTransactions, saveLocalTransactions, getLocalState, saveLocalState } from './demoStorage';
 import type { Transaction, TransactionDraft, TransactionUpdate, TransactionStatus, TransactionPeriod, ScheduleOptions, TransactionSeries } from './types';
+
+// Falha antes de obter um cliente remoto se modo, identidade ou ID local
+// forem encaminhados por engano para o caminho de uma conta real.
+function assertTransactionContext(isDemo: boolean, userId?: string, id?: string) {
+  if (typeof isDemo !== 'boolean') throw new Error('Modo de acesso inválido.');
+  if (isDemo && userId && userId !== 'demo-user-id') throw new Error('A demonstração exige uma identidade local.');
+  if (!isDemo && (userId === 'demo-user-id' || id && /^(demo-|tx-)/.test(id))) {
+    throw new Error('Dados da demonstração não podem acessar o banco.');
+  }
+}
 
 // Separa apenas os campos editáveis, evitando que a atualização troque o dono ou o ID.
 function editableTransactionFields(input: TransactionUpdate) {
@@ -12,6 +23,7 @@ function editableTransactionFields(input: TransactionUpdate) {
 
 // Busca lançamentos da conta confirmada; na demonstração, lê os exemplos locais.
 export async function fetchTransactionsService(userId: string, isDemo: boolean, period?: TransactionPeriod): Promise<Transaction[]> {
+  assertTransactionContext(isDemo, userId);
   if (!isDemo) {
     const { client, user } = await requireAuthenticatedClient(userId);
     const { error: scheduleError } = await client.rpc('materialize_transaction_series');
@@ -42,7 +54,8 @@ export async function fetchTransactionsService(userId: string, isDemo: boolean, 
 
   // Na demonstração, usa a lista salva neste navegador.
   const state = getLocalState();
-  let changed = false;
+  let changed = (state.examplesVersion ?? 0) < DEMO_EXAMPLES_VERSION;
+  if (changed) state.examplesVersion = DEMO_EXAMPLES_VERSION;
   for (const series of state.series) {
     const generated = materialize(series);
     if (generated.length) { state.transactions.push(...generated); changed = true; }
@@ -57,6 +70,7 @@ export async function addTransactionService(
   isDemo: boolean,
   expectedUserId?: string
 ): Promise<Transaction> {
+  assertTransactionContext(isDemo, expectedUserId);
   if (!isDemo) {
     const { client, user } = await requireAuthenticatedClient(expectedUserId);
     // O proprietário vem da identidade confirmada, nunca dos campos do formulário.
@@ -98,6 +112,7 @@ export async function updateTransactionService(
   isDemo: boolean,
   expectedUserId?: string
 ): Promise<Transaction> {
+  assertTransactionContext(isDemo, expectedUserId, id);
   if (!isDemo) {
     const { client, user } = await requireAuthenticatedClient(expectedUserId);
     const { data, error } = await client
@@ -128,6 +143,7 @@ export async function updateTransactionService(
 
 // Exclui o lançamento no banco ou remove seu ID da lista da demonstração.
 export async function deleteTransactionService(id: string, isDemo: boolean, expectedUserId?: string): Promise<void> {
+  assertTransactionContext(isDemo, expectedUserId, id);
   if (!isDemo) {
     const { client, user } = await requireAuthenticatedClient(expectedUserId);
     const { error } = await client
@@ -162,6 +178,7 @@ export async function toggleStatusService(
 
 // Série e ocorrências são persistidas juntas; erros revertem a operação inteira.
 export async function saveScheduledTransaction(draft: TransactionDraft, options: ScheduleOptions, isDemo: boolean, userId: string, id?: string): Promise<void> {
+  assertTransactionContext(isDemo, userId, id);
   validateSchedule(draft, options);
   if (!id && options.mode === 'single') { await addTransactionService(draft, isDemo, userId); return; }
   if (id && options.scope !== 'following' && !options.cancel) { await updateTransactionService(id, draft, isDemo, userId); return; }

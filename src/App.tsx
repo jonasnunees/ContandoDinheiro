@@ -1,3 +1,4 @@
+import { DemoGuide } from './features/finance/components/DemoGuide';
 import React, { lazy, Suspense, useState, useMemo, useSyncExternalStore, useEffect, useRef } from 'react';
 import type { Transaction, FilterState } from './features/finance/types';
 import { useSession } from './features/auth/useSession';
@@ -262,6 +263,17 @@ function AccountWorkspace({ user, sessionError, onLogout }: { user: AppUser; ses
           </div>
         </div>
 
+        {user.isDemo && !loading && !loadError && <DemoGuide onExplore={(search, monthOffset = 0) => {
+          const date = new Date();
+          date.setDate(1);
+          date.setMonth(date.getMonth() + monthOffset);
+          setCurrentMonth(date.getMonth());
+          setCurrentYear(date.getFullYear());
+          setFilterState({ type: 'todos', status: 'todos', searchTerm: search });
+          setActiveTab('transactions');
+          requestAnimationFrame(() => document.getElementById('transactions-section')?.focus());
+        }} />}
+
         {/* Totais do recorte atual; ocultos durante carregamento ou erro de leitura. */}
         {!loading && !loadError && <SummaryCards stats={stats} />}
 
@@ -311,7 +323,7 @@ function AccountWorkspace({ user, sessionError, onLogout }: { user: AppUser; ses
         </div>
 
         {/* Lista de lançamentos com busca, filtros e ações de criação, edição e exclusão. */}
-        <div className={activeTab === 'charts' ? 'hidden sm:block' : 'block'}>
+        <div id="transactions-section" tabIndex={-1} className={activeTab === 'charts' ? 'hidden sm:block' : 'block'}>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
               <ListOrdered className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
