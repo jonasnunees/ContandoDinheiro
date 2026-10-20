@@ -40,6 +40,26 @@ export function ReleaseNotes() {
         <h1 ref={heading} tabIndex={-1} className="text-3xl font-extrabold tracking-tight sm:text-4xl">Notas da versão</h1>
         <p className="mt-4 max-w-xl leading-relaxed text-slate-600">Acompanhe o que chega ao ContandoDinheiro e veja como cada novidade pode ajudar você a cuidar do seu dinheiro.</p>
 
+        <article aria-labelledby="version-1-1-0" className="mt-10 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div className="border-b border-slate-200 bg-emerald-50 p-6 sm:p-8">
+            <div className="flex flex-wrap items-center gap-3">
+              <h2 id="version-1-1-0" className="text-2xl font-bold">Versão 1.1.0</h2>
+              <span className="rounded-full border border-emerald-200 bg-white px-3 py-1 text-xs font-semibold text-emerald-800">Recorrências, parcelas e demonstração</span>
+            </div>
+            <p className="mt-3 text-sm text-slate-600"><time dateTime="2026-10-20">20 de outubro de 2026</time></p>
+            <p className="mt-4 leading-relaxed text-slate-700">Menos trabalho para registrar o que se repete e mais clareza para planejar os próximos meses.</p>
+          </div>
+          <ul className="space-y-6 p-6 sm:p-8">
+            <li><h3 className="font-semibold">Repita receitas e despesas todos os meses</h3><p className="mt-1 text-sm leading-relaxed text-slate-600">Cadastre salário, aluguel, internet e outras contas uma vez e escolha a repetição mensal. Você pode definir um término ou deixar a recorrência continuar. Sem término, o painel mantém os próximos 12 meses disponíveis e estende esse período conforme o tempo passa.</p></li>
+            <li><h3 className="font-semibold">Organize compras parceladas</h3><p className="mt-1 text-sm leading-relaxed text-slate-600">Informe o valor total da compra e o número de parcelas. Cada lançamento recebe uma identificação como “3 de 10”. Os centavos são distribuídos para que a soma das parcelas corresponda ao total informado, e essa identificação também aparece no arquivo CSV.</p></li>
+            <li><h3 className="font-semibold">Altere uma ocorrência ou as próximas pendências</h3><p className="mt-1 text-sm leading-relaxed text-slate-600">Ao editar, escolha mudar somente aquele lançamento ou ele e os próximos pendentes. Na edição, o valor corresponde a uma ocorrência. Você também pode cancelar as próximas pendências; alterações em conjunto preservam os lançamentos já pagos ou recebidos.</p></li>
+            <li><h3 className="font-semibold">Veja seus compromissos futuros sem confundir o saldo</h3><p className="mt-1 text-sm leading-relaxed text-slate-600">As ocorrências futuras de recorrências e parcelamentos começam pendentes. Elas ajudam a prever o que falta pagar e receber, mas só entram no saldo realizado quando você confirma o pagamento ou recebimento.</p></li>
+            <li><h3 className="font-semibold">Conte com o ajuste de datas nos meses mais curtos</h3><p className="mt-1 text-sm leading-relaxed text-slate-600">Um vencimento no dia 31 passa para o último dia disponível em meses mais curtos e volta ao dia original nos meses seguintes.</p></li>
+            <li><h3 className="font-semibold">Explore exemplos completos sem fazer login</h3><p className="mt-1 text-sm leading-relaxed text-slate-600">A demonstração agora inclui internet mensal, receita de aulas particulares, academia com término, notebook em 10 parcelas e curso em 6. Use os atalhos para encontrar os exemplos e explorar o próximo mês. Você pode editar, marcar pagamentos e cancelar séries pelo mesmo fluxo do aplicativo.</p></li>
+            <li><h3 className="font-semibold">Experimente com dados locais e isolados</h3><p className="mt-1 text-sm leading-relaxed text-slate-600">Criar, editar ou excluir na demonstração altera somente os exemplos salvos naquele navegador, sem modificar os dados da sua conta ou de outros visitantes. Os novos exemplos são acrescentados uma única vez, preservando suas edições anteriores.</p></li>
+          </ul>
+        </article>
+
         <article aria-labelledby="version-1-0-1" className="mt-10 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <div className="border-b border-slate-200 bg-emerald-50 p-6 sm:p-8">
             <div className="flex flex-wrap items-center gap-3">
