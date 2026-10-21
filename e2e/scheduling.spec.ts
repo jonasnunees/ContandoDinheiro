@@ -6,7 +6,7 @@ test('parcelamento: criação, persistência, edição isolada, próximas e canc
   page.on('pageerror', e => errors.push(e.message));
   await page.clock.setFixedTime(new Date('2026-10-20T12:00:00-03:00'));
   await page.goto('/');
-  await page.getByRole('button', { name: /Explorar.*(?:Demonstração|sem login)/i }).first().click();
+  await page.getByRole('link', { name: /Explorar.*(?:Demonstração|sem login)/i }).first().click();
   await page.getByRole('button', { name: /Nova Transação/ }).first().click();
   await page.getByLabel('Repetição', { exact: true }).selectOption('installments');
   await page.getByLabel('Descrição', { exact: true }).fill('Compra parcelada teste');
@@ -49,7 +49,6 @@ test('parcelamento: criação, persistência, edição isolada, próximas e canc
   expect(saved).toHaveLength(1);
   expect(saved[0].status).toBe('pago');
   await page.reload();
-  await page.getByRole('button', { name: /Explorar.*(?:Demonstração|sem login)/i }).first().click();
   await expect.poll(async () => (await state()).transactions.filter((t: { serie_id: string }) => t.serie_id === rows[0].serie_id).length).toBe(1);
   expect(errors).toEqual([]);
 });
@@ -57,7 +56,7 @@ test('parcelamento: criação, persistência, edição isolada, próximas e canc
 test('mensal com término e sem término mantém datas e não duplica ao recarregar',async({page})=>{
  await page.clock.setFixedTime(new Date('2026-10-20T12:00:00-03:00'));
  await page.goto('/');
- await page.getByRole('button',{name:/Explorar.*(?:Demonstração|sem login)/i}).first().click();
+ await page.getByRole('link',{name:/Explorar.*(?:Demonstração|sem login)/i}).first().click();
  for(const end of ['2027-01-31','']) {
   await page.getByRole('button',{name:/Nova Transação/}).first().click();
   await page.getByLabel('Repetição',{exact:true}).selectOption('monthly');
@@ -73,7 +72,6 @@ test('mensal com término e sem término mantém datas e não duplica ao recarre
  const finite=before.transactions.filter((t:{descricao:string})=>t.descricao==='Internet finita');
  expect(finite.map((t:{data:string})=>t.data)).toEqual(['2026-10-31','2026-11-30','2026-12-31','2027-01-31']);
  await page.reload();
- await page.getByRole('button',{name:/Explorar.*(?:Demonstração|sem login)/i}).first().click();
  await expect(page.getByRole('heading',{name:'Lançamentos & Extrato',exact:false})).toBeVisible();
  expect((await snapshot()).transactions.length).toBe(before.transactions.length);
  await page.screenshot({path:'test-results/recorrencias.png',fullPage:true});
@@ -83,7 +81,7 @@ test('mensal com término e sem término mantém datas e não duplica ao recarre
 test('formulário mensal em celular permite concluir sem transbordamento', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
-  await page.getByRole('button', { name: /Explorar.*(?:Demonstração|sem login)/i }).first().click();
+  await page.getByRole('link', { name: /Explorar.*(?:Demonstração|sem login)/i }).first().click();
   await page.getByRole('button', { name: /Nova Transação/ }).first().click();
   await page.getByLabel('Repetição', { exact: true }).selectOption('monthly');
   await page.getByLabel('Descrição', { exact: true }).fill('Recorrência no celular');

@@ -10,7 +10,7 @@ test('ações na demonstração não enviam consultas nem gravações à API do 
  });
  await page.clock.setFixedTime(new Date('2026-10-20T12:00:00-03:00'));
  await page.goto('/');
- await page.getByRole('button',{name:/Explorar.*(?:Demonstração|sem login)/i}).first().click();
+ await page.getByRole('link',{name:/Explorar.*(?:Demonstração|sem login)/i}).first().click();
  await expect(page.getByRole('region',{name:'Explore a demonstração'})).toBeVisible();
  // Mesmo um ID no formato do banco continua sendo apenas um dado local.
  await page.evaluate(()=>{

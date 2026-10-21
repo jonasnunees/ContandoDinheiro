@@ -1,5 +1,5 @@
 {
-  "include": ["src", "vite.config.ts", "playwright.config.ts", "e2e"],
+  "include": ["src", "vite.config.ts", "playwright.config.ts", "playwright.production.config.ts", "e2e"],
   "compilerOptions": {
     "target": "ES2022",
     "experimentalDecorators": true,

@@ -33,9 +33,14 @@ export default defineConfig(() => {
         workbox: {
           // Essas telas são guardadas para uso offline após o primeiro acesso,
           // em vez de disputar a conexão com a página inicial na instalação.
-          globIgnores: ['**/FinancialCharts-*.js', '**/ReleaseNotes-*.js', '**/*.css'],
+          globIgnores: ['**/AccountWorkspace-*.js', '**/FinancialCharts-*.js', '**/ReleaseNotes-*.js', '**/*.css'],
           runtimeCaching: [{
-            urlPattern: /\/assets\/(?:FinancialCharts|ReleaseNotes)-[^/]+\.js$/,
+            // O Vite exige o CSS compartilhado ao abrir componentes sob demanda.
+            urlPattern: /\/assets\/[^/]+\.css$/,
+            handler: 'CacheFirst',
+            options: { cacheName: 'app-styles', expiration: { maxEntries: 5 } },
+          }, {
+            urlPattern: /\/assets\/(?:AccountWorkspace|FinancialCharts|ReleaseNotes)-[^/]+\.js$/,
             handler: 'CacheFirst',
             options: { cacheName: 'optional-screens', expiration: { maxEntries: 10 } },
           }],

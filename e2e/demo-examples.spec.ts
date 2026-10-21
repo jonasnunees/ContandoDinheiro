@@ -8,10 +8,10 @@ for (const width of [390,1280]) {
   const errors:string[]=[];
   page.on('pageerror',e=>errors.push(e.message));
   await page.goto('/');
-  await page.getByRole('button',{name:/Explorar.*(?:Demonstração|sem login)/i}).first().click();
+  await page.getByRole('link',{name:/Explorar.*(?:Demonstração|sem login)/i}).first().click();
   const guide=page.getByRole('region',{name:'Explore a demonstração'});
   await expect(guide).toBeVisible();
-  const results=await new AxeBuilder({page}).include('main').analyze();
+  const results=await new AxeBuilder({page}).analyze();
   expect(results.violations.map(v=>v.id)).toEqual([]);
   await guide.screenshot({path:`test-results/demo-exemplos-${width}.png`});
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
@@ -49,8 +49,7 @@ test('demonstração existente recebe novos exemplos uma vez sem perder ediçõe
  await page.evaluate(()=>localStorage.setItem('gf_local_transactions',JSON.stringify([
   {id:'demo-1',user_id:'demo-user-id',descricao:'Meu salário editado',valor:7000,tipo:'receita',data:'2026-10-05',forma_pagamento:'Pix',status:'pago',categoria:'Salário'}
  ])));
- await page.reload();
- await page.getByRole('button',{name:/Explorar.*(?:Demonstração|sem login)/i}).first().click();
+ await page.goto('/demo');
  await expect(page.getByRole('region',{name:'Explore a demonstração'})).toBeVisible();
  let state=await page.evaluate(()=>JSON.parse(localStorage.getItem('gf_local_transactions')!));
  expect(state.examplesVersion).toBe(2);

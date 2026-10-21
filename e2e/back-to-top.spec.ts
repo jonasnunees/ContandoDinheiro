@@ -4,7 +4,9 @@ import AxeBuilder from '@axe-core/playwright';
 test('atalho mobile aparece após uma tela e retorna o foco ao conteúdo', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 500 });
   await page.goto('/');
-  await page.getByRole('button', { name: /Explorar.*(?:Demonstração|sem login)/i }).first().click();
+  await page.getByRole('link', { name: /Explorar.*(?:Demonstração|sem login)/i }).first().click();
+  await expect(page).toHaveURL(/\/demo$/);
+  await expect(page.getByRole('region', { name: 'Explore a demonstração' })).toBeVisible();
   const button = page.locator('button[aria-label="Voltar ao topo"]');
   await expect(button).toBeHidden();
   await expect(button).toHaveAttribute('tabindex', '-1');
@@ -44,7 +46,9 @@ test('retorno animado sobe gradualmente e permite interromper com toque', async 
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await page.setViewportSize({ width: 390, height: 500 });
   await page.goto('/');
-  await page.getByRole('button', { name: /Explorar.*(?:Demonstração|sem login)/i }).first().click();
+  await page.getByRole('link', { name: /Explorar.*(?:Demonstração|sem login)/i }).first().click();
+  await expect(page).toHaveURL(/\/demo$/);
+  await expect(page.getByRole('region', { name: 'Explore a demonstração' })).toBeVisible();
   await page.evaluate(() => window.scrollTo(0, 600));
   const button = page.getByRole('button', { name: 'Voltar ao topo', exact: true });
   await button.click();

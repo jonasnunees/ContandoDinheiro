@@ -158,3 +158,7 @@ Os testes de segurança exercitam esse isolamento mesmo com sessão real dispon�
 requisições, inclusive ao excluir um registro local cujo ID tenha o mesmo formato dos IDs reais.
 
 A apresentação fica em `/` e a demonstração tem endereço próprio em `/demo`. Recarregar ou compartilhar `/demo` abre diretamente o painel de exemplos, com dados locais, inclusive quando há uma conta conectada.
+
+Entrar e sair da demonstração preserva a sessão da conta conectada. O painel é carregado sob demanda; a apresentação não lê nem cria lançamentos de exemplo. A verificação de acessibilidade cobre a demonstração inteira nos temas claro e escuro, incluindo o rodapé, em celular e computador.
+
+Execute `npm run test:e2e:production` para verificar a versão compilada e a recarga offline da demonstração após o primeiro acesso. O cache de estilos e do painel é preenchido conforme o uso.

@@ -90,13 +90,16 @@ export const Header: React.FC<HeaderProps> = ({
               Demo
             </span>
           )}
-          <button
+          {user.isDemo ? <a href="/" aria-label="Sair da demonstração" title="Sair da demonstração"
+            className="p-1 text-slate-600 dark:text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 transition cursor-pointer">
+            <LogOut className="w-3.5 h-3.5" aria-hidden="true" />
+          </a> : <button
             onClick={onLogout}
             className="p-1 text-slate-600 dark:text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 transition cursor-pointer"
             title="Sair da conta"
           >
             <LogOut className="w-3.5 h-3.5" />
-          </button>
+          </button>}
         </div>
       ) : (
         <button
@@ -257,7 +260,10 @@ export const Header: React.FC<HeaderProps> = ({
                       </span>
                     </div>
                   </div>
-                  <button
+                  {user.isDemo ? <a href="/" className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-900/40">
+                    <LogOut className="w-3.5 h-3.5" aria-hidden="true" />
+                    Sair da demonstração
+                  </a> : <button
                     onClick={() => {
                       setIsMobileMenuOpen(false);
                       onLogout();
@@ -267,7 +273,7 @@ export const Header: React.FC<HeaderProps> = ({
                   >
                     <LogOut className="w-3.5 h-3.5" />
                     <span>Sair</span>
-                  </button>
+                  </button>}
                 </div>
               ) : (
                 <div className="flex items-center justify-between gap-3">

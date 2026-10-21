@@ -20,7 +20,6 @@ import { ThemeToggle } from './ThemeToggle';
 interface LandingPageProps {
   onOpenLogin: () => void;
   onOpenRegister: () => void;
-  onGoToDashboard: () => void;
   onLogout?: () => void;
   isLoggedIn: boolean;
   userEmail?: string;
@@ -29,7 +28,6 @@ interface LandingPageProps {
 export const LandingPage: React.FC<LandingPageProps> = ({
   onOpenLogin,
   onOpenRegister,
-  onGoToDashboard,
   onLogout,
   isLoggedIn,
   userEmail,
@@ -86,13 +84,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   )}
                 </div>
 
-                <button
-                  onClick={onGoToDashboard}
+                <a
+                  href="/demo"
                   className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-xs font-bold text-white shadow-md shadow-emerald-950/20 transition cursor-pointer"
                 >
                   <span>Painel</span>
                   <ArrowRight className="w-3.5 h-3.5" />
-                </button>
+                </a>
               </div>
             ) : (
               <button
@@ -151,16 +149,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                       <LogOut className="w-4 h-4" />
                     </button>
                   )}
-                  <button
-                    onClick={() => {
-                      setIsMobileMenuOpen(false);
-                      onGoToDashboard();
-                    }}
+                  <a
+                    href="/demo"
                     className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold shadow transition cursor-pointer"
                   >
                     <span>Painel</span>
                     <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
+                  </a>
                 </div>
               </div>
             ) : (
@@ -183,16 +178,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
             {/* Atalhos adicionais dentro do menu do celular. */}
             <div className="pt-2 border-t border-slate-200 dark:border-slate-800 space-y-2">
-              <button
-                onClick={() => {
-                  setIsMobileMenuOpen(false);
-                  onGoToDashboard();
-                }}
+              <a
+                href="/demo"
                 className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-900 text-xs font-semibold text-emerald-700 dark:text-emerald-400 transition cursor-pointer text-left"
               >
                 <span>Acessar Painel / Demonstração</span>
                 <ArrowRight className="w-4 h-4" />
-              </button>
+              </a>
 
               <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-100/70 dark:bg-slate-900/60 text-xs font-medium text-slate-700 dark:text-slate-300">
                 <span className="flex items-center gap-2">
@@ -248,12 +240,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               <span>Acessar com a Conta Google (Sem Senha)</span>
             </button>
 
-            <button
-              onClick={onGoToDashboard}
-              className="w-full sm:w-auto px-6 py-3.5 rounded-2xl border border-slate-300 dark:border-slate-800 bg-white/80 dark:bg-slate-900/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300 transition cursor-pointer"
+            <a
+              href="/demo"
+              className="inline-flex items-center justify-center w-full sm:w-auto px-6 py-3.5 rounded-2xl border border-slate-300 dark:border-slate-800 bg-white/80 dark:bg-slate-900/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300 transition cursor-pointer"
             >
               Explorar demonstração sem login →
-            </button>
+            </a>
           </div>
 
           <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">A demonstração inclui contas recorrentes, compras parceladas e compromissos dos próximos meses para você experimentar.</p>
@@ -470,12 +462,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               <span>Acessar com o Google (Sem Senha)</span>
             </button>
 
-            <button
-              onClick={onGoToDashboard}
-              className="w-full sm:w-auto px-6 py-3.5 rounded-2xl border border-slate-300 dark:border-slate-800 bg-white/80 dark:bg-slate-900/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300 transition cursor-pointer"
+            <a
+              href="/demo"
+              className="inline-flex items-center justify-center w-full sm:w-auto px-6 py-3.5 rounded-2xl border border-slate-300 dark:border-slate-800 bg-white/80 dark:bg-slate-900/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300 transition cursor-pointer"
             >
               Testar demonstração sem login →
-            </button>
+            </a>
           </div>
         </div>
       </section>
@@ -519,12 +511,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               Cadastro
             </button>
             <span>•</span>
-            <button
-              onClick={onGoToDashboard}
+            <a
+              href="/demo"
               className="hover:text-emerald-600 dark:hover:text-emerald-400 transition cursor-pointer"
             >
               Acessar Painel
-            </button>
+            </a>
           </div>
         </div>
       </footer>

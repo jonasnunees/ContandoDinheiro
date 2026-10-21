@@ -8,7 +8,7 @@ for (const theme of ['light', 'dark']) {
       await page.addInitScript(value => localStorage.setItem('gf_app_theme', value), theme);
       const chartRequests: string[] = [];
       page.on('request', request => {
-        if (request.url().includes('FinancialCharts')) chartRequests.push(request.url());
+        if (/FinancialCharts|AccountWorkspace|demoStorage|demoExamples/.test(request.url())) chartRequests.push(request.url());
       });
       await page.goto('/');
       await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
@@ -16,6 +16,7 @@ for (const theme of ['light', 'dark']) {
       const results = await new AxeBuilder({ page }).analyze();
       expect(results.violations.map(v => ({ id: v.id, nodes: v.nodes.map(n => n.html) }))).toEqual([]);
       expect(chartRequests).toEqual([]);
+      expect(await page.evaluate(() => localStorage.getItem('gf_local_transactions'))).toBeNull();
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     });
   }
@@ -27,7 +28,7 @@ test('fluxo demonstrativo acessível: teclado, valores, gráficos e persistênci
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.goto('/');
-  await page.getByRole('button', { name: /Explorar.*(?:Demonstração|sem login)/i }).first().click();
+  await page.getByRole('link', { name: /Explorar.*(?:Demonstração|sem login)/i }).first().click();
   await expect(page.getByRole('heading', { name: 'Lançamentos & Extrato', exact: false })).toBeVisible();
   const newTransaction = page.getByRole('button', { name: /Nova Transação/ }).first();
   await newTransaction.click();
@@ -52,7 +53,6 @@ test('fluxo demonstrativo acessível: teclado, valores, gráficos e persistênci
   await page.getByRole('textbox', { name: 'Buscar transações' }).fill('Teste de acessibilidade');
   await expect(page.getByRole('cell', { name: /1.234,56/ }).first()).toBeVisible();
   await page.reload();
-  await page.getByRole('button', { name: /Explorar.*(?:Demonstração|sem login)/i }).first().click();
   await expect(page.getByText('Teste de acessibilidade', { exact: true }).first()).toBeVisible();
   await page.getByText('Consultar valores dos gráficos em tabela').click();
   await expect(page.getByRole('table').last()).toBeVisible();
@@ -63,7 +63,7 @@ test('fluxo demonstrativo acessível: teclado, valores, gráficos e persistênci
 test('painel em celular e tema claro mantém nomes acessíveis', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
-  await page.getByRole('button', { name: /Explorar.*(?:Demonstração|sem login)/i }).first().click();
+  await page.getByRole('link', { name: /Explorar.*(?:Demonstração|sem login)/i }).first().click();
   await page.getByRole('button', { name: 'Mudar para tema claro' }).first().click();
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations.map(v => ({ id: v.id, nodes: v.nodes.map(n => n.html) }))).toEqual([]);
@@ -75,7 +75,8 @@ test('painel em celular e tema claro mantém nomes acessíveis', async ({ page }
 
 test('falha de armazenamento mostra erro e preserva a transação', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: /Explorar.*(?:Demonstração|sem login)/i }).first().click();
+  await page.getByRole('link', { name: /Explorar.*(?:Demonstração|sem login)/i }).first().click();
+  await expect(page.getByRole('region', { name: 'Explore a demonstração' })).toBeVisible();
   await page.evaluate(() => {
     Storage.prototype.setItem = () => { throw new DOMException('Quota exceeded', 'QuotaExceededError'); };
   });
@@ -103,7 +104,7 @@ test('acesso com Google tem diálogo nomeado e fecha por teclado', async ({ page
 
 test('editar, alterar situação e excluir mantém os dados após recarregar', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: /Explorar.*(?:Demonstração|sem login)/i }).first().click();
+  await page.getByRole('link', { name: /Explorar.*(?:Demonstração|sem login)/i }).first().click();
   await page.getByRole('button', { name: 'Editar Salário Mensal', exact: true }).first().click();
   const dialog = page.getByRole('dialog', { name: 'Editar Lançamento' });
   await page.getByLabel('Descrição', { exact: true }).fill('Receita editada');
@@ -114,21 +115,19 @@ test('editar, alterar situação e excluir mantém os dados após recarregar', a
   await row.getByRole('button', { name: 'Alterar situação de Receita editada', exact: true }).click();
   await expect(row.getByText('Pendente', { exact: true })).toBeVisible();
   await page.reload();
-  await page.getByRole('button', { name: /Explorar.*(?:Demonstração|sem login)/i }).first().click();
   await expect(row.getByText('Pendente', { exact: true })).toBeVisible();
   await expect(row.getByRole('cell', { name: /777,77/ })).toBeVisible();
   await page.getByRole('button', { name: 'Excluir Receita editada', exact: true }).first().click();
   await page.getByRole('button', { name: 'Confirmar exclusão de Receita editada', exact: true }).first().click();
   await expect(page.getByText('Receita editada', { exact: true })).toHaveCount(0);
   await page.reload();
-  await page.getByRole('button', { name: /Explorar.*(?:Demonstração|sem login)/i }).first().click();
   await expect(page.getByText('Receita editada', { exact: true })).toHaveCount(0);
 });
 
 test('dados locais corrompidos apresentam aviso e não são sobrescritos', async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('gf_local_transactions', '{"id":"incompleto"}'));
   await page.goto('/');
-  await page.getByRole('button', { name: /Explorar.*(?:Demonstração|sem login)/i }).first().click();
+  await page.getByRole('link', { name: /Explorar.*(?:Demonstração|sem login)/i }).first().click();
   await expect(page.getByRole('alert')).toContainText('conteúdo salvo foi preservado');
   await page.getByRole('button', { name: /Nova Transação/ }).first().click();
   await page.getByLabel('Descrição', { exact: true }).fill('Novo lançamento');
@@ -137,3 +136,18 @@ test('dados locais corrompidos apresentam aviso e não são sobrescritos', async
   await expect(page.getByRole('dialog').getByRole('alert')).toBeVisible();
   expect(await page.evaluate(() => localStorage.getItem('gf_local_transactions'))).toBe('{"id":"incompleto"}');
 });
+
+for (const theme of ['light', 'dark']) {
+  for (const width of [390, 1280]) {
+    test(`demo direta acessível no tema ${theme} em ${width}px, incluindo rodapé`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 900 });
+      await page.addInitScript(value => localStorage.setItem('gf_app_theme', value), theme);
+      await page.goto('/demo');
+      await expect(page.getByRole('region', { name: 'Explore a demonstração' })).toBeVisible();
+      await expect(page).toHaveTitle('Demonstração — ContandoDinheiro');
+      const result = await new AxeBuilder({ page }).analyze();
+      expect(result.violations.map(v => ({ id: v.id, nodes: v.nodes.map(n => n.html) }))).toEqual([]);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    });
+  }
+}

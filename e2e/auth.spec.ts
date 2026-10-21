@@ -151,3 +151,29 @@ for (const scenario of ['erro do provedor', 'endereço ausente']) {
     expect(new URL(page.url()).pathname).toBe('/');
   });
 }
+
+for (const width of [390, 1280]) {
+  test(`sair da demonstração preserva a conta conectada em ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.addInitScript(() => {
+      if (localStorage.getItem('audit-signouts') === null) localStorage.setItem('audit-signouts', '0');
+    });
+    await page.route('**/src/services/supabase.ts*', route => route.fulfill({
+      contentType: 'application/javascript',
+      body: infrastructure.replace('async signOut() {',
+        "async signOut() { localStorage.setItem('audit-signouts', String(Number(localStorage.getItem('audit-signouts')) + 1));"),
+    }));
+    const reads: string[] = [];
+    page.on('request', request => { if (request.url().includes('/__test_transactions?')) reads.push(request.url()); });
+    await page.goto('/demo');
+    await expect(page.getByRole('region', { name: 'Explore a demonstração' })).toBeVisible();
+    await page.reload();
+    await expect(page.getByRole('region', { name: 'Explore a demonstração' })).toBeVisible();
+    expect(reads).toEqual([]);
+    if (width === 390) await page.getByRole('button', { name: 'Abrir menu', exact: true }).click();
+    await page.getByRole('link', { name: 'Sair da demonstração', exact: true }).first().click();
+    await expect(page).toHaveURL(/\/$/);
+    await expect(page.getByRole(width === 390 ? 'heading' : 'cell', { name: 'Lançamento account-a', exact: true })).toBeVisible();
+    expect(await page.evaluate(() => localStorage.getItem('audit-signouts'))).toBe('0');
+  });
+}

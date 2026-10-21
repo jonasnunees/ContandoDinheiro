@@ -3,6 +3,7 @@ import { defineConfig } from '@playwright/test';
 // Configura os testes de navegador e inicia o site localmente para executá-los.
 export default defineConfig({
   testDir: './e2e',
+  testIgnore: '**/production/**',
   // Execução serial evita disputas nos cenários que interceptam serviços e simulam sessão.
   fullyParallel: false,
   workers: 1,

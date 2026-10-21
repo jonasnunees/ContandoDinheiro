@@ -9,11 +9,12 @@
     "build": "vite build",
     "preview": "vite preview",
     "clean": "node scripts/clean.mjs",
-    "lint": "tsc --noEmit && eslint src scripts vite.config.ts eslint.config.js playwright.config.ts",
+    "lint": "tsc --noEmit && eslint src scripts vite.config.ts eslint.config.js playwright.config.ts playwright.production.config.ts",
     "test:security": "node --experimental-vm-modules --test scripts/security.test.mjs",
     "test:auth": "node --test scripts/auth-navigation.test.mjs",
     "test:validation": "node --test scripts/validation.test.mjs",
     "test:e2e": "playwright test",
+    "test:e2e:production": "npm run build && playwright test --config=playwright.production.config.ts",
     "test": "npm run test:validation && npm run test:finance && npm run test:demo && npm run test:scheduling && npm run test:security && npm run test:auth",
     "test:scheduling": "node --test scripts/scheduling.test.mjs",
     "test:demo": "node --test scripts/demo.test.mjs",
@@ -27,7 +28,7 @@
     "lucide-react": "^0.546.0",
     "react": "^19.0.1",
     "react-dom": "^19.0.1",
-    "vite": "^8.3.0"
+    "vite": "8.3.4"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.13.0",

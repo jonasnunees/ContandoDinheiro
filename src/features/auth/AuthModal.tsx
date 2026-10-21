@@ -1,7 +1,7 @@
 import { signInWithGoogleService } from './authService';
 import { Modal } from '../../components/Modal';
 import React, { useState } from 'react';
-import { getSupabaseClient, isSupabaseConfigured } from '../../services/supabase';
+import { isSupabaseConfigured } from '../../services/supabase';
 import { Sparkles, AlertCircle, Loader2, X, CheckCircle2, ArrowRight } from 'lucide-react';
 
 interface AuthModalProps {
@@ -46,23 +46,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
   };
 
-  // Encerra a sessão real antes de abrir a demonstração, que usa dados locais.
-  const handleGuestLogin = async () => {
-    setErrorMessage('');
-    setGoogleLoading(true);
-    try {
-      const client = getSupabaseClient();
-      if (client) {
-        const { error } = await client.auth.signOut();
-        if (error) throw error;
-      }
-      onAuthSuccess({ id: 'demo-user-id', email: 'convidado@demo.com', isDemo: true });
-      onClose();
-    } catch {
-      setErrorMessage('Não foi possível encerrar a sessão para entrar no modo convidado.');
-    } finally {
-      setGoogleLoading(false);
-    }
+  // A demonstração usa uma página e identidade locais e preserva a sessão conectada.
+  const handleGuestLogin = () => {
+    onAuthSuccess({ id: 'demo-user-id', email: 'convidado@demo.com', isDemo: true });
+    onClose();
   };
 
   return (
