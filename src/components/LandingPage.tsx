@@ -222,7 +222,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
           {/* Texto que explica a proposta do aplicativo. */}
           <p className="text-base sm:text-lg md:text-xl text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed">
-            Organize receitas, despesas, contas mensais e compras parceladas. Acompanhe o que já foi pago e planeje os próximos meses em um só lugar.
+            Organize receitas, despesas, contas mensais e compras parceladas. Acompanhe os próximos vencimentos, registre pagamentos e planeje os próximos meses em um só lugar.
           </p>
 
           {/* Botões para entrar, cadastrar-se ou experimentar a demonstração. */}
@@ -358,7 +358,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             </div>
             <h3 className="text-lg font-bold text-slate-900 dark:text-white">Receitas e despesas organizadas</h3>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-              Adicione receitas e despesas com categoria, forma de pagamento (Pix, cartão, boleto) e alterne status entre pago e pendente com 1 clique.
+              Adicione receitas e despesas com categoria e forma de pagamento (Pix, cartão, boleto). Registre a data efetiva do pagamento ou recebimento sem alterar o vencimento original.
             </p>
           </div>
 
@@ -382,8 +382,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 flex items-center justify-center">
               <CalendarDays aria-hidden="true" className="w-6 h-6" />
             </div>
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white">Próximos meses à vista</h3>
-            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">Consulte receitas a receber e despesas pendentes dos próximos meses. O saldo realizado considera apenas os pagamentos e recebimentos confirmados.</p>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white">Pendências e vencimentos à vista</h3>
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">Veja despesas atrasadas, de hoje e dos próximos sete dias, agrupadas por vencimento e com totais por grupo. Contas de meses anteriores também aparecem, independentemente do período selecionado.</p>
           </div>
 
           {/* Explica o segundo benefício. */}
@@ -393,7 +393,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             </div>
             <h3 className="text-lg font-bold text-slate-900 dark:text-white">Gráficos, filtros e exportação</h3>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-              Compare entradas e saídas, consulte gráficos ou tabelas e encontre lançamentos com os filtros. Exporte o extrato em CSV para abrir em uma planilha.
+              Compare entradas e saídas, consulte gráficos ou tabelas e encontre lançamentos com os filtros. Exporte o extrato em CSV com vencimento e data efetiva do pagamento ou recebimento.
             </p>
           </div>
 
@@ -449,7 +449,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               </span>
               <h3 className="font-bold text-slate-900 dark:text-white text-sm">Registre e planeje</h3>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Adicione receitas, despesas, recorrências e parcelas. Confirme pagamentos e recebimentos para atualizar seu saldo realizado.
+                Adicione receitas, despesas, recorrências e parcelas. Ao confirmar pagamentos e recebimentos, informe a data efetiva para atualizar seu saldo realizado.
               </p>
             </div>
           </div>
