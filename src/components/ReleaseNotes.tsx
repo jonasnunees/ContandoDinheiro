@@ -40,6 +40,24 @@ export function ReleaseNotes() {
         <h1 ref={heading} tabIndex={-1} className="text-3xl font-extrabold tracking-tight sm:text-4xl">Notas da versão</h1>
         <p className="mt-4 max-w-xl leading-relaxed text-slate-600">Acompanhe o que chega ao ContandoDinheiro e veja como cada novidade pode ajudar você a cuidar do seu dinheiro.</p>
 
+        <article aria-labelledby="version-1-1-1" className="mt-10 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div className="border-b border-slate-200 bg-emerald-50 p-6 sm:p-8">
+            <div className="flex flex-wrap items-center gap-3">
+              <h2 id="version-1-1-1" className="text-2xl font-bold">Versão 1.1.1</h2>
+              <span className="rounded-full border border-emerald-200 bg-white px-3 py-1 text-xs font-semibold text-emerald-800">Demonstração, navegação e acessibilidade</span>
+            </div>
+            <p className="mt-3 text-sm text-slate-600"><time dateTime="2026-10-20">20 de outubro de 2026</time></p>
+            <p className="mt-4 leading-relaxed text-slate-700">Mais facilidade para experimentar o aplicativo, com uma demonstração independente e melhorias de leitura e carregamento.</p>
+          </div>
+          <ul className="space-y-6 p-6 sm:p-8">
+            <li><h3 className="font-semibold">Acesse a demonstração por um endereço próprio</h3><p className="mt-1 text-sm leading-relaxed text-slate-600">A demonstração agora fica em <a href="https://contando-dinheiro.vercel.app/demo" className="rounded font-semibold text-emerald-800 underline underline-offset-4 hover:text-emerald-950">/demo</a>. Você pode salvar ou compartilhar esse endereço e abrir diretamente o painel de exemplos. Ao recarregar a página, continua na demonstração.</p></li>
+            <li><h3 className="font-semibold">Experimente sem sair da sua conta</h3><p className="mt-1 text-sm leading-relaxed text-slate-600">Entrar e sair da demonstração preserva a conta que estiver conectada. Os exemplos continuam separados dos seus lançamentos e ficam salvos somente naquele navegador.</p></li>
+            <li><h3 className="font-semibold">Abra a página inicial com menos arquivos</h3><p className="mt-1 text-sm leading-relaxed text-slate-600">O painel financeiro passa a carregar quando você o acessa. A página de apresentação também deixa de preparar os exemplos da demonstração antes de você escolher explorá-la.</p></li>
+            <li><h3 className="font-semibold">Leia o rodapé com mais conforto</h3><p className="mt-1 text-sm leading-relaxed text-slate-600">Melhoramos o contraste do texto do rodapé no tema escuro. Os acessos entre a apresentação e a demonstração agora usam links, que também permitem abrir a página em outra aba.</p></li>
+            <li><h3 className="font-semibold">Recarregue a demonstração mesmo sem internet</h3><p className="mt-1 text-sm leading-relaxed text-slate-600">Com os arquivos necessários já salvos no navegador para uso offline, você pode recarregar a demonstração sem conexão e manter as alterações feitas nos exemplos. Para consultar e salvar lançamentos na sua conta, continua sendo necessária uma conexão com a internet.</p></li>
+          </ul>
+        </article>
+
         <article aria-labelledby="version-1-1-0" className="mt-10 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <div className="border-b border-slate-200 bg-emerald-50 p-6 sm:p-8">
             <div className="flex flex-wrap items-center gap-3">

@@ -9,7 +9,9 @@ test('notas públicas em modo claro com navegação e preferência de tema prese
   await expect(page.getByRole('heading', { name: 'Notas da versão', exact: true })).toBeFocused();
   await expect(page.getByRole('heading', { name: 'Versão 1.0', exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Versão 1.0.1', exact: true })).toBeVisible();
-  await expect(page.locator('article').first()).toHaveAccessibleName('Versão 1.1.0');
+  await expect(page.getByRole('heading', { name: 'Versão 1.1.0', exact: true })).toBeVisible();
+  await expect(page.locator('article').first()).toHaveAccessibleName('Versão 1.1.1');
+  await expect(page.locator('article').first().getByRole('link', { name: '/demo', exact: true })).toHaveAttribute('href', 'https://contando-dinheiro.vercel.app/demo');
   await expect(page.locator('article').first().locator('time')).toHaveAttribute('datetime', '2026-10-20');
   await expect(page.locator('main').locator('..')).toHaveCSS('color-scheme', 'light');
   await expect(page.locator('main').locator('..')).toHaveCSS('background-color', 'oklch(0.984 0.003 247.858)');
