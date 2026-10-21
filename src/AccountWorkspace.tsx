@@ -326,7 +326,13 @@ export default function AccountWorkspace({ user, sessionError, onLogout }: { use
       {/* Rodapé com informações do aplicativo. */}
       <footer ref={footerRef} className="border-t border-slate-200 dark:border-slate-900 bg-white dark:bg-slate-950 py-6 px-4 text-center text-xs text-slate-600 dark:text-slate-400 transition-colors">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p>ContandoDinheiro — Sistema de Gestão Financeira com Supabase & PWA</p>
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-lg bg-emerald-700 flex items-center justify-center text-white font-bold text-xs">
+              C
+            </div>
+            <span className="font-semibold text-slate-800 dark:text-slate-300">ContandoDinheiro</span>
+            <span>— Gestão Financeira Pessoal Gratuita</span>
+          </div>
           <div className="flex flex-wrap items-center justify-center gap-4">
           <a href="#notas-da-versao" className="rounded text-slate-600 dark:text-slate-400 hover:text-emerald-700 dark:hover:text-emerald-400">Notas da versão</a>
           <a
