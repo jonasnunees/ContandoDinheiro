@@ -12,7 +12,7 @@ import {
   Menu,
   X,
   LogOut,
-  Github
+  Repeat2, CreditCard, CalendarDays, Github
 } from 'lucide-react';
 import { PWAInstallButton } from './PWAInstallButton';
 import { ThemeToggle } from './ThemeToggle';
@@ -222,7 +222,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
           {/* Texto que explica a proposta do aplicativo. */}
           <p className="text-base sm:text-lg md:text-xl text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed">
-            Organize receitas e despesas com praticidade total. Acesse com sua conta Google em 1 clique ou cadastre-se sem enrolação.
+            Organize receitas, despesas, contas mensais e compras parceladas. Acompanhe o que já foi pago e planeje os próximos meses em um só lugar.
           </p>
 
           {/* Botões para entrar, cadastrar-se ou experimentar a demonstração. */}
@@ -283,10 +283,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               <span className="w-3 h-3 rounded-full bg-rose-500" />
               <span className="w-3 h-3 rounded-full bg-amber-500" />
               <span className="w-3 h-3 rounded-full bg-emerald-500" />
-              <span className="ml-2 text-xs font-mono text-slate-500 dark:text-slate-400">Painel Financeiro Interativo</span>
+              <span className="ml-2 text-xs font-mono text-slate-500 dark:text-slate-400">Prévia do painel</span>
             </div>
             <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-semibold border border-emerald-500/20">
-              Ao vivo
+              Dados fictícios
             </span>
           </div>
 
@@ -296,7 +296,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               <span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 uppercase">Receitas do Mês</span>
               <div className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mt-1">R$ 8.135,50</div>
               <span className="text-[11px] text-emerald-700 dark:text-emerald-400 flex items-center gap-1 mt-1">
-                <TrendingUp className="w-3 h-3" /> +12% vs mês anterior
+                <TrendingUp className="w-3 h-3" /> Recebido no período
               </span>
             </div>
 
@@ -339,14 +339,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         </div>
       </section>
 
-      {/* Apresenta os três principais benefícios do aplicativo. */}
+      {/* Apresenta os recursos disponíveis no aplicativo. */}
       <section className="py-16 px-4 sm:px-8 max-w-6xl mx-auto w-full">
         <div className="text-center max-w-xl mx-auto mb-12 space-y-2">
           <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">
             Tudo o que você precisa, sem complicação
           </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            Três pilares diretos para organizar suas finanças sem planilhas confusas.
+            Do registro do dia a dia ao planejamento dos próximos meses, acompanhe seu dinheiro com clareza.
           </p>
         </div>
 
@@ -356,10 +356,34 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 flex items-center justify-center">
               <Wallet className="w-6 h-6" />
             </div>
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white">1. Lançamentos em 10 Segundos</h3>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white">Receitas e despesas organizadas</h3>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
               Adicione receitas e despesas com categoria, forma de pagamento (Pix, cartão, boleto) e alterne status entre pago e pendente com 1 clique.
             </p>
+          </div>
+
+          <div className="card-lift rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 space-y-4 hover:border-slate-300 dark:hover:border-slate-700 transition shadow-sm">
+            <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 flex items-center justify-center">
+              <Repeat2 aria-hidden="true" className="w-6 h-6" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white">Contas mensais sem retrabalho</h3>
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">Cadastre receitas e despesas recorrentes, com ou sem término. Ao editar, escolha uma ocorrência ou as próximas pendências, preservando o que já foi pago ou recebido.</p>
+          </div>
+
+          <div className="card-lift rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 space-y-4 hover:border-slate-300 dark:hover:border-slate-700 transition shadow-sm">
+            <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 flex items-center justify-center">
+              <CreditCard aria-hidden="true" className="w-6 h-6" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white">Compras parceladas sob controle</h3>
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">Informe o valor total e a quantidade de parcelas. Acompanhe cada lançamento com sua identificação, como “3 de 10”, e veja o que ainda falta pagar.</p>
+          </div>
+
+          <div className="card-lift rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 space-y-4 hover:border-slate-300 dark:hover:border-slate-700 transition shadow-sm">
+            <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 flex items-center justify-center">
+              <CalendarDays aria-hidden="true" className="w-6 h-6" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white">Próximos meses à vista</h3>
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">Consulte receitas a receber e despesas pendentes dos próximos meses. O saldo realizado considera apenas os pagamentos e recebimentos confirmados.</p>
           </div>
 
           {/* Explica o segundo benefício. */}
@@ -367,9 +391,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             <div className="w-12 h-12 rounded-xl bg-teal-500/10 border border-teal-500/20 text-teal-700 dark:text-teal-400 flex items-center justify-center">
               <PieChart className="w-6 h-6" />
             </div>
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white">2. Gráficos Visuais Claros</h3>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white">Gráficos, filtros e exportação</h3>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-              Gráficos de Rosca e Barras mostram exatamente onde seu dinheiro está indo e para onde você pode direcionar mais economia no mês.
+              Compare entradas e saídas, consulte gráficos ou tabelas e encontre lançamentos com os filtros. Exporte o extrato em CSV para abrir em uma planilha.
             </p>
           </div>
 
@@ -378,9 +402,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             <div className="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center">
               <Smartphone className="w-6 h-6" />
             </div>
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white">3. PWA Instalável & Offline</h3>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white">No celular e no computador</h3>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-              Instale o aplicativo direto no seu celular ou computador sem ocupar espaço. Funciona com total rapidez mesmo se a conexão cair.
+              Use os temas claro e escuro e instale o aplicativo em navegadores compatíveis. Os dados da sua conta precisam de internet; a demonstração pode reabrir offline após o navegador salvar os arquivos necessários.
             </p>
           </div>
         </div>
@@ -394,7 +418,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               Passo a Passo Simples
             </span>
             <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white mt-1">
-              Como começar em menos de 1 minuto
+              Como começar a organizar seu dinheiro
             </h2>
           </div>
 
@@ -403,9 +427,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-emerald-500 text-slate-950 font-black text-sm">
                 1
               </span>
-              <h3 className="font-bold text-slate-900 dark:text-white text-sm">Cadastre-se Grátis</h3>
+              <h3 className="font-bold text-slate-900 dark:text-white text-sm">Experimente sem login</h3>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Informe seu e-mail e crie uma senha. Não pedimos dados bancários nem cartão.
+                Abra a demonstração com exemplos fictícios. Suas alterações ficam somente neste navegador, separadas dos dados da sua conta.
               </p>
             </div>
 
@@ -413,9 +437,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-emerald-500 text-slate-950 font-black text-sm">
                 2
               </span>
-              <h3 className="font-bold text-slate-900 dark:text-white text-sm">Faça o Login</h3>
+              <h3 className="font-bold text-slate-900 dark:text-white text-sm">Entre na sua conta</h3>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Acesse seu painel exclusivo e protegido com isolamento seguro de dados.
+                Use sua conta Google ou cadastre seu e-mail e senha para salvar seus próprios lançamentos e acessá-los em outro dispositivo.
               </p>
             </div>
 
@@ -423,9 +447,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-emerald-500 text-slate-950 font-black text-sm">
                 3
               </span>
-              <h3 className="font-bold text-slate-900 dark:text-white text-sm">Lance seus Gastos</h3>
+              <h3 className="font-bold text-slate-900 dark:text-white text-sm">Registre e planeje</h3>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Acompanhe o saldo do mês, analise gráficos e conquiste sua tranquilidade financeira.
+                Adicione receitas, despesas, recorrências e parcelas. Confirme pagamentos e recebimentos para atualizar seu saldo realizado.
               </p>
             </div>
           </div>
@@ -445,7 +469,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           </h2>
 
           <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 max-w-xl mx-auto">
-            Junte-se agora mesmo. Leva menos de 30 segundos para criar sua conta e começar a gerenciar seu dinheiro com segurança.
+            Comece pelos exemplos da demonstração ou entre na sua conta para organizar seus próprios lançamentos, contas recorrentes e compras parceladas.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">

@@ -40,6 +40,22 @@ export function ReleaseNotes() {
         <h1 ref={heading} tabIndex={-1} className="text-3xl font-extrabold tracking-tight sm:text-4xl">Notas da versão</h1>
         <p className="mt-4 max-w-xl leading-relaxed text-slate-600">Acompanhe o que chega ao ContandoDinheiro e veja como cada novidade pode ajudar você a cuidar do seu dinheiro.</p>
 
+        <article aria-labelledby="version-1-1-2" className="mt-10 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div className="border-b border-slate-200 bg-emerald-50 p-6 sm:p-8">
+            <div className="flex flex-wrap items-center gap-3">
+              <h2 id="version-1-1-2" className="text-2xl font-bold">Versão 1.1.2</h2>
+              <span className="rounded-full border border-emerald-200 bg-white px-3 py-1 text-xs font-semibold text-emerald-800">Apresentação atualizada e demonstração mais clara</span>
+            </div>
+            <p className="mt-3 text-sm text-slate-600"><time dateTime="2026-10-20">20 de outubro de 2026</time></p>
+            <p className="mt-4 leading-relaxed text-slate-700">Conheça os recursos atuais do aplicativo e encontre com mais facilidade os exemplos para experimentar.</p>
+          </div>
+          <ul className="space-y-6 p-6 sm:p-8">
+            <li><h3 className="font-semibold">Conheça recorrências, parcelas e planejamento na página inicial</h3><p className="mt-1 text-sm leading-relaxed text-slate-600">A apresentação agora destaca contas mensais com ou sem término, compras parceladas e compromissos futuros. Também explica os filtros, a exportação em CSV e a diferença entre pendências e saldo realizado.</p></li>
+            <li><h3 className="font-semibold">Explore uma demonstração mais organizada</h3><p className="mt-1 text-sm leading-relaxed text-slate-600">Os exemplos estão separados em três cards com ícones e botões alinhados, adaptados ao celular. O aviso sobre dados fictícios e armazenamento no navegador ganhou uma área própria, e as dicas adicionais ficam no rodapé do guia.</p></li>
+            <li><h3 className="font-semibold">Entenda como começar e quando precisa de internet</h3><p className="mt-1 text-sm leading-relaxed text-slate-600">Revisamos as orientações de acesso e instalação. A prévia da página inicial está identificada como dados fictícios, e o texto esclarece que sua conta precisa de conexão e que a demonstração depende dos arquivos já salvos para reabrir offline.</p></li>
+          </ul>
+        </article>
+
         <article aria-labelledby="version-1-1-1" className="mt-10 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <div className="border-b border-slate-200 bg-emerald-50 p-6 sm:p-8">
             <div className="flex flex-wrap items-center gap-3">
