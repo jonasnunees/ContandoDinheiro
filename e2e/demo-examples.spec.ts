@@ -36,7 +36,6 @@ for (const width of [390,1280]) {
   expect(next.find((t:{descricao:string})=>t.descricao==='Notebook para trabalho').valor).toBe(400);
   expect(state.transactions.find((t:{id:string})=>t.id==='demo-series-notebook-1').valor).toBe(349.99);
   await page.reload();
-  await page.getByRole('button',{name:/Explorar.*(?:Demonstração|sem login)/i}).first().click();
   await expect(page.getByRole('region',{name:'Explore a demonstração'})).toBeVisible();
   const after=await page.evaluate(()=>JSON.parse(localStorage.getItem('gf_local_transactions')!));
   expect(after.transactions.length).toBe(state.transactions.length);
@@ -63,7 +62,6 @@ test('demonstração existente recebe novos exemplos uma vez sem perder ediçõe
  await expect(page.getByRole('button',{name:'Editar Internet residencial',exact:true})).toHaveCount(0);
  state=await page.evaluate(()=>JSON.parse(localStorage.getItem('gf_local_transactions')!));
  await page.reload();
- await page.getByRole('button',{name:/Explorar.*(?:Demonstração|sem login)/i}).first().click();
  await expect(page.getByRole('region',{name:'Explore a demonstração'})).toBeVisible();
  const after=await page.evaluate(()=>JSON.parse(localStorage.getItem('gf_local_transactions')!));
  expect(after.transactions.length).toBe(state.transactions.length);

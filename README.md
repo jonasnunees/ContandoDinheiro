@@ -156,3 +156,5 @@ já existentes no Supabase.
 Os testes de segurança exercitam esse isolamento mesmo com sessão real disponível. O teste
 `e2e/demo-isolation.spec.ts` monitora a API do banco durante operações na interface e exige zero
 requisições, inclusive ao excluir um registro local cujo ID tenha o mesmo formato dos IDs reais.
+
+A apresentação fica em `/` e a demonstração tem endereço próprio em `/demo`. Recarregar ou compartilhar `/demo` abre diretamente o painel de exemplos, com dados locais, inclusive quando há uma conta conectada.

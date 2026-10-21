@@ -2,7 +2,7 @@ import { DemoGuide } from './features/finance/components/DemoGuide';
 import React, { lazy, Suspense, useState, useMemo, useSyncExternalStore, useEffect, useRef } from 'react';
 import type { Transaction, FilterState } from './features/finance/types';
 import { useSession } from './features/auth/useSession';
-import type { AppUser } from './features/auth/session';
+import { GUEST_USER, type AppUser } from './features/auth/session';
 import { useTransactions } from './features/finance/useTransactions';
 import { filterTransactions, summarizeTransactions } from './features/finance/calculations';
 import { Header } from './components/Header';
@@ -52,7 +52,10 @@ export default function App() {
 }
 
 function FinanceApp() {
-  const { user, sessionError, logout } = useSession();
+  const { user: sessionUser, sessionError, logout } = useSession();
+  // A URL da demonstração sempre usa a identidade local, mesmo com uma conta conectada.
+  const isDemoPage = window.location.pathname.replace(/\/$/, '') === '/demo';
+  const user = isDemoPage ? GUEST_USER : sessionUser;
   // Aguarda a confirmação da sessão antes de escolher a tela inicial.
   if (!user) {
     return (
@@ -73,9 +76,12 @@ function FinanceApp() {
 
 function AccountWorkspace({ user, sessionError, onLogout }: { user: AppUser; sessionError: string; onLogout: () => Promise<void> }) {
   const showBackToTop = useSyncExternalStore(subscribeToScroll, hasScrolledPastFirstScreen, () => false);
-  // Conta real começa no painel; convidado começa na apresentação, com opção de explorar a demo.
+  // A apresentação e a demonstração têm endereços próprios.
   const currentDate = new Date();
-  const [currentView, setCurrentView] = useState<'landing' | 'dashboard'>(user.isDemo ? 'landing' : 'dashboard');
+  const currentView = user.isDemo && window.location.pathname.replace(/\/$/, '') !== '/demo' ? 'landing' : 'dashboard';
+  const navigateToView = (view: 'landing' | 'dashboard') => {
+    window.location.assign(view === 'landing' ? '/' : '/demo');
+  };
   const footerRef = useRef<HTMLElement>(null);
   const scrollAnimation = useRef<number | null>(null);
   const [footerClearance, setFooterClearance] = useState(0);
@@ -175,7 +181,7 @@ function AccountWorkspace({ user, sessionError, onLogout }: { user: AppUser; ses
             setIsAuthModalOpen(true);
           }}
           onGoToDashboard={() => {
-            setCurrentView('dashboard');
+            navigateToView('dashboard');
           }}
           onLogout={onLogout}
           isLoggedIn={Boolean(user && !user.isDemo)}
@@ -187,7 +193,7 @@ function AccountWorkspace({ user, sessionError, onLogout }: { user: AppUser; ses
           isOpen={isAuthModalOpen}
           onClose={() => setIsAuthModalOpen(false)}
           onAuthSuccess={() => {
-            setCurrentView('dashboard');
+            navigateToView('dashboard');
           }}
         />
 
@@ -217,7 +223,7 @@ function AccountWorkspace({ user, sessionError, onLogout }: { user: AppUser; ses
         }}
         onLogout={onLogout}
         onOpenLanding={user.isDemo ? () => {
-          setCurrentView('landing');
+          navigateToView('landing');
         } : undefined}
         user={user}
       />
@@ -245,7 +251,7 @@ function AccountWorkspace({ user, sessionError, onLogout }: { user: AppUser; ses
 
           <div className="flex items-center gap-2">
             {user.isDemo && <button
-              onClick={() => setCurrentView('landing')}
+              onClick={() => navigateToView('landing')}
               className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/80 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white text-xs transition cursor-pointer shadow-sm"
               title="Voltar para a página de apresentação"
             >
@@ -427,7 +433,7 @@ function AccountWorkspace({ user, sessionError, onLogout }: { user: AppUser; ses
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
         onAuthSuccess={() => {
-          setCurrentView('dashboard');
+          navigateToView('dashboard');
         }}
       />
 
