@@ -1,3 +1,5 @@
+import { localDate } from './features/finance/validation';
+import { DueDates } from './features/finance/components/DueDates';
 import { DemoGuide } from './features/finance/components/DemoGuide';
 import React, { lazy, Suspense, useState, useMemo, useSyncExternalStore, useEffect, useRef } from 'react';
 import type { Transaction, FilterState } from './features/finance/types';
@@ -107,7 +109,7 @@ export default function AccountWorkspace({ user, sessionError, onLogout }: { use
   const [currentMonth, setCurrentMonth] = useState<number>(currentDate.getMonth());
   const [currentYear, setCurrentYear] = useState<number>(currentDate.getFullYear());
 
-  const { transactions, loading, loadError, isRefreshing,
+  const { transactions, pendingTransactions, loading, loadError, isRefreshing,
     saveTransaction: handleSaveTransaction, deleteTransaction: handleDeleteTransaction,
     toggleStatus: handleToggleStatus, refresh: handleRefresh } = useTransactions(user, currentMonth, currentYear);
 
@@ -207,6 +209,11 @@ export default function AccountWorkspace({ user, sessionError, onLogout }: { use
 
         {/* Totais do recorte atual; ocultos durante carregamento ou erro de leitura. */}
         {!loading && !loadError && <SummaryCards stats={stats} />}
+
+        {!loading && !loadError && <DueDates transactions={pendingTransactions} onPay={tx => {
+          setTransactionToEdit({ ...tx, status: 'pago', data_pagamento: localDate() });
+          setIsTransactionModalOpen(true);
+        }} />}
 
         {/* Botões que escolhem a seção exibida no celular. */}
         <div className="flex sm:hidden border border-slate-200 dark:border-slate-800 bg-slate-200/80 dark:bg-slate-900 rounded-xl p-1 gap-1 text-xs font-semibold">

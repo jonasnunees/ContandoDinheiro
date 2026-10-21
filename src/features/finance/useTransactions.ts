@@ -1,3 +1,5 @@
+import { localDate } from './validation';
+import { upcomingLimit } from './dueDates';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AppUser } from '../auth/session';
 import type { Transaction, TransactionDraft, TransactionStatus, ScheduleOptions } from './types';
@@ -8,6 +10,7 @@ import { fetchTransactionsService, saveScheduledTransaction,
 // Os serviços persistem os dados; este hook mantém a interface sincronizada com o resultado.
 export function useTransactions(user: AppUser, month: number, year: number) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [pendingTransactions, setPendingTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -27,8 +30,8 @@ export function useTransactions(user: AppUser, month: number, year: number) {
     setLoading(true);
     setLoadError('');
     try {
-      const data = await fetchTransactionsService(user.id, user.isDemo, { month, year });
-      if (mounted.current && request === version.current && activeKey.current === key) setTransactions(data);
+      const [data, pending] = await Promise.all([fetchTransactionsService(user.id, user.isDemo, { month, year }), fetchTransactionsService(user.id, user.isDemo, undefined, upcomingLimit(localDate()))]);
+      if (mounted.current && request === version.current && activeKey.current === key) { setTransactions(data); setPendingTransactions(pending); }
     } catch (error) {
       if (mounted.current && request === version.current && activeKey.current === key) {
         setLoadError(user.isDemo && error instanceof Error ? error.message :
@@ -63,5 +66,5 @@ export function useTransactions(user: AppUser, month: number, year: number) {
     await loadTransactions();
   };
   const refresh = async () => { setIsRefreshing(true); await loadTransactions(); };
-  return { transactions, loading, loadError, isRefreshing, saveTransaction, deleteTransaction, toggleStatus, refresh };
+  return { transactions, pendingTransactions, loading, loadError, isRefreshing, saveTransaction, deleteTransaction, toggleStatus, refresh };
 }

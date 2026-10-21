@@ -33,6 +33,7 @@ export function materialize(series: TransactionSeries, today = localDate()): Tra
     const value = series.mode === 'installments' ? (Math.floor(cents / series.count!) + (index < cents % series.count! ? 1 : 0)) / 100 : series.template.valor;
     result.push({ ...series.template, id: `${series.id}-${index}`, user_id: 'demo-user-id',
       serie_id: series.id, ocorrencia: index, parcelas: series.mode === 'installments' ? series.count : null,
+      data_pagamento: index === 0 && date <= today && series.template.status === 'pago' ? series.template.data_pagamento : null,
       data: date, valor: value, status: index === 0 && date <= today ? series.template.status : 'pendente' });
     series.next++;
   }
@@ -43,14 +44,14 @@ export function editFollowing(rows: Transaction[], series: TransactionSeries, se
   const start = selected.ocorrencia!;
   if (cancel) series.cancelled = true;
   else {
-    series.template = { ...updates, data: updates.data, status: 'pendente' };
+    series.template = { ...updates, data: updates.data, status: 'pendente', data_pagamento: null };
     series.base = start;
 
   }
   return rows.flatMap(row => {
     if (row.serie_id !== series.id || row.ocorrencia! < start || row.status === 'pago') return [row];
     if (cancel) return [];
-    return [{ ...row, ...updates, data: monthlyDate(updates.data, row.ocorrencia! - start), status: 'pendente' as const }];
+    return [{ ...row, ...updates, data: monthlyDate(updates.data, row.ocorrencia! - start), data_pagamento: null, status: 'pendente' as const }];
   });
 }
 

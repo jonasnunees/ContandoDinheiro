@@ -30,6 +30,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
   const [valor, setValor] = useState('');
   const [tipo, setTipo] = useState<TransactionType>('despesa');
   const [data, setData] = useState(localDate());
+  const [dataPagamento, setDataPagamento] = useState('');
   const [formaPagamento, setFormaPagamento] = useState<PaymentMethod>('Pix');
   const [status, setStatus] = useState<TransactionStatus>('pago');
   const [categoria, setCategoria] = useState<Category>('Alimentação');
@@ -48,6 +49,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
       setValor(transactionToEdit.valor.toFixed(2).replace('.', ','));
       setTipo(transactionToEdit.tipo);
       setData(transactionToEdit.data);
+      setDataPagamento(transactionToEdit.data_pagamento ?? '');
       setFormaPagamento(transactionToEdit.forma_pagamento);
       setStatus(transactionToEdit.status);
       setCategoria(transactionToEdit.categoria);
@@ -56,6 +58,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
       setValor('');
       setTipo('despesa');
       setData(localDate());
+      setDataPagamento(localDate());
       setFormaPagamento('Pix');
       setStatus('pago');
       setCategoria('Alimentação');
@@ -100,6 +103,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
           valor: numericValue,
           tipo,
           data,
+          data_pagamento: status === 'pago' ? dataPagamento || null : null,
           forma_pagamento: formaPagamento,
           status,
           categoria,
@@ -280,7 +284,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
             <div className="space-y-1.5">
               <label htmlFor="tx-data" className="text-xs font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
                 <CalendarIcon className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
-                Data
+                Vencimento
               </label>
               <input
                 type="date"
@@ -300,7 +304,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
               <div role="group" aria-labelledby="status-label" className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
-                  aria-pressed={status === 'pago'} disabled={loading} onClick={() => setStatus('pago')}
+                  aria-pressed={status === 'pago'} disabled={loading} onClick={() => { setStatus('pago'); if (status !== 'pago') setDataPagamento(localDate()); }}
                   className={`py-2 px-2 rounded-xl text-xs font-semibold border transition cursor-pointer ${
                     status === 'pago'
                       ? 'bg-emerald-500/15 border-emerald-500 text-emerald-700 dark:text-emerald-400'
@@ -323,6 +327,12 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
               </div>
             </div>
           </div>
+
+          {status === 'pago' && <div className="space-y-1.5">
+            <label htmlFor="tx-paid-date" className="block text-xs font-medium">{tipo === 'receita' ? 'Data do recebimento' : 'Data do pagamento'}</label>
+            <input id="tx-paid-date" type="date" max={localDate()} value={dataPagamento} disabled={loading} onChange={e => setDataPagamento(e.target.value)} className="w-full rounded-xl border p-2 bg-white dark:bg-slate-950" />
+            {!dataPagamento && <p className="text-xs">Data não informada. Preencha somente se souber quando ocorreu.</p>}
+          </div>}
 
           {/* Botões para cancelar ou confirmar o formulário. */}
           <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-200 dark:border-slate-800/80">

@@ -46,7 +46,8 @@ Os dados da demonstração ficam no navegador. Para salvar seus próprios regist
 | Recurso | O que entrega |
 | --- | --- |
 | **Resumo financeiro** | Receitas recebidas, despesas pagas, saldo, taxa de economia e totais a pagar e receber. |
-| **Gestão de lançamentos** | Cadastro, edição e exclusão com descrição, valor, data, categoria, forma de pagamento e status. |
+| **Gestão de lançamentos** | Cadastro, edição e exclusão com descrição, valor, vencimento, data efetiva do pagamento, categoria, forma de pagamento e status. |
+| **Pendências por vencimento** | Contas atrasadas, de hoje e dos próximos sete dias, incluindo meses anteriores e sem depender do período selecionado. |
 | **Recorrências mensais** | Contas e receitas recorrentes, com ou sem data de término. |
 | **Compras parceladas** | Divisão do valor total em 2 a 360 parcelas, preservando a soma exata dos centavos. |
 | **Edição de séries** | Alteração de uma ocorrência ou dela e das próximas pendentes; cancelamento futuro preservando o histórico pago. |
@@ -68,6 +69,14 @@ Os dados da demonstração ficam no navegador. Para salvar seus próprios regist
   <br>
   <em>O mesmo controle financeiro no celular, com opção de tema escuro.</em>
 </p>
+
+## Vencimentos e pagamentos
+
+A data do lançamento (`data`) representa o vencimento e continua determinando o período dos resumos, gráficos e extrato. A data efetiva (`data_pagamento`) é independente e aparece no histórico e no CSV. Pagamentos antigos permanecem com data não informada; não há preenchimento retroativo presumido.
+
+A seção de pendências reúne somente despesas pendentes, ordenadas pelo vencimento. Inclui todos os atrasos e os próximos sete dias, com totais por grupo. Registrar pagamento abre a edição com a data de hoje, que pode ser corrigida. Reabrir uma conta como pendente limpa sua data de pagamento. Cada parcela tem seu próprio registro.
+
+A migração `20261021231121_payment_dates.sql` deve ser aplicada antes da publicação do frontend atualizado. Ela adiciona a coluna opcional, valida pagamentos e atualiza a geração de séries, preservando os dados existentes.
 
 ## Decisões de engenharia
 

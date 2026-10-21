@@ -25,7 +25,7 @@ const client = { async rpc() { return { data: null, error: null }; }, auth: {
 }, from() {
   const args = { account: user.id, offset: 0, action: 'read' };
   const query = {};
-  for (const method of ['select', 'eq', 'order', 'gte', 'lt', 'single']) query[method] = () => query;
+  for (const method of ['select', 'eq', 'order', 'gte', 'lt', 'lte', 'single']) query[method] = () => query;
   query.eq = (field, value) => { if (field === 'user_id') args.account = value; return query; };
   query.range = offset => { args.offset = offset; return query; };
   for (const method of ['insert', 'update', 'delete']) query[method] = () => { args.action = method; return query; };

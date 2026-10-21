@@ -15,6 +15,7 @@ export interface Transaction {
   valor: number;
   tipo: TransactionType;
   data: string; // Texto no formato ano-mês-dia, por exemplo: 2026-10-05.
+  data_pagamento?: string | null; // Ausente nos pagamentos antigos sem data conhecida.
   forma_pagamento: PaymentMethod;
   status: TransactionStatus;
   categoria: Category;

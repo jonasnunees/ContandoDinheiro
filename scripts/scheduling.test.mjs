@@ -55,6 +55,7 @@ test('PostgreSQL: séries atômicas, isolamento, geração idempotente e histór
   await db.exec(read('20261014110059_enforce_transaction_integrity.sql'));
   await db.exec(read(readdirSync(new URL('../supabase/migrations',import.meta.url)).find(n=>n.endsWith('_recurring_transactions.sql'))));
   await db.exec(read(readdirSync(new URL('../supabase/migrations',import.meta.url)).find(n=>n.endsWith('_index_transaction_series.sql'))));
+  await db.exec(read(readdirSync(new URL('../supabase/migrations',import.meta.url)).find(n=>n.endsWith('_payment_dates.sql'))));
   await db.query(`INSERT INTO auth.users(id,email) VALUES ($1,'a@example.invalid'),($2,'b@example.invalid')`,[a,b]);
   await db.exec(`SET ROLE authenticated; SELECT set_config('request.jwt.claim.sub','${a}',false);`);
   const save=async(d,o,id=null)=>db.query('SELECT public.save_transaction_series($1::jsonb,$2::jsonb,$3::uuid)',[JSON.stringify(d),JSON.stringify(o),id]);
@@ -101,6 +102,16 @@ test('PostgreSQL: séries atômicas, isolamento, geração idempotente e histór
   assert.equal(Number((await db.query('SELECT valor FROM public.transacoes WHERE id=$1',[extended[2].id])).rows[0].valor),100);
   await save({...draft,data:'2100-01-31'},{mode:'installments',count:2});
   assert.ok((await db.query("SELECT status FROM public.transacoes WHERE data >= '2100-01-01'")).rows.every(t=>t.status==='pendente'));
+  // Pagamento real persiste; reabrir limpa a data, sem inventar histórico antigo.
+  const paidId=extended[0].id;
+  await db.query("UPDATE public.transacoes SET status='pago',data_pagamento='2026-01-15' WHERE id=$1",[paidId]);
+  assert.equal((await db.query('SELECT data_pagamento FROM public.transacoes WHERE id=$1',[paidId])).rows[0].data_pagamento.toISOString().slice(0,10),'2026-01-15');
+  await assert.rejects(db.query("UPDATE public.transacoes SET data_pagamento='9999-01-01' WHERE id=$1",[paidId]));
+  await db.query("UPDATE public.transacoes SET status='pendente' WHERE id=$1",[paidId]);
+  assert.equal((await db.query('SELECT data_pagamento FROM public.transacoes WHERE id=$1',[paidId])).rows[0].data_pagamento,null);
+  await save({...draft,data_pagamento:'2026-01-15'},{mode:'installments',count:2});
+  const paidSeries=(await db.query("SELECT * FROM public.transacoes WHERE data_pagamento='2026-01-15'")).rows;
+  assert.equal(paidSeries.length,1);
   await db.exec('RESET ROLE; SET ROLE anon;');
   await assert.rejects(db.query('SELECT public.materialize_transaction_series()'));
  } finally {await db.close();}

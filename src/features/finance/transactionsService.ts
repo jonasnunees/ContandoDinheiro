@@ -17,12 +17,12 @@ function assertTransactionContext(isDemo: boolean, userId?: string, id?: string)
 
 // Separa apenas os campos editáveis, evitando que a atualização troque o dono ou o ID.
 function editableTransactionFields(input: TransactionUpdate) {
-  const fields = ['descricao', 'valor', 'tipo', 'data', 'forma_pagamento', 'status', 'categoria'] as const;
+  const fields = ['descricao', 'valor', 'tipo', 'data', 'forma_pagamento', 'status', 'categoria', 'data_pagamento'] as const;
   return Object.fromEntries(fields.filter(field => input[field] !== undefined).map(field => [field, input[field]]));
 }
 
 // Busca lançamentos da conta confirmada; na demonstração, lê os exemplos locais.
-export async function fetchTransactionsService(userId: string, isDemo: boolean, period?: TransactionPeriod): Promise<Transaction[]> {
+export async function fetchTransactionsService(userId: string, isDemo: boolean, period?: TransactionPeriod, pendingUntil?: string): Promise<Transaction[]> {
   assertTransactionContext(isDemo, userId);
   if (!isDemo) {
     const { client, user } = await requireAuthenticatedClient(userId);
@@ -37,6 +37,7 @@ export async function fetchTransactionsService(userId: string, isDemo: boolean, 
         .order('data', { ascending: false }).order('id', { ascending: false });
       // Intervalo com início incluído e fim excluído: dispensa calcular o último dia
       // de cada mês e também funciona na passagem de dezembro para janeiro.
+      if (pendingUntil) query = query.eq('status', 'pendente').eq('tipo', 'despesa').lte('data', pendingUntil);
       if (period) {
         const start = period.month === -1 ? `${period.year}-01-01` : `${period.year}-${String(period.month + 1).padStart(2, '0')}-01`;
         const end = period.month === -1 ? `${period.year + 1}-01-01` : localDate(new Date(period.year, period.month + 1, 1));
@@ -172,7 +173,7 @@ export async function toggleStatusService(
   expectedUserId?: string
 ): Promise<TransactionStatus> {
   const nextStatus: TransactionStatus = currentStatus === 'pago' ? 'pendente' : 'pago';
-  await updateTransactionService(id, { status: nextStatus }, isDemo, expectedUserId);
+  await updateTransactionService(id, { status: nextStatus, data_pagamento: nextStatus === 'pago' ? localDate() : null }, isDemo, expectedUserId);
   return nextStatus;
 }
 

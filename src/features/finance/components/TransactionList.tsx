@@ -86,10 +86,11 @@ export const TransactionList: React.FC<TransactionListProps> = ({
   // Monta uma tabela dos lançamentos exibidos e cria um arquivo CSV para baixar.
   const handleExportCSV = () => {
     if (transactions.length === 0) return;
-    const header = ['ID', 'Data', 'Descrição', 'Tipo', 'Categoria', 'Forma de Pagamento', 'Valor', 'Status', 'Recorrência / Parcela'];
+    const header = ['ID', 'Vencimento', 'Data do pagamento', 'Descrição', 'Tipo', 'Categoria', 'Forma de Pagamento', 'Valor', 'Status', 'Recorrência / Parcela'];
     const rows = transactions.map((t) => [
       t.id,
       t.data,
+      t.data_pagamento ?? '',
       t.descricao,
       t.tipo,
       t.categoria,
@@ -194,7 +195,7 @@ export const TransactionList: React.FC<TransactionListProps> = ({
                   <th scope="col" className="py-3 px-4">Descrição</th>
                   <th scope="col" className="py-3 px-4">Categoria</th>
                   <th scope="col" className="py-3 px-4">Pagamento</th>
-                  <th scope="col" className="py-3 px-4">Data</th>
+                  <th scope="col" className="py-3 px-4">Vencimento / pagamento</th>
                   <th scope="col" className="py-3 px-4 text-right">Valor</th>
                   <th scope="col" className="py-3 px-4 text-center">Status</th>
                   <th scope="col" className="py-3 px-4 text-right">Ações</th>
@@ -249,7 +250,7 @@ export const TransactionList: React.FC<TransactionListProps> = ({
 
                       {/* Data */}
                       <td className="py-3.5 px-4 text-slate-500 dark:text-slate-400 whitespace-nowrap">
-                        {formatDate(tx.data)}
+                        Venc.: {formatDate(tx.data)}{tx.status === 'pago' && <span className="block text-xs">{tx.tipo === 'receita' ? 'Recebido' : 'Pago'}: {tx.data_pagamento ? formatDate(tx.data_pagamento) : 'data não informada'}</span>}
                       </td>
 
                       {/* Valor */}
@@ -358,7 +359,7 @@ export const TransactionList: React.FC<TransactionListProps> = ({
                       <div>
                         <h3 className="text-sm font-bold text-slate-900 dark:text-white">{tx.descricao}{tx.serie_id && <span className="ml-2 text-xs font-normal">({occurrenceLabel(tx)})</span>}</h3>
                         <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                          <span>{formatDate(tx.data)}</span>
+                          <span>Venc.: {formatDate(tx.data)}{tx.status === 'pago' && <span className="block text-xs">{tx.tipo === 'receita' ? 'Recebido' : 'Pago'}: {tx.data_pagamento ? formatDate(tx.data_pagamento) : 'data não informada'}</span>}</span>
                           <span>•</span>
                           <span>{tx.forma_pagamento}</span>
                         </div>

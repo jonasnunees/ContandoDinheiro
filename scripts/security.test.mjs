@@ -15,7 +15,7 @@ async function loadServices({ env = {}, authenticated = true, pages = [[]], muta
   const calls = [];
   const user = { id: 'account-a', email: 'a@example.invalid' };
   const query = {};
-  for (const method of ['select', 'eq', 'order', 'insert', 'update', 'delete', 'single', 'gte', 'lt', 'range']) {
+  for (const method of ['select', 'eq', 'order', 'insert', 'update', 'delete', 'single', 'gte', 'lt', 'lte', 'range']) {
     query[method] = (...args) => { calls.push([method, ...args]); return query; };
   }
   let single = false;
@@ -320,4 +320,25 @@ test('identidade e IDs da demonstração são bloqueados antes do acesso remoto,
   await assert.rejects(service.deleteTransactionService('id',undefined,'account-a'), /Modo de acesso/);
   await assert.rejects(service.deleteTransactionService('id',true,'account-a'), /identidade local/);
   assert.equal(calls.length,0);
+});
+
+
+test('consulta global de vencimentos mantém proprietário e não aplica período mensal', async () => {
+  const { service, calls } = await loadServices({pages:[[]]});
+  await service.fetchTransactionsService('account-a', false, undefined, '2026-10-28');
+  assert.ok(calls.some(c=>c[0]==='eq' && c[1]==='user_id' && c[2]==='account-a'));
+  assert.ok(calls.some(c=>c[0]==='eq' && c[1]==='status' && c[2]==='pendente'));
+  assert.ok(calls.some(c=>c[0]==='eq' && c[1]==='tipo' && c[2]==='despesa'));
+  assert.ok(calls.some(c=>c[0]==='lte' && c[1]==='data' && c[2]==='2026-10-28'));
+  assert.ok(!calls.some(c=>c[0]==='gte'));
+});
+test('alternar situação registra pagamento e limpa data ao reabrir', async () => {
+  for(const status of ['pendente','pago']) {
+    const {service,calls}=await loadServices();
+    await service.toggleStatusService('1',status,false,'account-a');
+    const payload=calls.find(c=>c[0]==='update')[1];
+    assert.equal(payload.status,status==='pago'?'pendente':'pago');
+    if(status==='pago') assert.equal(payload.data_pagamento,null);
+    else assert.match(payload.data_pagamento,/^\d{4}-\d{2}-\d{2}$/);
+  }
 });

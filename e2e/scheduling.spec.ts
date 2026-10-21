@@ -12,7 +12,7 @@ test('parcelamento: criação, persistência, edição isolada, próximas e canc
   await page.getByLabel('Descrição', { exact: true }).fill('Compra parcelada teste');
   await page.getByLabel('Valor total da compra (R$)', { exact: true }).fill('100,00');
   await page.getByLabel('Número de parcelas').fill('3');
-  await page.getByLabel('Data', { exact: true }).fill('2026-10-31');
+  await page.getByLabel('Vencimento', { exact: true }).fill('2026-10-31');
   await page.getByRole('button', { name: 'Cadastrar Transação' }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
   const state = () => page.evaluate(() => JSON.parse(localStorage.getItem('gf_local_transactions')!));
@@ -62,7 +62,7 @@ test('mensal com término e sem término mantém datas e não duplica ao recarre
   await page.getByLabel('Repetição',{exact:true}).selectOption('monthly');
   await page.getByLabel('Descrição',{exact:true}).fill(end ? 'Internet finita':'Aluguel contínuo');
   await page.getByLabel('Valor (R$)',{exact:true}).fill('200');
-  await page.getByLabel('Data',{exact:true}).fill('2026-10-31');
+  await page.getByLabel('Vencimento',{exact:true}).fill('2026-10-31');
   if(end) await page.getByLabel('Repetir até (opcional)').fill(end);
   await page.getByRole('button',{name:'Cadastrar Transação'}).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
