@@ -14,7 +14,7 @@ test('pendência antiga permanece visível em outro período e registra pagament
   const section = page.getByRole('region', { name: 'Pendências e próximos vencimentos' });
   await page.getByLabel('Mês dos lançamentos').selectOption('11');
   await expect(section.getByText('Conta antiga teste', {exact:true})).toBeVisible();
-  await expect(section.getByText('Atrasada há 21 dia(s)').first()).toBeVisible();
+  await expect(section.getByText('Atrasada há 21 dias').first()).toBeVisible();
   const axe = await new AxeBuilder({ page }).include('section[aria-labelledby="due-title"]').analyze();
   expect(axe.violations.map(v => v.id)).toEqual([]);
   await section.getByRole('button', { name: 'Registrar pagamento de Conta antiga teste', exact: true }).click();
@@ -47,3 +47,4 @@ test('pendência antiga permanece visível em outro período e registra pagament
   expect(await page.evaluate(()=>document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await page.screenshot({path:'test-results/pendencias-mobile.png',fullPage:true});
 });
+
