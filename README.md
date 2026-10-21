@@ -120,32 +120,6 @@ scripts/             # Testes de regras, segurança e autenticação
 - **Node.js Test Runner, PGlite, Playwright e axe:** testes de regras, operações SQL locais, fluxos de navegador e verificações automatizadas de acessibilidade.
 - **Vercel:** hospedagem da aplicação.
 
-## Executar localmente
-
-Com Node.js e npm instalados:
-
-```sh
-npm ci
-npm run dev
-```
-
-Acesse `http://localhost:3000/demo` para explorar o painel com dados locais, sem configurar uma conta.
-
-Para usar autenticação e dados reais, copie [`.env.example`](.env.example) para `.env.local`, configure `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` e prepare o projeto Supabase com autenticação Google, URLs de redirecionamento e as migrações disponíveis no repositório, em ordem cronológica. Use apenas a chave pública destinada ao cliente; chaves secretas não devem ser expostas em variáveis `VITE_`.
-
-<details>
-  <summary>Detalhes de recorrência e atualização de ambientes</summary>
-
-- Recorrências sem término mantêm doze meses disponíveis a partir do mês atual, com atualização ao carregar o painel.
-- Recorrências com término de até trinta anos e compras parceladas geram todas as ocorrências no cadastro.
-- Ao editar uma série, o valor informado corresponde a uma ocorrência. Alterações e cancelamentos das próximas pendências preservam ocorrências pagas.
-- As migrações [de recorrências](supabase/migrations/20261020173827_recurring_transactions.sql) e [do índice de séries](supabase/migrations/20261020173940_index_transaction_series.sql) devem ser aplicadas após as anteriores. A aplicação depende dessa estrutura para carregar lançamentos de contas reais. Ambas foram aplicadas ao ambiente do ContandoDinheiro em 20/10/2026.
-- A demonstração migra os dados locais existentes e acrescenta os novos exemplos uma única vez, preservando alterações anteriores. Exemplos excluídos não reaparecem ao recarregar; listas já esvaziadas permanecem vazias.
-- A rota `/demo` abre diretamente os exemplos, inclusive quando há uma conta conectada. Entrar e sair da demonstração preserva a sessão da conta, e suas operações afetam somente os dados locais.
-- O cache de estilos e do painel é preenchido conforme o uso; a recarga offline da demonstração depende do primeiro acesso e dos recursos já armazenados.
-
-</details>
-
 ## Qualidade e testes
 
 As verificações cobrem regras financeiras, validação, recorrências, dados de demonstração, segurança e navegação de autenticação. Os testes de recorrência também exercitam as operações SQL em PostgreSQL local via PGlite. Os fluxos com Playwright verificam a experiência no navegador, incluindo isolamento da demonstração e acessibilidade.
