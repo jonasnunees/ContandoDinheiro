@@ -1,3 +1,4 @@
+import { matchesTransactionPeriod } from './calculations';
 import { DEMO_EXAMPLES_VERSION } from './demoExamples';
 import { materialize, editFollowing, validateSchedule } from './scheduling';
 import { localDate, isTransaction } from './validation';
@@ -62,7 +63,13 @@ export async function fetchTransactionsService(userId: string, isDemo: boolean, 
     if (generated.length) { state.transactions.push(...generated); changed = true; }
   }
   if (changed) saveLocalState(state);
-  return state.transactions.filter(t => t.user_id === userId || userId === 'demo-user-id');
+  // Mantém o contrato da leitura remota: o período e o limite de pendências
+  // também se aplicam à demonstração, antes de entregar os dados à interface.
+  return state.transactions.filter(transaction =>
+    (transaction.user_id === userId || userId === 'demo-user-id') &&
+    (!period || matchesTransactionPeriod(transaction, period)) &&
+    (!pendingUntil || transaction.status === 'pendente' && transaction.tipo === 'despesa' && transaction.data <= pendingUntil)
+  );
 }
 
 // Cria um lançamento no banco ou na lista local, conforme o modo de acesso.

@@ -1,4 +1,4 @@
-import { CATEGORIES, PAYMENT_METHODS, type Transaction } from './types.ts';
+import { CATEGORIES, PAYMENT_METHODS, type Transaction, type TransactionSeries } from './types.ts';
 
 // Monta a data no formato ano-mês-dia usando o horário local, sem mudar o dia por causa do fuso.
 export function localDate(date = new Date()): string {
@@ -21,23 +21,56 @@ export function parseMoney(input: string): number {
   return value;
 }
 
-// Confere os campos de dados recebidos antes de tratá-los como um lançamento válido.
-// Os tipos do TypeScript ajudam durante o desenvolvimento, mas não verificam dados externos.
+// O JavaScript normaliza datas como 30/fev; a comparação de volta ao texto
+// impede que essa correção automática aceite um vencimento inexistente.
+export function isCalendarDate(value: unknown): value is string {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const timestamp = Date.parse(`${value}T12:00:00Z`);
+  return !Number.isNaN(timestamp) && new Date(timestamp).toISOString().slice(0, 10) === value;
+}
+
+function hasValidOccurrence(tx: Record<string, unknown>): boolean {
+  if (tx.serie_id == null) return tx.ocorrencia == null && tx.parcelas == null;
+  return typeof tx.serie_id === 'string' && Number.isInteger(tx.ocorrencia) && Number(tx.ocorrencia) >= 0 &&
+    (tx.parcelas == null || Number.isInteger(tx.parcelas) && Number(tx.parcelas) >= 2 &&
+      Number(tx.parcelas) <= 360 && Number(tx.ocorrencia) < Number(tx.parcelas));
+}
+
+// Pagamentos antigos podem não ter data conhecida. Uma data preenchida exige
+// status pago e não pode apontar para o futuro no calendário local do usuário.
+function hasValidPaymentDate(tx: Record<string, unknown>): boolean {
+  return tx.data_pagamento == null ||
+    (tx.status === 'pago' && isCalendarDate(tx.data_pagamento) && tx.data_pagamento <= localDate());
+}
+
+// Tipos estáticos não verificam JSON nem respostas do servidor: esta é a
+// fronteira que transforma dados externos em lançamentos confiáveis.
 export function isTransaction(value: unknown): value is Transaction {
   if (!value || typeof value !== 'object') return false;
   const tx = value as Record<string, unknown>;
-  const seriesValid = tx.serie_id == null
-    ? tx.ocorrencia == null && tx.parcelas == null
-    : typeof tx.serie_id === 'string' && Number.isInteger(tx.ocorrencia) && Number(tx.ocorrencia) >= 0 &&
-      (tx.parcelas == null || Number.isInteger(tx.parcelas) && Number(tx.parcelas) >= 2 && Number(tx.parcelas) <= 360 && Number(tx.ocorrencia) < Number(tx.parcelas));
-  const paidDate = tx.data_pagamento;
-  const paymentValid = paidDate == null || (tx.status === 'pago' && typeof paidDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(paidDate) && !Number.isNaN(Date.parse(`${paidDate}T12:00:00Z`)) && new Date(`${paidDate}T12:00:00Z`).toISOString().slice(0, 10) === paidDate && paidDate <= localDate());
-  return paymentValid && seriesValid && (tx.created_at === undefined || typeof tx.created_at === 'string') && typeof tx.id === 'string' && typeof tx.user_id === 'string' &&
+  return hasValidPaymentDate(tx) && hasValidOccurrence(tx) &&
+    (tx.created_at === undefined || typeof tx.created_at === 'string') &&
+    typeof tx.id === 'string' && typeof tx.user_id === 'string' &&
     typeof tx.descricao === 'string' && tx.descricao.trim().length > 0 &&
     typeof tx.valor === 'number' && Number.isFinite(tx.valor) && tx.valor > 0 && tx.valor <= 9999999999.99 &&
     ['receita', 'despesa'].includes(String(tx.tipo)) && ['pago', 'pendente'].includes(String(tx.status)) &&
-    typeof tx.data === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(tx.data) &&
-    !Number.isNaN(Date.parse(`${tx.data}T12:00:00Z`)) && new Date(`${tx.data}T12:00:00Z`).toISOString().slice(0, 10) === tx.data &&
+    isCalendarDate(tx.data) &&
     PAYMENT_METHODS.some(method => method === tx.forma_pagamento) &&
     CATEGORIES.some(category => category === tx.categoria);
+}
+
+// O estado salvo contém modelos de séries, além das ocorrências já geradas.
+// Valida ambos antes de materializar para não propagar um JSON corrompido.
+export function isTransactionSeries(value: unknown): value is TransactionSeries {
+  if (!value || typeof value !== 'object') return false;
+  const series = value as Record<string, unknown>;
+  if (!series.template || typeof series.template !== 'object') return false;
+  return typeof series.id === 'string' &&
+    ['monthly', 'installments'].includes(String(series.mode)) &&
+    Number.isInteger(series.next) && Number(series.next) >= 0 &&
+    (series.base === undefined || Number.isInteger(series.base) && Number(series.base) >= 0) &&
+    (series.mode !== 'installments' || Number.isInteger(series.count) && Number(series.count) >= 2 && Number(series.count) <= 360) &&
+    (series.end === undefined || isCalendarDate(series.end)) &&
+    (series.cancelled === undefined || typeof series.cancelled === 'boolean') &&
+    isTransaction({ ...series.template, id: series.id, user_id: 'demo-user-id' });
 }

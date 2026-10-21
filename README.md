@@ -111,6 +111,8 @@ e2e/                 # Fluxos de navegador, acessibilidade e versão compilada
 scripts/             # Testes de regras, segurança e autenticação
 ```
 
+A avaliação de manutenção, as melhorias aplicadas e as convenções para novas alterações estão em [Qualidade do código](CODE_QUALITY.md).
+
 ### Tecnologias
 
 - **React e TypeScript:** interface baseada em componentes e contratos tipados.

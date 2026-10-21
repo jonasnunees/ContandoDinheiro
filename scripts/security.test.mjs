@@ -342,3 +342,34 @@ test('alternar situação registra pagamento e limpa data ao reabrir', async () 
     else assert.match(payload.data_pagamento,/^\d{4}-\d{2}-\d{2}$/);
   }
 });
+
+
+test('leitura da demonstração aplica período e limite de pendências sem acesso remoto', async () => {
+  const { service, calls, storage } = await loadServices();
+  const rows = [
+    { ...validTx, id: 'old', user_id: 'demo-user-id', tipo: 'despesa', status: 'pendente', data: '2025-12-01' },
+    { ...validTx, id: 'due', user_id: 'demo-user-id', tipo: 'despesa', status: 'pendente', data: '2026-10-05' },
+    { ...validTx, id: 'paid', user_id: 'demo-user-id', tipo: 'despesa' },
+    { ...validTx, id: 'income', user_id: 'demo-user-id', status: 'pendente' },
+    { ...validTx, id: 'future', user_id: 'demo-user-id', tipo: 'despesa', status: 'pendente', data: '2026-11-01' },
+  ];
+  storage.set('gf_local_transactions', JSON.stringify({ transactions: rows, series: [], examplesVersion: 999 }));
+  const readIds = async (period, limit) => Array.from(
+    await service.fetchTransactionsService('demo-user-id', true, period, limit), row => row.id);
+  assert.deepEqual(await readIds({ month: 9, year: 2026 }), ['due', 'paid', 'income']);
+  assert.deepEqual(await readIds({ month: -1, year: 2026 }), ['due', 'paid', 'income', 'future']);
+  assert.deepEqual(await readIds(undefined, '2026-10-28'), ['old', 'due']);
+  assert.deepEqual(await readIds({ month: 9, year: 2026 }, '2026-10-28'), ['due']);
+  assert.equal(calls.length, 0);
+});
+
+test('série inválida é preservada na leitura e rejeitada antes da gravação local', async () => {
+  const { service, storage } = await loadServices();
+  const series = { id: 's', template: validTx, mode: 'monthly', next: 0, end: '2026-02-30' };
+  const state = { transactions: [], series: [series], examplesVersion: 999 };
+  const raw = JSON.stringify(state);
+  storage.set('gf_local_transactions', raw);
+  assert.throws(() => service.getLocalState(), /conteúdo salvo foi preservado/);
+  assert.throws(() => service.saveLocalState(state), /inválidos/);
+  assert.equal(storage.get('gf_local_transactions'), raw);
+});

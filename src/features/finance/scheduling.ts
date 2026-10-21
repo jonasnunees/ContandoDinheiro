@@ -22,6 +22,11 @@ export function validateSchedule(draft: TransactionDraft, options: ScheduleOptio
   }
 }
 
+/**
+ * Gera somente ocorrências ainda não emitidas, até o horizonte da série.
+ * Avança `series.next` no próprio objeto; o chamador deve persistir a série
+ * junto com o resultado para não duplicar nem perder ocorrências na recarga.
+ */
 export function materialize(series: TransactionSeries, today = localDate()): Transaction[] {
   const result: Transaction[] = [];
   const horizon = monthlyDate(today.slice(0, 8) + '01', 12);
@@ -40,6 +45,8 @@ export function materialize(series: TransactionSeries, today = localDate()): Tra
   return result;
 }
 
+// Atualiza a configuração da série recebida e devolve uma nova lista de registros.
+// Ocorrências pagas e anteriores à selecionada preservam o histórico original.
 export function editFollowing(rows: Transaction[], series: TransactionSeries, selected: Transaction, updates: TransactionDraft, cancel = false): Transaction[] {
   const start = selected.ocorrencia!;
   if (cancel) series.cancelled = true;

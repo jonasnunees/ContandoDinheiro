@@ -1,7 +1,8 @@
+import { useWorkspaceScroll } from './hooks/useWorkspaceScroll';
 import { localDate } from './features/finance/validation';
 import { DueDates } from './features/finance/components/DueDates';
 import { DemoGuide } from './features/finance/components/DemoGuide';
-import React, { lazy, Suspense, useState, useMemo, useSyncExternalStore, useEffect, useRef } from 'react';
+import React, { lazy, Suspense, useState, useMemo } from 'react';
 import type { Transaction, FilterState } from './features/finance/types';
 import type { AppUser } from './features/auth/session';
 import { useTransactions } from './features/finance/useTransactions';
@@ -23,88 +24,12 @@ import {
   Github
 } from 'lucide-react';
 
-// Os gráficos e o histórico de versões só são baixados quando essas telas são usadas.
+// Os gráficos são baixados quando o painel precisa exibi-los.
 const FinancialCharts = lazy(() => import('./features/finance/components/FinancialCharts').then(module => ({ default: module.FinancialCharts })));
 
-function subscribeToScroll(callback: () => void) {
-  window.addEventListener('scroll', callback, { passive: true });
-  window.addEventListener('resize', callback);
-  return () => {
-    window.removeEventListener('scroll', callback);
-    window.removeEventListener('resize', callback);
-  };
-}
-
-function hasScrolledPastFirstScreen() {
-  return window.scrollY >= window.innerHeight;
-}
-
 export default function AccountWorkspace({ user, sessionError, onLogout }: { user: AppUser; sessionError: string; onLogout: () => Promise<void> }) {
-  const showBackToTop = useSyncExternalStore(subscribeToScroll, hasScrolledPastFirstScreen, () => false);
   const currentDate = new Date();
-  const footerRef = useRef<HTMLElement>(null);
-  const scrollAnimation = useRef<number | null>(null);
-  const [footerClearance, setFooterClearance] = useState(0);
-  const isFooterVisible = footerClearance > 0;
-  const floatingButtonStyle = {
-    bottom: `max(calc(1.5rem + env(safe-area-inset-bottom)), ${footerClearance}px)`,
-  };
-
-  useEffect(() => {
-    const cancelScroll = () => {
-      if (scrollAnimation.current !== null) cancelAnimationFrame(scrollAnimation.current);
-      scrollAnimation.current = null;
-    };
-    window.addEventListener('wheel', cancelScroll, { passive: true });
-    window.addEventListener('touchstart', cancelScroll, { passive: true });
-    window.addEventListener('keydown', cancelScroll);
-    return () => {
-      cancelScroll();
-      window.removeEventListener('wheel', cancelScroll);
-      window.removeEventListener('touchstart', cancelScroll);
-      window.removeEventListener('keydown', cancelScroll);
-    };
-  }, []);
-
-  const scrollBackToTop = () => {
-    document.getElementById('dashboard-content')?.focus({ preventScroll: true });
-    if (scrollAnimation.current !== null) cancelAnimationFrame(scrollAnimation.current);
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      scrollAnimation.current = null;
-      window.scrollTo({ top: 0, behavior: 'instant' });
-      return;
-    }
-    const startY = window.scrollY;
-    const duration = Math.min(1800, 1200 + startY * 0.15);
-    const startTime = performance.now();
-    const animate = (now: number) => {
-      const progress = Math.min(1, (now - startTime) / duration);
-      // Curva cosseno: começa devagar e freia gradualmente ao chegar ao topo.
-      const eased = (1 - Math.cos(Math.PI * progress)) / 2;
-      window.scrollTo({ top: startY * (1 - eased), behavior: 'instant' });
-      scrollAnimation.current = progress < 1 ? requestAnimationFrame(animate) : null;
-    };
-    scrollAnimation.current = requestAnimationFrame(animate);
-  };
-
-  useEffect(() => {
-    const footer = footerRef.current;
-    if (!footer) return;
-    const updatePosition = () => {
-      const top = footer.getBoundingClientRect().top;
-      setFooterClearance(top < window.innerHeight ? window.innerHeight - top + 16 : 0);
-    };
-    const observer = new ResizeObserver(updatePosition);
-    observer.observe(document.body);
-    window.addEventListener('scroll', updatePosition, { passive: true });
-    window.addEventListener('resize', updatePosition);
-    updatePosition();
-    return () => {
-      observer.disconnect();
-      window.removeEventListener('scroll', updatePosition);
-      window.removeEventListener('resize', updatePosition);
-    };
-  }, []);
+  const { showBackToTop, footerRef, isFooterVisible, floatingButtonStyle, scrollBackToTop } = useWorkspaceScroll();
 
   const [currentMonth, setCurrentMonth] = useState<number>(currentDate.getMonth());
   const [currentYear, setCurrentYear] = useState<number>(currentDate.getFullYear());

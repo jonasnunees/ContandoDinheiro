@@ -38,3 +38,16 @@ test('agrupamentos dos gráficos preservam centavos e painel vazio não produz N
   assert.equal(empty.taxaEconomia, 0);
   assert.equal(empty.quantidadeTransacoes, 0);
 });
+
+
+test('agrupamento aceita rótulos que coincidem com propriedades de objetos', () => {
+  const rows = ['__proto__', 'constructor', 'toString'].flatMap(categoria => [
+    { ...tx(`${categoria}-1`, 0.1), categoria },
+    { ...tx(`${categoria}-2`, 0.2), categoria },
+  ]);
+  const totals = groupTransactionValues(rows, 'categoria');
+  for (const label of ['__proto__', 'constructor', 'toString']) {
+    assert.equal(Object.hasOwn(totals, label), true);
+    assert.equal(totals[label], 0.3);
+  }
+});

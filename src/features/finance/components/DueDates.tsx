@@ -51,7 +51,7 @@ export function DueDates({ transactions, onPay }: { transactions: Transaction[];
           const days = index === 0 ? overdueDays(tx.data, today) : overdueDays(today, tx.data);
           return <li key={tx.id} className="flex flex-wrap items-center gap-3 py-3 sm:gap-4">
             <div aria-hidden="true" className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800/80">
-              <span className="text-[10px] font-semibold uppercase text-slate-500 dark:text-slate-400">{new Date(`${tx.data}T12:00:00`).toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '')}</span>
+              <span className="text-[10px] font-semibold uppercase text-slate-600 dark:text-slate-400">{new Date(`${tx.data}T12:00:00`).toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '')}</span>
               <span className="text-lg font-bold leading-5 text-slate-700 dark:text-slate-200">{tx.data.slice(8)}</span>
             </div>
             <div className="min-w-0 flex-1 basis-36">
