@@ -139,7 +139,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         </div>
 
         {!isConfigured && (
-          <p className="mb-3 text-xs text-slate-500">O acesso está temporariamente indisponível. Tente novamente mais tarde.</p>
+          <p className="mb-3 text-xs text-slate-600 dark:text-slate-400">O acesso está temporariamente indisponível. Tente novamente mais tarde.</p>
         )}
 
         {/* Permite experimentar o aplicativo com dados de demonstração. */}
