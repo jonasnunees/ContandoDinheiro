@@ -1,0 +1,55 @@
+name: Integração contínua
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Análise, regras e navegador
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      CI: 'true'
+      # Os testes usam simulações e PGlite; nenhuma credencial é necessária.
+      VITE_SUPABASE_URL: ''
+      VITE_SUPABASE_ANON_KEY: ''
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - name: Usar a versão de npm declarada pelo projeto
+        run: npm install --global "$(node -p "require('./package.json').packageManager")"
+      - name: Instalar dependências pelo lockfile
+        run: npm ci
+      - name: Analisar tipos e código
+        run: npm run lint
+      - name: Testar regras e serviços
+        run: npm test
+      - name: Instalar Chromium e dependências do sistema
+        run: npx playwright install --with-deps chromium
+      - name: Testar fluxos de navegador
+        run: npm run test:e2e
+      - name: Compilar e testar a demonstração offline
+        run: npm run test:e2e:production
+      - name: Disponibilizar diagnóstico das falhas
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-diagnostics
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 7

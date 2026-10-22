@@ -134,6 +134,24 @@ As verificações cobrem regras financeiras, validação, recorrências, dados d
 | `npm run lint` | Tipagem TypeScript e análise estática com ESLint. |
 | `npm run build` | Compilação para produção. |
 
+### Integração contínua
+
+O fluxo `.github/workflows/ci.yml` verifica pushes e pull requests em Ubuntu,
+com Node 24.18.0 (fixado em `.node-version`) e a versão de npm declarada em
+`packageManager`. A instalação usa `npm ci` e o `package-lock.json` versionado.
+
+São executados análise estática, testes de regras e serviços, testes de navegador
+em Chromium e `test:e2e:production`, que compila uma única vez e verifica a recarga
+offline com o service worker real. O CI instala o navegador e suas dependências
+de sistema. Os testes usam simulações e PGlite, sem secrets ou credenciais de
+produção; as variáveis de conexão ficam vazias.
+
+Em falhas de navegador, o artefato `playwright-diagnostics` mantém relatórios HTML,
+traces e capturas por sete dias. Falhas de análise, instalação ou regras aparecem
+nos logs da etapa correspondente. Execuções antigas da mesma referência são
+canceladas quando uma nova começa. O fluxo tem apenas permissão de leitura do
+repositório e não publica a aplicação.
+
 ## Autor e contribuições
 
 Desenvolvido por [Jonas Nunes](https://github.com/jonasnunees). O ContandoDinheiro apresenta a integração entre desenvolvimento de interface, modelagem de regras de negócio, persistência e testes em um produto utilizável.
