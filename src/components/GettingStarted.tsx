@@ -9,7 +9,7 @@ const steps = [
   },
   {
     title: 'Entre na sua conta',
-    description: 'Use sua conta Google ou cadastre seu e-mail e senha para salvar seus próprios lançamentos e acessá-los em outro dispositivo.',
+    description: 'Entre com sua conta Google para salvar seus próprios lançamentos e acessá-los em outro dispositivo.',
     Icon: UserRoundCheck,
   },
   {
