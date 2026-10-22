@@ -218,6 +218,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 <span className="flex items-center gap-1.5"><ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />Acesso com Google</span>
               </div>
             </div>
+            <figure className="min-w-0">
             <div className="finance-scene" role="img" aria-label="Prévia ilustrativa com dados fictícios: saldo de R$ 3.285,50 e despesas de R$ 4.850,00, divididas por categoria.">
               <div className="finance-orbit bg-emerald-500 dark:bg-emerald-600" />
               <div className="finance-phone bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700">
@@ -237,8 +238,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 <div className="finance-donut"><div className="bg-white dark:bg-slate-800"><PieChart className="w-7 h-7 text-emerald-700 dark:text-emerald-400" /></div></div>
                 {[[ 'Moradia', 'R$ 2.500,00', 'bg-emerald-600' ], ['Alimentação', 'R$ 1.500,00', 'bg-teal-500'], ['Outros', 'R$ 850,00', 'bg-slate-300']].map(([label, value, color]) => <div key={label} className="flex items-center justify-between gap-4 py-2 text-[11px] border-b last:border-0 border-slate-100 dark:border-slate-700 text-slate-600 dark:text-slate-300"><span className="flex items-center gap-2"><span className={`w-1.5 h-1.5 rounded-full ${color}`} />{label}</span><span className="font-semibold">{value}</span></div>)}
               </div>
-              <span className="absolute bottom-0 right-4 text-[10px] text-slate-500 dark:text-slate-400">Prévia ilustrativa · Dados fictícios</span>
             </div>
+              <figcaption className="mt-6 text-center text-xs leading-relaxed text-slate-500 dark:text-slate-400">Prévia ilustrativa · Dados fictícios</figcaption>
+            </figure>
           </div>
         </div>
       </section>
