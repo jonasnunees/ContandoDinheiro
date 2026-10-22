@@ -11,7 +11,7 @@ import {
   Menu,
   X,
   LogOut,
-  Repeat2, CreditCard, CalendarDays, Github
+  Repeat2, CreditCard, CalendarDays, Github, Plus
 } from 'lucide-react';
 import { FeatureCarousel } from './FeatureCarousel';
 import { GettingStarted } from './GettingStarted';
@@ -25,6 +25,29 @@ interface LandingPageProps {
   isLoggedIn: boolean;
   userEmail?: string;
 }
+
+const frequentlyAskedQuestions = [
+  {
+    question: 'O ContandoDinheiro é gratuito?',
+    answer: 'Sim! Você pode organizar suas receitas, despesas, contas recorrentes e compras parceladas gratuitamente, sem precisar cadastrar um cartão de crédito.',
+  },
+  {
+    question: 'Preciso criar uma conta para testar?',
+    answer: 'Não. A demonstração permite explorar o painel com dados fictícios, sem login. Para começar a registrar suas próprias finanças, entre com sua conta Google.',
+  },
+  {
+    question: 'Posso usar no celular e no computador?',
+    answer: 'Sim. O ContandoDinheiro se adapta às duas telas e pode ser instalado como aplicativo em navegadores compatíveis. Para acessar os dados da sua conta, você precisa de conexão com a internet.',
+  },
+  {
+    question: 'Como organizo contas recorrentes e compras parceladas?',
+    answer: 'Ao adicionar um lançamento, você pode definir uma recorrência ou informar o valor total e o número de parcelas. Assim, acompanha os próximos vencimentos e marca cada conta como paga ou recebida.',
+  },
+  {
+    question: 'Consigo exportar meus lançamentos?',
+    answer: 'Sim. Você pode usar os filtros do painel para consultar seus lançamentos e exportar o extrato em CSV, incluindo o vencimento e a data efetiva do pagamento ou recebimento.',
+  },
+];
 
 export const LandingPage: React.FC<LandingPageProps> = ({
   onOpenLogin,
@@ -355,6 +378,27 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             >
               Testar demonstração sem login →
             </a>
+          </div>
+        </div>
+      </section>
+
+      <section id="faq" aria-labelledby="faq-title" className="scroll-mt-24 px-4 sm:px-8 pt-4 pb-20 sm:pb-24">
+        <div className="max-w-3xl mx-auto">
+          <div className="text-center mb-10">
+            <p className="text-xs font-bold uppercase tracking-widest text-emerald-700 dark:text-emerald-400 mb-3">Tire suas dúvidas</p>
+            <h2 id="faq-title" className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">Perguntas frequentes</h2>
+            <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">Tudo para começar a cuidar do seu dinheiro com tranquilidade.</p>
+          </div>
+          <div className="space-y-3">
+            {frequentlyAskedQuestions.map(({ question, answer }) => (
+              <details key={question} className="group rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 open:border-emerald-300 dark:open:border-emerald-700 transition-colors">
+                <summary className="flex items-center justify-between gap-4 rounded-2xl px-5 py-5 sm:px-6 text-sm sm:text-base font-semibold text-slate-900 dark:text-slate-100 cursor-pointer list-none [&::-webkit-details-marker]:hidden hover:text-emerald-700 dark:hover:text-emerald-400 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-600">
+                  {question}
+                  <Plus aria-hidden="true" className="w-5 h-5 shrink-0 text-emerald-700 dark:text-emerald-400 transition-transform motion-reduce:transition-none group-open:rotate-45" />
+                </summary>
+                <p className="px-5 pb-5 sm:px-6 text-sm leading-relaxed text-slate-600 dark:text-slate-300">{answer}</p>
+              </details>
+            ))}
           </div>
         </div>
       </section>
