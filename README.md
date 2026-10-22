@@ -10,7 +10,7 @@
 
 Uma aplicação web para organizar receitas, despesas e compromissos futuros, com indicadores visuais, lançamentos recorrentes e compras parceladas. O projeto reúne interface responsiva, autenticação, persistência e testes automatizados em uma experiência que pode ser explorada sem cadastro.
 
-[**Explorar demonstração →**](https://contando-dinheiro.vercel.app/demo) · [Acessar aplicativo](https://contando-dinheiro.vercel.app/) · [Conhecer o autor](https://github.com/jonasnunees)
+[**Explorar demonstração →**](https://contando-dinheiro.vercel.app/demo) · [Acessar aplicativo](https://contando-dinheiro.vercel.app/)
 
 ![React](https://img.shields.io/badge/React-20232a?logo=react&logoColor=61dafb)
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178c6?logo=typescript&logoColor=white)
