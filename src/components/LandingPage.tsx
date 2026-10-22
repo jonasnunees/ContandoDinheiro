@@ -14,6 +14,7 @@ import {
   Repeat2, CreditCard, CalendarDays, Github
 } from 'lucide-react';
 import { FeatureCarousel } from './FeatureCarousel';
+import { GettingStarted } from './GettingStarted';
 import { PWAInstallButton } from './PWAInstallButton';
 import { ThemeToggle } from './ThemeToggle';
 
@@ -316,51 +317,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         </FeatureCarousel>
       </section>
 
-      {/* Explica os três passos para começar a usar o aplicativo. */}
-      <section className="py-12 px-4 sm:px-8 bg-slate-100/60 dark:bg-slate-900/50 border-y border-slate-200 dark:border-slate-900">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-10">
-            <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
-              Passo a Passo Simples
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white mt-1">
-              Como começar a organizar seu dinheiro
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center sm:text-left">
-            <div className="card-lift p-4 rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm">
-              <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-emerald-500 text-slate-950 font-black text-sm">
-                1
-              </span>
-              <h3 className="font-bold text-slate-900 dark:text-white text-sm">Experimente sem login</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Abra a demonstração com exemplos fictícios. Suas alterações ficam somente neste navegador, separadas dos dados da sua conta.
-              </p>
-            </div>
-
-            <div className="card-lift p-4 rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm">
-              <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-emerald-500 text-slate-950 font-black text-sm">
-                2
-              </span>
-              <h3 className="font-bold text-slate-900 dark:text-white text-sm">Entre na sua conta</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Use sua conta Google ou cadastre seu e-mail e senha para salvar seus próprios lançamentos e acessá-los em outro dispositivo.
-              </p>
-            </div>
-
-            <div className="card-lift p-4 rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm">
-              <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-emerald-500 text-slate-950 font-black text-sm">
-                3
-              </span>
-              <h3 className="font-bold text-slate-900 dark:text-white text-sm">Registre e planeje</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Adicione receitas, despesas, recorrências e parcelas. Ao confirmar pagamentos e recebimentos, informe a data efetiva para atualizar seu saldo realizado.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
+      <GettingStarted />
 
       {/* Convite final para acessar o aplicativo. */}
       <section className="py-16 px-4 sm:px-8">

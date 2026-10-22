@@ -3,6 +3,32 @@
 /* Aplica estilos escuros aos elementos dentro de uma página com a classe dark. */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* A ordem de leitura acompanha a sequência visual, inclusive no celular. */
+.getting-started-timeline { position: relative; list-style: none; padding: 0; margin: 0; }
+.getting-started-timeline::before { content: ''; position: absolute; top: 24px; bottom: 24px; left: 12px; width: 2px; background: #059669; }
+.getting-started-step { position: relative; display: grid; grid-template-columns: 26px minmax(0, 1fr); column-gap: 16px; padding-bottom: 32px; }
+.getting-started-step:last-child { padding-bottom: 0; }
+.getting-started-marker { position: absolute; left: 6px; top: 24px; width: 14px; height: 14px; border-radius: 50%; }
+.getting-started-card { grid-column: 2; }
+.getting-started-icon { display: none; }
+@media (min-width: 640px) {
+  .getting-started-timeline::before { left: calc(50% - 1px); }
+  .getting-started-step { grid-template-columns: minmax(0, 1fr) 64px minmax(0, 1fr); gap: 0; padding-bottom: 40px; align-items: center; }
+  .getting-started-marker { left: calc(50% - 7px); top: 28px; }
+  .getting-started-card { grid-column: 3; grid-row: 1; }
+  .getting-started-icon { display: flex; justify-content: center; grid-column: 1; grid-row: 1; }
+  .getting-started-step:nth-child(even) .getting-started-card { grid-column: 1; }
+  .getting-started-step:nth-child(even) .getting-started-icon { grid-column: 3; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .getting-started-card, .getting-started-icon { transition: opacity 800ms ease, transform 800ms ease; }
+  .getting-started-step[data-pending] .getting-started-card,
+  .getting-started-step[data-pending] .getting-started-icon { opacity: 0; transform: translateY(24px); }
+}
+@media print {
+  .getting-started-step .getting-started-card, .getting-started-step .getting-started-icon { opacity: 1 !important; transform: none !important; }
+}
+
 @layer base {
   /* Evita rolagem horizontal da página; tabelas usam seus próprios contêineres roláveis. */
   html, body {
