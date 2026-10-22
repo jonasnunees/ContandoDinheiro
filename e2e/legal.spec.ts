@@ -26,15 +26,17 @@ test('documentos estão acessíveis na apresentação, no login e na demonstraç
   await expect(page.getByRole('navigation', { name: 'Documentos legais' }).getByRole('link', { name: 'Política de Privacidade', exact: true })).toHaveAttribute('href', '/politica-de-privacidade');
 });
 
-test('política permanece legível no celular e acessível nos dois temas', async ({ page }) => {
+test('páginas legais mantêm tema claro e acessibilidade mesmo com preferência escura', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto('/politica-de-privacidade');
-  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-  for (const theme of ['light', 'dark']) {
-    await page.evaluate(value => {
-      document.documentElement.classList.toggle('dark', value === 'dark');
-      document.documentElement.classList.toggle('light', value === 'light');
-    }, theme);
+  await page.addInitScript(() => localStorage.setItem('gf_app_theme', 'dark'));
+  for (const path of ['/termos-de-uso', '/politica-de-privacidade']) {
+    await page.goto(path);
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expect(page.locator('html')).toHaveClass(/dark/);
+    await expect(page.locator('main').locator('..')).toHaveCSS('color-scheme', 'light');
+    await expect(page.locator('main').locator('..')).toHaveCSS('background-color', 'oklch(0.984 0.003 247.858)');
+    expect(await page.evaluate(() => localStorage.getItem('gf_app_theme'))).toBe('dark');
+    await expect(page.getByRole('banner').getByRole('button')).toHaveCount(0);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   }
