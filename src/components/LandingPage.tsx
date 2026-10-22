@@ -13,6 +13,7 @@ import {
   LogOut,
   Repeat2, CreditCard, CalendarDays, Github
 } from 'lucide-react';
+import { FeatureCarousel } from './FeatureCarousel';
 import { PWAInstallButton } from './PWAInstallButton';
 import { ThemeToggle } from './ThemeToggle';
 
@@ -253,7 +254,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <FeatureCarousel>
           {/* Explica o primeiro benefício. */}
           <div className="card-lift rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 space-y-4 hover:border-slate-300 dark:hover:border-slate-700 transition shadow-sm">
             <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 flex items-center justify-center">
@@ -310,7 +311,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               Use os temas claro e escuro e instale o aplicativo em navegadores compatíveis. Os dados da sua conta precisam de internet; a demonstração pode reabrir offline após o navegador salvar os arquivos necessários.
             </p>
           </div>
-        </div>
+        </FeatureCarousel>
       </section>
 
       {/* Explica os três passos para começar a usar o aplicativo. */}
