@@ -17,6 +17,7 @@ import { FeatureCarousel } from './FeatureCarousel';
 import { GettingStarted } from './GettingStarted';
 import { PWAInstallButton } from './PWAInstallButton';
 import { ThemeToggle } from './ThemeToggle';
+import { LegalLinks } from '../features/legal/LegalLinks';
 
 interface LandingPageProps {
   onOpenLogin: () => void;
@@ -416,6 +417,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           </div>
 
           <div className="flex flex-wrap items-center justify-center gap-4 text-slate-500 dark:text-slate-400">
+            <LegalLinks />
             <a href="#notas-da-versao" className="rounded hover:text-emerald-700 dark:hover:text-emerald-400">Notas da versão</a>
             <a
               href="https://github.com/jonasnunees/ContandoDinheiro"

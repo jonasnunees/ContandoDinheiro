@@ -7,6 +7,9 @@ import { AuthModal } from './features/auth/AuthModal';
 import { OfflineIndicator } from './components/OfflineIndicator';
 
 const AccountWorkspace = lazy(() => import('./AccountWorkspace'));
+const LegalPage = lazy(() => import('./features/legal/LegalPage'));
+const legalKind = window.location.pathname.replace(/\/$/, '') === '/termos-de-uso' ? 'terms'
+  : window.location.pathname.replace(/\/$/, '') === '/politica-de-privacidade' ? 'privacy' : null;
 const ReleaseNotes = lazy(() => import('./components/ReleaseNotes').then(module => ({ default: module.ReleaseNotes })));
 const isDemoPage = window.location.pathname.replace(/\/$/, '') === '/demo';
 
@@ -27,12 +30,13 @@ function LoadingScreen() {
 export default function App() {
   const hash = useSyncExternalStore(subscribeToNavigation, () => window.location.hash);
   useEffect(() => {
-    document.title = hash === '#notas-da-versao' ? 'Notas da versão — ContandoDinheiro'
+    document.title = legalKind ? `${legalKind === 'terms' ? 'Termos de Uso' : 'Política de Privacidade'} — ContandoDinheiro`
+      : hash === '#notas-da-versao' ? 'Notas da versão — ContandoDinheiro'
       : isDemoPage ? 'Demonstração — ContandoDinheiro'
       : 'ContandoDinheiro — Gestão Financeira & Controle de Gastos';
   }, [hash]);
   return <Suspense fallback={<LoadingScreen />}>
-    {hash === '#notas-da-versao' ? <ReleaseNotes /> : isDemoPage
+    {legalKind ? <LegalPage kind={legalKind} /> : hash === '#notas-da-versao' ? <ReleaseNotes /> : isDemoPage
       ? <AccountWorkspace user={GUEST_USER} sessionError="" onLogout={async () => { window.location.assign('/'); }} />
       : <SessionPage />}
   </Suspense>;

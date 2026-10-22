@@ -1,4 +1,5 @@
 import { signInWithGoogleService } from './authService';
+import { LegalLinks } from '../legal/LegalLinks';
 import { Modal } from '../../components/Modal';
 import React, { useState } from 'react';
 import { isSupabaseConfigured } from '../../services/supabase';
@@ -88,6 +89,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         )}
 
         {/* Área com o botão de acesso pelo Google e mensagens de erro. */}
+        <div className="mb-4 space-y-2 text-center text-xs text-slate-600 dark:text-slate-300">
+          <p>Ao escolher entrar com Google, você concorda com os Termos de Uso e declara ciência da Política de Privacidade. Serviço destinado a maiores de 18 anos.</p>
+          <LegalLinks />
+        </div>
         <div className="space-y-2.5 mb-4">
           {/* O Google permite escolher a conta e verifica a identidade durante o login. */}
           <button
@@ -126,7 +131,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         <div className="p-3 rounded-xl bg-slate-50/80 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800/80 space-y-1.5 mb-3.5">
           <div className="flex items-center gap-2 text-[11px] text-slate-700 dark:text-slate-300">
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400 flex-shrink-0" />
-            <span><strong>Zero Senhas:</strong> Sem risco de esquecer ou perder o acesso.</span>
+            <span><strong>Sem senha adicional:</strong> O acesso depende da sua conta Google.</span>
           </div>
           <div className="flex items-center gap-2 text-[11px] text-slate-700 dark:text-slate-300">
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400 flex-shrink-0" />
@@ -134,7 +139,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           </div>
           <div className="flex items-center gap-2 text-[11px] text-slate-700 dark:text-slate-300">
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400 flex-shrink-0" />
-            <span><strong>Privacidade Total:</strong> Dados vinculados com segurança à sua conta.</span>
+            <span><strong>Acesso individual:</strong> Lançamentos vinculados à sua conta.</span>
           </div>
         </div>
 

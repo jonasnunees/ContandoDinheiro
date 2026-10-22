@@ -1,4 +1,5 @@
 import { useWorkspaceScroll } from './hooks/useWorkspaceScroll';
+import { LegalLinks } from './features/legal/LegalLinks';
 import { localDate } from './features/finance/validation';
 import { DueDates } from './features/finance/components/DueDates';
 import { DemoGuide } from './features/finance/components/DemoGuide';
@@ -266,6 +267,7 @@ export default function AccountWorkspace({ user, sessionError, onLogout }: { use
             <span>— Gestão Financeira Pessoal Gratuita</span>
           </div>
           <div className="flex flex-wrap items-center justify-center gap-4">
+          <LegalLinks />
           <a href="#notas-da-versao" className="rounded text-slate-600 dark:text-slate-400 hover:text-emerald-700 dark:hover:text-emerald-400">Notas da versão</a>
           <a
             href="https://github.com/jonasnunees/ContandoDinheiro"

@@ -1,6 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
-    { "source": "/demo", "destination": "/index.html" }
+    { "source": "/demo", "destination": "/index.html" },
+    { "source": "/termos-de-uso", "destination": "/index.html" },
+    { "source": "/politica-de-privacidade", "destination": "/index.html" }
   ]
 }
