@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
 for (const theme of ['light', 'dark']) {
-  for (const width of [390, 1280]) {
+  for (const width of [320, 390, 1280]) {
     test(`página inicial acessível no tema ${theme} com largura ${width}`, async ({ page }) => {
       await page.setViewportSize({ width, height: 844 });
       await page.addInitScript(value => localStorage.setItem('gf_app_theme', value), theme);
@@ -13,6 +13,17 @@ for (const theme of ['light', 'dark']) {
       await page.goto('/');
       await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
       await expect(page.getByRole('main')).toHaveCount(1);
+      await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
+      await page.evaluate(() => document.fonts.ready);
+      // O overflow oculto do documento não pode mascarar texto cortado no título.
+      const headingFits = await page.getByRole('heading', { level: 1 }).evaluate(element => {
+        const range = document.createRange();
+        range.selectNodeContents(element);
+        return [...range.getClientRects()].every(rect => rect.left >= 0 && rect.right <= innerWidth);
+      });
+      expect(headingFits).toBe(true);
+      // A ilustração é uma imagem acessível única; audita também o contraste dos textos internos.
+      await page.locator('.finance-scene').evaluate(element => element.removeAttribute('role'));
       const results = await new AxeBuilder({ page }).analyze();
       expect(results.violations.map(v => ({ id: v.id, nodes: v.nodes.map(n => n.html) }))).toEqual([]);
       expect(chartRequests).toEqual([]);
