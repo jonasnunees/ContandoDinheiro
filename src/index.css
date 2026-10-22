@@ -30,6 +30,11 @@
 }
 
 @layer base {
+  /* Suaviza a navegação entre seções pelos links da página. */
+  html {
+    scroll-behavior: smooth;
+  }
+
   /* Evita rolagem horizontal da página; tabelas usam seus próprios contêineres roláveis. */
   html, body {
     max-width: 100%;
