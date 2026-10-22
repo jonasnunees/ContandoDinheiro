@@ -40,6 +40,24 @@ export function ReleaseNotes() {
         <h1 ref={heading} tabIndex={-1} className="text-3xl font-extrabold tracking-tight sm:text-4xl">Notas da versão</h1>
         <p className="mt-4 max-w-xl leading-relaxed text-slate-600">Acompanhe o que chega ao ContandoDinheiro e veja como cada novidade pode ajudar você a cuidar do seu dinheiro.</p>
 
+        <article aria-labelledby="version-1-2-1" className="mt-10 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div className="border-b border-slate-200 bg-emerald-50 p-6 sm:p-8">
+            <div className="flex flex-wrap items-center gap-3">
+              <h2 id="version-1-2-1" className="text-2xl font-bold">Versão 1.2.1</h2>
+              <span className="rounded-full border border-emerald-200 bg-white px-3 py-1 text-xs font-semibold text-emerald-800">Página inicial mais clara e fácil de explorar</span>
+            </div>
+            <p className="mt-3 text-sm text-slate-600"><time dateTime="2026-10-22">22 de outubro de 2026</time></p>
+            <p className="mt-4 leading-relaxed text-slate-700">Explore os recursos, acompanhe os primeiros passos e tire suas dúvidas em uma apresentação adaptada ao celular e ao computador.</p>
+          </div>
+          <ul className="space-y-6 p-6 sm:p-8">
+            <li><h3 className="font-semibold">Explore os recursos em um carrossel contínuo</h3><p className="mt-1 text-sm leading-relaxed text-slate-600">Os cartões de recursos agora aparecem em um carrossel que volta ao início ao completar a sequência. Use as setas laterais ou os indicadores para escolher o que quer conhecer. O avanço automático acontece a cada seis segundos, e a quantidade de cartões visíveis se adapta ao tamanho da tela.</p></li>
+            <li><h3 className="font-semibold">Navegue no seu ritmo</h3><p className="mt-1 text-sm leading-relaxed text-slate-600">O carrossel pausa enquanto o ponteiro está sobre ele e interrompe o avanço automático quando um controle recebe foco pelo teclado. Se você prefere movimento reduzido nas configurações do dispositivo, o avanço automático fica desativado. Os controles também têm identificação para leitores de tela.</p></li>
+            <li><h3 className="font-semibold">Acompanhe os primeiros passos em uma linha do tempo</h3><p className="mt-1 text-sm leading-relaxed text-slate-600">A seção “Como começar a organizar seu dinheiro” ganhou etapas numeradas, ícones e cartões alternados no computador, com disposição própria no celular. As etapas aparecem gradualmente durante a rolagem. A preferência por movimento reduzido é respeitada, mantendo o conteúdo visível sem o efeito.</p></li>
+            <li><h3 className="font-semibold">Leia o aviso da ilustração sem sobreposição</h3><p className="mt-1 text-sm leading-relaxed text-slate-600">A legenda “Prévia ilustrativa · Dados fictícios” agora fica centralizada abaixo da imagem, com espaço próprio. Isso evita que o texto cubra a ilustração, especialmente em telas pequenas.</p></li>
+            <li><h3 className="font-semibold">Tire suas dúvidas antes de começar</h3><p className="mt-1 text-sm leading-relaxed text-slate-600">Adicionamos cinco perguntas frequentes antes do rodapé, sobre gratuidade, demonstração sem conta, uso no celular e no computador, recorrências e parcelas, e exportação em CSV. Você pode abrir cada resposta pelo teclado ou por toque. A seção acompanha os temas claro e escuro da página inicial.</p></li>
+          </ul>
+        </article>
+
         <article aria-labelledby="version-1-2-0" className="mt-10 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <div className="border-b border-slate-200 bg-emerald-50 p-6 sm:p-8">
             <div className="flex flex-wrap items-center gap-3">
