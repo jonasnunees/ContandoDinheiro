@@ -198,6 +198,19 @@ test('PostgreSQL: séries atômicas, isolamento, geração idempotente e histór
     ).rows;
     assert.equal(extended.length, 12);
     assert.equal(extended.at(-1).ocorrencia, 12);
+    // Solicitações sobrepostas são serializadas por esta conexão de teste.
+    // Exercita idempotência real no banco; bloqueios entre sessões exigem PostgreSQL.
+    await Promise.all(
+      Array.from({ length: 4 }, () => db.query('SELECT public.materialize_transaction_series()')),
+    );
+    const repeated = (
+      await db.query('SELECT * FROM public.transacoes WHERE serie_id=$1 ORDER BY ocorrencia', [
+        rolling.id,
+      ])
+    ).rows;
+    assert.deepEqual(repeated, extended);
+    assert.equal(new Set(repeated.map((row) => row.ocorrencia)).size, repeated.length);
+
     await assert.rejects(save({ ...draft, valor: -1 }, { scope: 'following' }, extended[0].id));
     assert.equal(
       Number(

@@ -47,6 +47,43 @@ function editableTransactionFields(input: TransactionUpdate) {
   );
 }
 
+// Contexto restrito à chamada: nunca é armazenado entre cargas ou contas.
+type ReadContext = Awaited<ReturnType<typeof requireAuthenticatedClient>>;
+
+async function prepareTransactionRead(userId: string): Promise<ReadContext> {
+  const { client } = await requireAuthenticatedClient(userId);
+  const { error } = await client.rpc('materialize_transaction_series');
+  if (error) throw error;
+  // Detecta troca de conta enquanto a materialização estava em andamento.
+  const context = await requireAuthenticatedClient(userId);
+  if (context.client !== client) throw new Error('A conexão mudou. Tente novamente.');
+  return context;
+}
+
+// Uma carga possui uma barreira de preparação e duas leituras em paralelo.
+export async function fetchTransactionLoadService(
+  userId: string,
+  isDemo: boolean,
+  period: TransactionPeriod,
+  pendingUntil: string,
+): Promise<[Transaction[], Transaction[]]> {
+  assertTransactionContext(isDemo, userId);
+  if (isDemo) {
+    const rows = await fetchTransactionsService(userId, true);
+    return [
+      rows.filter((row) => matchesTransactionPeriod(row, period)),
+      rows.filter(
+        (row) => row.status === 'pendente' && row.tipo === 'despesa' && row.data <= pendingUntil,
+      ),
+    ];
+  }
+  const context = await prepareTransactionRead(userId);
+  return Promise.all([
+    readTransactions(userId, false, period, undefined, context),
+    readTransactions(userId, false, undefined, pendingUntil, context),
+  ]);
+}
+
 // Busca lançamentos da conta confirmada; na demonstração, lê os exemplos locais.
 export async function fetchTransactionsService(
   userId: string,
@@ -55,10 +92,21 @@ export async function fetchTransactionsService(
   pendingUntil?: string,
 ): Promise<Transaction[]> {
   assertTransactionContext(isDemo, userId);
+  const context = isDemo ? undefined : await prepareTransactionRead(userId);
+  return readTransactions(userId, isDemo, period, pendingUntil, context);
+}
+
+// Privada: somente os pontos de entrada autenticados fornecem o contexto preparado.
+async function readTransactions(
+  userId: string,
+  isDemo: boolean,
+  period?: TransactionPeriod,
+  pendingUntil?: string,
+  context?: ReadContext,
+): Promise<Transaction[]> {
   if (!isDemo) {
-    const { client, user } = await requireAuthenticatedClient(userId);
-    const { error: scheduleError } = await client.rpc('materialize_transaction_series');
-    if (scheduleError) throw scheduleError;
+    if (!context) throw new Error('Leitura sem preparação.');
+    const { client, user } = context;
     const result: Transaction[] = [];
     let offset = 0;
     // Busca em páginas e avança pela quantidade recebida, até não haver mais registros.

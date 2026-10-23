@@ -133,7 +133,7 @@ async function loadServices({
     if (module.status !== 'evaluated') await module.evaluate();
     roots.push(module.namespace);
   }
-  return { service: Object.assign({}, ...roots), calls, storage };
+  return { service: Object.assign({}, ...roots), calls, storage, client, user };
 }
 
 test('CSV neutraliza fórmulas e preserva aspas e linhas dentro da célula', async () => {
@@ -680,4 +680,108 @@ test('série inválida é preservada na leitura e rejeitada antes da gravação 
   assert.throws(() => service.getLocalState(), /conteúdo salvo foi preservado/);
   assert.throws(() => service.saveLocalState(state), /inválidos/);
   assert.equal(storage.get('gf_local_transactions'), raw);
+});
+
+const loadPeriod = { month: 9, year: 2026 };
+const deferred = () => {
+  let resolve;
+  const promise = new Promise((done) => {
+    resolve = done;
+  });
+  return { promise, resolve };
+};
+
+test('carga aguarda uma materialização antes das duas consultas e recargas preparam novamente', async () => {
+  const { service, client, calls } = await loadServices();
+  const started = deferred();
+  const gate = deferred();
+  let materializations = 0;
+  client.rpc = async () => {
+    materializations++;
+    started.resolve();
+    await gate.promise;
+    return { error: null };
+  };
+  const load = () =>
+    service.fetchTransactionLoadService('account-a', false, loadPeriod, '2026-10-28');
+  const first = load();
+  await started.promise;
+  assert.equal(calls.filter(([method]) => method === 'from').length, 0);
+  gate.resolve();
+  const rows = await first;
+  assert.equal(rows.length, 2);
+  assert.equal(materializations, 1);
+  assert.equal(calls.filter(([method]) => method === 'from').length, 2);
+  await load();
+  await service.updateTransactionService('1', { valor: 20 }, false, 'account-a');
+  await load();
+  assert.equal(materializations, 3);
+});
+
+test('cargas concorrentes são independentes e chamadas diretas continuam preparando', async () => {
+  const { service, client } = await loadServices();
+  const gate = deferred();
+  const started = deferred();
+  let count = 0;
+  client.rpc = async () => {
+    if (++count === 3) started.resolve();
+    await gate.promise;
+    return { error: null };
+  };
+  const loads = [
+    service.fetchTransactionLoadService('account-a', false, loadPeriod, '2026-10-28'),
+    service.fetchTransactionLoadService('account-a', false, loadPeriod, '2026-10-28'),
+    service.fetchTransactionsService('account-a', false),
+  ];
+  await started.promise;
+  assert.equal(count, 3);
+  gate.resolve();
+  await Promise.all(loads);
+});
+
+test('falha na preparação impede consultas e uma nova carga pode tentar novamente', async () => {
+  const { service, client, calls } = await loadServices();
+  client.rpc = async () => ({ error: new Error('materialização falhou') });
+  await assert.rejects(
+    service.fetchTransactionLoadService('account-a', false, loadPeriod, '2026-10-28'),
+    /materialização falhou/,
+  );
+  assert.equal(calls.filter(([method]) => method === 'from').length, 0);
+  client.rpc = async () => ({ error: null });
+  await service.fetchTransactionLoadService('account-a', false, loadPeriod, '2026-10-28');
+  assert.equal(calls.filter(([method]) => method === 'from').length, 2);
+});
+
+test('troca de conta durante preparação rejeita carga antiga sem misturar contas', async () => {
+  const { service, client, user, calls } = await loadServices();
+  const started = deferred();
+  const gate = deferred();
+  client.rpc = async () => {
+    started.resolve();
+    await gate.promise;
+    return { error: null };
+  };
+  const oldLoad = service.fetchTransactionLoadService('account-a', false, loadPeriod, '2026-10-28');
+  await started.promise;
+  user.id = 'account-b';
+  gate.resolve();
+  await assert.rejects(oldLoad, /conta mudou/);
+  assert.equal(calls.filter(([method]) => method === 'from').length, 0);
+  await service.fetchTransactionLoadService('account-b', false, loadPeriod, '2026-10-28');
+  const owners = calls.filter(([method, field]) => method === 'eq' && field === 'user_id');
+  assert.ok(owners.length === 2 && owners.every(([, , id]) => id === 'account-b'));
+});
+
+test('falha de consulta rejeita a carga completa e não impede recarga', async () => {
+  const { service, client } = await loadServices();
+  const original = client.from;
+  client.from = () => {
+    throw new Error('consulta falhou');
+  };
+  await assert.rejects(
+    service.fetchTransactionLoadService('account-a', false, loadPeriod, '2026-10-28'),
+    /consulta falhou/,
+  );
+  client.from = original;
+  await service.fetchTransactionLoadService('account-a', false, loadPeriod, '2026-10-28');
 });

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AppUser } from '../auth/session';
 import type { Transaction, TransactionDraft, TransactionStatus, ScheduleOptions } from './types';
 import {
-  fetchTransactionsService,
+  fetchTransactionLoadService,
   saveScheduledTransaction,
   deleteTransactionService,
   toggleStatusService,
@@ -36,10 +36,12 @@ export function useTransactions(user: AppUser, month: number, year: number) {
     setLoading(true);
     setLoadError('');
     try {
-      const [data, pending] = await Promise.all([
-        fetchTransactionsService(user.id, user.isDemo, { month, year }),
-        fetchTransactionsService(user.id, user.isDemo, undefined, upcomingLimit(localDate())),
-      ]);
+      const [data, pending] = await fetchTransactionLoadService(
+        user.id,
+        user.isDemo,
+        { month, year },
+        upcomingLimit(localDate()),
+      );
       if (mounted.current && request === version.current && activeKey.current === key) {
         setTransactions(data);
         setPendingTransactions(pending);

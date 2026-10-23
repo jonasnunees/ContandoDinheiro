@@ -58,3 +58,34 @@ Os testes de regressão cobrem filtros locais, isolamento remoto, calendário, s
 - `npx playwright test`: 31 dos 34 fluxos passaram inicialmente; três apontaram o mesmo problema de contraste. Após a correção, os cinco cenários de painel/tema diretamente afetados passaram na repetição direcionada. Os outros 31 fluxos já haviam passado, incluindo os dois testes de retorno ao topo.
 - `npm run test:e2e:production`: compilação e teste de recarga offline aprovados.
 - `git diff --check`: sem erros de espaços ou conflitos.
+
+## Coordenação da leitura de lançamentos
+
+`fetchTransactionLoadService` prepara uma carga: valida a conta, aguarda uma única
+RPC `materialize_transaction_series`, confirma novamente a identidade e a conexão,
+e só então consulta período e pendências em paralelo. O contexto preparado é privado
+à chamada; não há cache global, flag pública para pular materialização, TTL ou promessa
+compartilhada entre usuários. A demonstração materializa e lê uma vez e filtra as duas listas.
+
+Cada recarga, troca de período ou carga após salvar/excluir/alternar situação prepara
+novamente. Cargas independentes concorrentes também preparam separadamente: compartilhar
+uma promessa entre elas poderia reutilizar preparação anterior a uma gravação. O hook
+preserva sua versão/chave de seleção e publica as duas listas apenas se ambas tiverem
+sucesso e a carga ainda for atual. Falhas de preparação impedem ambas as consultas;
+falhas de leitura rejeitam o conjunto. A próxima tentativa começa do zero.
+
+Consumidores diretos de `fetchTransactionsService` continuam materializando antes de ler;
+o único consumidor de produção encontrado era `useTransactions`, agora usando a carga
+coordenada. Os testes de serviço também mantêm cobertura da entrada individual.
+
+A atomicidade da escrita permanece na RPC PostgreSQL existente: transação, bloqueios
+`FOR UPDATE`, índice único de série/ocorrência, `auth.uid()` e RLS. A coordenação não
+transforma as duas consultas paginadas em um snapshot transacional: gravações concorrentes
+podem ser observadas entre consultas, como antes. Não há alteração de schema ou de permissões.
+
+Os testes cobrem a barreira antes das consultas, contagem de materializações, cargas
+sobrepostas, recarga após alteração, troca de conta durante a RPC, chamadas diretas,
+falhas de preparação/leitura e recuperação. O banco local PGlite verifica idempotência
+sem duplicar ocorrências e os testes existentes verificam rollback e isolamento por
+usuário. PGlite serializa sua única conexão; isso não testa contenção entre sessões
+PostgreSQL reais.
