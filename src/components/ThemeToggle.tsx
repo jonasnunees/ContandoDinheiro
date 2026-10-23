@@ -21,7 +21,11 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({ className = '' }) => {
           ? 'bg-white border-slate-200 text-amber-800 hover:bg-amber-50 hover:border-amber-300 shadow-sm'
           : 'bg-slate-900 border-slate-800 text-indigo-300 hover:bg-slate-800 hover:text-indigo-200 hover:border-slate-700'
       } ${className}`}
-      title={isLight ? 'Tema Claro ativo — Clique para Tema Escuro' : 'Tema Escuro ativo — Clique para Tema Claro'}
+      title={
+        isLight
+          ? 'Tema Claro ativo — Clique para Tema Escuro'
+          : 'Tema Escuro ativo — Clique para Tema Claro'
+      }
       aria-label={isLight ? 'Mudar para tema escuro' : 'Mudar para tema claro'}
     >
       {isLight ? (

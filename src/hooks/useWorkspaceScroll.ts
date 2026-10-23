@@ -18,7 +18,11 @@ function hasScrolledPastFirstScreen() {
  * A tela cuida do conteúdo; este hook concentra observadores e sua limpeza.
  */
 export function useWorkspaceScroll() {
-  const showBackToTop = useSyncExternalStore(subscribeToScroll, hasScrolledPastFirstScreen, () => false);
+  const showBackToTop = useSyncExternalStore(
+    subscribeToScroll,
+    hasScrolledPastFirstScreen,
+    () => false,
+  );
   const footerRef = useRef<HTMLElement>(null);
   const scrollAnimation = useRef<number | null>(null);
   const [footerClearance, setFooterClearance] = useState(0);

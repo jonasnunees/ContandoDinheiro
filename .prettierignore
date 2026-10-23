@@ -1,0 +1,6 @@
+# Prettier também respeita o .gitignore do projeto.
+package-lock.json
+
+# Recursos visuais exportados/gerados; preservar os arquivos originais.
+public/branding/
+public/icons/

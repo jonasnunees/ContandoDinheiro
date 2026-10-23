@@ -35,6 +35,8 @@ jobs:
         run: npm ci
       - name: Analisar tipos e código
         run: npm run lint
+      - name: Verificar formatação
+        run: npm run format:check
       - name: Testar regras e serviços
         run: npm test
       - name: Instalar Chromium e dependências do sistema

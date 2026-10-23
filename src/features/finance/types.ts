@@ -1,9 +1,28 @@
 // Fonte comum das opções dos formulários, dos tipos e da validação em execução.
 // Ao mudar essas listas, revise também as restrições SQL das transações.
-export const PAYMENT_METHODS = ['Pix', 'Cartão de Crédito', 'Cartão de Débito', 'Dinheiro', 'Boleto', 'Transferência', 'Outro'] as const;
-export const CATEGORIES = ['Alimentação', 'Moradia', 'Transporte', 'Saúde', 'Educação', 'Lazer', 'Salário', 'Investimentos', 'Serviços', 'Outros'] as const;
-export type PaymentMethod = typeof PAYMENT_METHODS[number];
-export type Category = typeof CATEGORIES[number];
+export const PAYMENT_METHODS = [
+  'Pix',
+  'Cartão de Crédito',
+  'Cartão de Débito',
+  'Dinheiro',
+  'Boleto',
+  'Transferência',
+  'Outro',
+] as const;
+export const CATEGORIES = [
+  'Alimentação',
+  'Moradia',
+  'Transporte',
+  'Saúde',
+  'Educação',
+  'Lazer',
+  'Salário',
+  'Investimentos',
+  'Serviços',
+  'Outros',
+] as const;
+export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
+export type Category = (typeof CATEGORIES)[number];
 export type TransactionType = 'receita' | 'despesa';
 export type TransactionStatus = 'pago' | 'pendente';
 
@@ -44,7 +63,10 @@ export interface FilterState {
 }
 
 // Um formulário só envia campos editáveis: identidade, proprietário e criação vêm do serviço/banco.
-export type TransactionDraft = Omit<Transaction, 'id' | 'created_at' | 'user_id' | 'serie_id' | 'ocorrencia' | 'parcelas'>;
+export type TransactionDraft = Omit<
+  Transaction,
+  'id' | 'created_at' | 'user_id' | 'serie_id' | 'ocorrencia' | 'parcelas'
+>;
 export interface ScheduleOptions {
   mode: 'single' | 'monthly' | 'installments';
   count?: number;
@@ -65,4 +87,7 @@ export interface TransactionSeries {
 // Uma atualização pode enviar apenas parte desses campos, como a mudança de status.
 export type TransactionUpdate = Partial<TransactionDraft>;
 // Janeiro = 0, dezembro = 11; -1 representa todos os meses do ano escolhido.
-export interface TransactionPeriod { month: number; year: number }
+export interface TransactionPeriod {
+  month: number;
+  year: number;
+}

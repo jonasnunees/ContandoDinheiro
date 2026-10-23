@@ -6,57 +6,130 @@ import { test } from 'node:test';
 import vm from 'node:vm';
 import { PGlite } from '@electric-sql/pglite';
 
-const read = path => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
+const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 
-const validTx = { id: '1', user_id: 'account-a', descricao: 'Teste', valor: 10, tipo: 'receita', data: '2026-10-05', forma_pagamento: 'Pix', status: 'pago', categoria: 'Salário' };
+const validTx = {
+  id: '1',
+  user_id: 'account-a',
+  descricao: 'Teste',
+  valor: 10,
+  tipo: 'receita',
+  data: '2026-10-05',
+  forma_pagamento: 'Pix',
+  status: 'pago',
+  categoria: 'Salário',
+};
 // Executa os módulos reais num contexto isolado, substituindo cliente, ambiente e armazenamento.
 // calls registra filtros e cargas enviadas; pages permite simular a paginação sem acessar a rede.
-async function loadServices({ env = {}, authenticated = true, pages = [[]], mutation = validTx, oauth = { url: 'https://example.supabase.co/auth/v1/authorize' } } = {}) {
+async function loadServices({
+  env = {},
+  authenticated = true,
+  pages = [[]],
+  mutation = validTx,
+  oauth = { url: 'https://example.supabase.co/auth/v1/authorize' },
+} = {}) {
   const calls = [];
   const user = { id: 'account-a', email: 'a@example.invalid' };
   const query = {};
-  for (const method of ['select', 'eq', 'order', 'insert', 'update', 'delete', 'single', 'gte', 'lt', 'lte', 'range']) {
-    query[method] = (...args) => { calls.push([method, ...args]); return query; };
+  for (const method of [
+    'select',
+    'eq',
+    'order',
+    'insert',
+    'update',
+    'delete',
+    'single',
+    'gte',
+    'lt',
+    'lte',
+    'range',
+  ]) {
+    query[method] = (...args) => {
+      calls.push([method, ...args]);
+      return query;
+    };
   }
   let single = false;
-  query.single = () => { single = true; calls.push(['single']); return query; };
-  query.range = (...args) => { single = false; calls.push(['range', ...args]); return query; };
-  query.then = resolve => resolve({ data: single ? mutation : pages.shift() ?? [], error: null });
+  query.single = () => {
+    single = true;
+    calls.push(['single']);
+    return query;
+  };
+  query.range = (...args) => {
+    single = false;
+    calls.push(['range', ...args]);
+    return query;
+  };
+  query.then = (resolve) =>
+    resolve({ data: single ? mutation : (pages.shift() ?? []), error: null });
   const client = {
-    rpc: async (...args) => { calls.push(['rpc', ...args]); return { data: null, error: null }; },
-    auth: { getUser: async () => ({ data: { user: authenticated ? user : null }, error: null }), signInWithOAuth: async () => ({ data: oauth, error: null }) },
-    from: table => { calls.push(['from', table]); return query; },
+    rpc: async (...args) => {
+      calls.push(['rpc', ...args]);
+      return { data: null, error: null };
+    },
+    auth: {
+      getUser: async () => ({ data: { user: authenticated ? user : null }, error: null }),
+      signInWithOAuth: async () => ({ data: oauth, error: null }),
+    },
+    from: (table) => {
+      calls.push(['from', table]);
+      return query;
+    },
   };
   const storage = new Map([
     ['gf_supabase_url', 'https://example.supabase.co'],
     ['gf_supabase_anon_key', 'sb_publishable_test'],
   ]);
   const context = vm.createContext({
-    URL, atob, console, crypto: globalThis.crypto, window: { location: { origin: "http://localhost:3000" } },
+    URL,
+    atob,
+    console,
+    crypto: globalThis.crypto,
+    window: { location: { origin: 'http://localhost:3000' } },
     localStorage: {
-      getItem: key => storage.get(key) ?? null,
+      getItem: (key) => storage.get(key) ?? null,
       setItem: (key, value) => storage.set(key, value),
-      removeItem: key => storage.delete(key),
+      removeItem: (key) => storage.delete(key),
     },
   });
-  const dependency = new vm.SyntheticModule(['createClient'], function () {
-    this.setExport('createClient', () => client);
-  }, { context });
+  const dependency = new vm.SyntheticModule(
+    ['createClient'],
+    function () {
+      this.setExport('createClient', () => client);
+    },
+    { context },
+  );
   const modules = new Map();
   function getModule(file) {
-    if (!modules.has(file)) modules.set(file, new vm.SourceTextModule(stripTypeScriptTypes(read(file)), {
-      context, identifier: file, initializeImportMeta: meta => { meta.env = env; },
-    }));
+    if (!modules.has(file))
+      modules.set(
+        file,
+        new vm.SourceTextModule(stripTypeScriptTypes(read(file)), {
+          context,
+          identifier: file,
+          initializeImportMeta: (meta) => {
+            meta.env = env;
+          },
+        }),
+      );
     return modules.get(file);
   }
   const roots = [];
-  for (const file of ['src/services/supabase.ts', 'src/features/finance/transactionsService.ts', 'src/features/finance/demoStorage.ts', 'src/features/auth/authService.ts']) {
+  for (const file of [
+    'src/services/supabase.ts',
+    'src/features/finance/transactionsService.ts',
+    'src/features/finance/demoStorage.ts',
+    'src/features/auth/authService.ts',
+  ]) {
     const module = getModule(file);
-    if (module.status === 'unlinked') await module.link((specifier, parent) => {
-      if (specifier === '@supabase/supabase-js') return dependency;
-      const target = path.posix.normalize(path.posix.join(path.posix.dirname(parent.identifier), specifier));
-      return getModule(target.endsWith('.ts') ? target : target + '.ts');
-    });
+    if (module.status === 'unlinked')
+      await module.link((specifier, parent) => {
+        if (specifier === '@supabase/supabase-js') return dependency;
+        const target = path.posix.normalize(
+          path.posix.join(path.posix.dirname(parent.identifier), specifier),
+        );
+        return getModule(target.endsWith('.ts') ? target : target + '.ts');
+      });
     if (module.status !== 'evaluated') await module.evaluate();
     roots.push(module.namespace);
   }
@@ -65,17 +138,40 @@ async function loadServices({ env = {}, authenticated = true, pages = [[]], muta
 
 test('CSV neutraliza fórmulas e preserva aspas e linhas dentro da célula', async () => {
   const csv = await import('../src/features/finance/csv.ts');
-  for (const value of ['=1+1', '+1', '-1', '@SUM(A1)', '  =1+1', '\t=1+1', '\r=1+1', '\n=1+1', '\u0000=1+1']) {
+  for (const value of [
+    '=1+1',
+    '+1',
+    '-1',
+    '@SUM(A1)',
+    '  =1+1',
+    '\t=1+1',
+    '\r=1+1',
+    '\n=1+1',
+    '\u0000=1+1',
+  ]) {
     assert.ok(csv.escapeCSVCell(value).startsWith('"\''), JSON.stringify(value));
   }
   assert.equal(csv.escapeCSVCell('Descrição "teste",\nPix'), '"Descrição ""teste"",\nPix"');
-  assert.equal(csv.serializeCSV([['Descrição', 'Valor'], ['ação', 1]]), '\uFEFF"Descrição","Valor"\r\n"ação","1"');
+  assert.equal(
+    csv.serializeCSV([
+      ['Descrição', 'Valor'],
+      ['ação', 1],
+    ]),
+    '\uFEFF"Descrição","Valor"\r\n"ação","1"',
+  );
 });
 
 test('conexão rejeita HTTP, destino externo e chaves privilegiadas', async () => {
   const { service } = await loadServices();
-  const jwt = role => `header.${Buffer.from(JSON.stringify({ role })).toString('base64url')}.signature`;
-  for (const url of ['http://example.supabase.co', 'https://attacker.invalid', 'https://example.supabase.co.attacker.invalid', 'https://user:pass@example.supabase.co', 'https://example.supabase.co?target=1']) {
+  const jwt = (role) =>
+    `header.${Buffer.from(JSON.stringify({ role })).toString('base64url')}.signature`;
+  for (const url of [
+    'http://example.supabase.co',
+    'https://attacker.invalid',
+    'https://example.supabase.co.attacker.invalid',
+    'https://user:pass@example.supabase.co',
+    'https://example.supabase.co?target=1',
+  ]) {
     assert.throws(() => service.validateSupabaseCredentials(url, 'sb_publishable_test'));
   }
   for (const key of ['sb_secret_test', jwt('service_role'), jwt('authenticated'), 'invalid']) {
@@ -86,17 +182,24 @@ test('conexão rejeita HTTP, destino externo e chaves privilegiadas', async () =
 });
 
 test('configuração de produção ignora alterações no navegador', async () => {
-  const { service } = await loadServices({ env: {
-    VITE_SUPABASE_URL: 'https://production.supabase.co', VITE_SUPABASE_ANON_KEY: 'sb_publishable_production',
-  } });
+  const { service } = await loadServices({
+    env: {
+      VITE_SUPABASE_URL: 'https://production.supabase.co',
+      VITE_SUPABASE_ANON_KEY: 'sb_publishable_production',
+    },
+  });
   assert.equal(service.getSupabaseCredentials().url, 'https://production.supabase.co');
-  assert.throws(() => service.setSupabaseCredentials('https://example.supabase.co', 'sb_publishable_test'));
+  assert.throws(() =>
+    service.setSupabaseCredentials('https://example.supabase.co', 'sb_publishable_test'),
+  );
 });
 
 test('CRUD real exige sessão e não usa armazenamento demo como fallback', async () => {
   const { service, calls, storage } = await loadServices({ authenticated: false });
   await assert.rejects(service.fetchTransactionsService('victim', false), /Sessão inválida/);
-  await assert.rejects(service.addTransactionService({ descricao: 'teste', user_id: 'victim' }, false));
+  await assert.rejects(
+    service.addTransactionService({ descricao: 'teste', user_id: 'victim' }, false),
+  );
   await assert.rejects(service.updateTransactionService('id', { status: 'pago' }, false));
   await assert.rejects(service.deleteTransactionService('id', false));
   assert.equal(calls.length, 0);
@@ -106,26 +209,42 @@ test('CRUD real exige sessão e não usa armazenamento demo como fallback', asyn
 test('CRUD vincula consultas à sessão e bloqueia alterações de campos protegidos', async () => {
   const { service, calls } = await loadServices();
   await service.fetchTransactionsService('account-a', false);
-  assert.ok(calls.some(call => call[0] === 'eq' && call[1] === 'user_id' && call[2] === 'account-a'));
+  assert.ok(
+    calls.some((call) => call[0] === 'eq' && call[1] === 'user_id' && call[2] === 'account-a'),
+  );
   calls.length = 0;
-  await service.addTransactionService({ descricao: 'teste', user_id: 'victim', id: 'forged', created_at: 'forged' }, false);
-  const inserted = calls.find(call => call[0] === 'insert')[1][0];
+  await service.addTransactionService(
+    { descricao: 'teste', user_id: 'victim', id: 'forged', created_at: 'forged' },
+    false,
+  );
+  const inserted = calls.find((call) => call[0] === 'insert')[1][0];
   assert.equal(inserted.user_id, 'account-a');
   assert.equal(inserted.id, undefined);
   assert.equal(inserted.created_at, undefined);
   calls.length = 0;
-  await service.updateTransactionService('id', { user_id: 'victim', id: 'forged', created_at: 'forged', status: 'pago' }, false);
-  const updated = calls.find(call => call[0] === 'update')[1];
+  await service.updateTransactionService(
+    'id',
+    { user_id: 'victim', id: 'forged', created_at: 'forged', status: 'pago' },
+    false,
+  );
+  const updated = calls.find((call) => call[0] === 'update')[1];
   assert.deepEqual(Object.keys(updated), ['status']);
-  assert.ok(calls.some(call => call[0] === 'eq' && call[1] === 'user_id' && call[2] === 'account-a'));
+  assert.ok(
+    calls.some((call) => call[0] === 'eq' && call[1] === 'user_id' && call[2] === 'account-a'),
+  );
   calls.length = 0;
   await service.deleteTransactionService('id', false);
-  assert.ok(calls.some(call => call[0] === 'eq' && call[1] === 'user_id' && call[2] === 'account-a'));
+  assert.ok(
+    calls.some((call) => call[0] === 'eq' && call[1] === 'user_id' && call[2] === 'account-a'),
+  );
 });
 
 test('OAuth retorna endereço do provedor e ausência de configuração informa erro', async () => {
   const { service } = await loadServices();
-  assert.equal((await service.signInWithGoogleService()).url, 'https://example.supabase.co/auth/v1/authorize');
+  assert.equal(
+    (await service.signInWithGoogleService()).url,
+    'https://example.supabase.co/auth/v1/authorize',
+  );
   const missing = await loadServices({ env: { VITE_SUPABASE_URL: 'https://example.supabase.co' } });
   assert.ok((await missing.service.signInWithGoogleService()).error);
 });
@@ -133,26 +252,52 @@ test('OAuth retorna endereço do provedor e ausência de configuração informa 
 test('retornos inválidos de criação e atualização são rejeitados', async () => {
   const { service } = await loadServices({ mutation: { id: 'broken' } });
   await assert.rejects(service.addTransactionService(validTx, false), /inválida/);
-  await assert.rejects(service.updateTransactionService('1', { status: 'pago' }, false), /inválida/);
+  await assert.rejects(
+    service.updateTransactionService('1', { status: 'pago' }, false),
+    /inválida/,
+  );
 });
 
 test('mudança de conta bloqueia operações iniciadas para outro proprietário', async () => {
   const { service, calls } = await loadServices();
   await assert.rejects(service.fetchTransactionsService('account-b', false), /conta mudou/);
   await assert.rejects(service.addTransactionService(validTx, false, 'account-b'), /conta mudou/);
-  await assert.rejects(service.updateTransactionService('1', { status: 'pago' }, false, 'account-b'), /conta mudou/);
+  await assert.rejects(
+    service.updateTransactionService('1', { status: 'pago' }, false, 'account-b'),
+    /conta mudou/,
+  );
   await assert.rejects(service.deleteTransactionService('1', false, 'account-b'), /conta mudou/);
   assert.equal(calls.length, 0);
 });
 
 test('paginação recupera todas as páginas mesmo com limite menor da API e filtra período', async () => {
-  const tx = { id: '1', user_id: 'account-a', descricao: 'Teste', valor: 10, tipo: 'receita', data: '2026-10-05', forma_pagamento: 'Pix', status: 'pago', categoria: 'Salário' };
+  const tx = {
+    id: '1',
+    user_id: 'account-a',
+    descricao: 'Teste',
+    valor: 10,
+    tipo: 'receita',
+    data: '2026-10-05',
+    forma_pagamento: 'Pix',
+    status: 'pago',
+    categoria: 'Salário',
+  };
   const { service, calls } = await loadServices({ pages: [[tx], [{ ...tx, id: '2' }], []] });
-  const result = await service.fetchTransactionsService('account-a', false, { month: 9, year: 2026 });
+  const result = await service.fetchTransactionsService('account-a', false, {
+    month: 9,
+    year: 2026,
+  });
   assert.equal(result.length, 2);
-  assert.deepEqual(calls.filter(call => call[0] === 'range').map(call => call.slice(1)), [[0, 499], [1, 500], [2, 501]]);
-  assert.ok(calls.some(call => call[0] === 'gte' && call[2] === '2026-10-01'));
-  assert.ok(calls.some(call => call[0] === 'lt' && call[2] === '2026-11-01'));
+  assert.deepEqual(
+    calls.filter((call) => call[0] === 'range').map((call) => call.slice(1)),
+    [
+      [0, 499],
+      [1, 500],
+      [2, 501],
+    ],
+  );
+  assert.ok(calls.some((call) => call[0] === 'gte' && call[2] === '2026-10-01'));
+  assert.ok(calls.some((call) => call[0] === 'lt' && call[2] === '2026-11-01'));
 });
 
 test('dados locais inválidos são informados e preservados antes de qualquer gravação', async () => {
@@ -165,7 +310,7 @@ test('dados locais inválidos são informados e preservados antes de qualquer gr
   }
 });
 
-test('migração protege dados e gera auditoria no PostgreSQL local', async t => {
+test('migração protege dados e gera auditoria no PostgreSQL local', async (t) => {
   const db = new PGlite();
   const accountA = '11111111-1111-4111-8111-111111111111';
   const accountB = '22222222-2222-4222-8222-222222222222';
@@ -184,8 +329,11 @@ test('migração protege dados e gera auditoria no PostgreSQL local', async t =>
       GRANT USAGE ON SCHEMA public, auth TO anon, authenticated;
     `);
     // Uma conta anterior à instalação precisa de perfil para gravar transações.
-    await db.query(`INSERT INTO auth.users (id, email, raw_user_meta_data, raw_app_meta_data)
-      VALUES ($1, 'a@example.invalid', '{"full_name":"Conta anterior"}', '{"provider":"google"}')`, [accountA]);
+    await db.query(
+      `INSERT INTO auth.users (id, email, raw_user_meta_data, raw_app_meta_data)
+      VALUES ($1, 'a@example.invalid', '{"full_name":"Conta anterior"}', '{"provider":"google"}')`,
+      [accountA],
+    );
     await db.exec(sql);
     await db.exec(read('supabase/migrations/20261014110059_enforce_transaction_integrity.sql'));
     await t.test('instalação recupera perfil de conta preexistente', async () => {
@@ -193,7 +341,9 @@ test('migração protege dados e gera auditoria no PostgreSQL local', async t =>
       assert.equal(rows[0].id, accountA);
       assert.equal(rows[0].nome, 'Conta anterior');
     });
-    await db.query("UPDATE public.usuarios SET nome = 'Nome personalizado' WHERE id = $1", [accountA]);
+    await db.query("UPDATE public.usuarios SET nome = 'Nome personalizado' WHERE id = $1", [
+      accountA,
+    ]);
     await db.exec(read('supabase/migrations/20261002220000_backfill_existing_profiles.sql'));
     // Simula políticas permissivas que poderiam ter sobrado de uma configuração anterior.
     await db.exec(`
@@ -205,14 +355,22 @@ test('migração protege dados e gera auditoria no PostgreSQL local', async t =>
       const { rows } = await db.query('SELECT nome FROM public.usuarios WHERE id = $1', [accountA]);
       assert.equal(rows[0].nome, 'Nome personalizado');
     });
-    await db.query(`INSERT INTO auth.users (id, email, raw_app_meta_data) VALUES
-      ($1, 'b@example.invalid', '{"provider":"google"}')`, [accountB]);
+    await db.query(
+      `INSERT INTO auth.users (id, email, raw_app_meta_data) VALUES
+      ($1, 'b@example.invalid', '{"provider":"google"}')`,
+      [accountB],
+    );
 
     await t.test('trigger mapeia provider sem falhar no cadastro', async () => {
       const { rows } = await db.query('SELECT provider FROM public.usuarios ORDER BY id');
-      assert.deepEqual(rows.map(row => row.provider), ['google', 'google']);
+      assert.deepEqual(
+        rows.map((row) => row.provider),
+        ['google', 'google'],
+      );
     });
-    await db.exec(`SET ROLE authenticated; SELECT set_config('request.jwt.claim.sub', '${accountA}', false);`);
+    await db.exec(
+      `SET ROLE authenticated; SELECT set_config('request.jwt.claim.sub', '${accountA}', false);`,
+    );
     const { rows: created } = await db.query(`INSERT INTO public.transacoes
       (descricao, valor, tipo, forma_pagamento, status, categoria)
       VALUES ('Teste A', 10, 'receita', 'Pix', 'pago', 'Outros') RETURNING id`);
@@ -220,49 +378,120 @@ test('migração protege dados e gera auditoria no PostgreSQL local', async t =>
 
     await t.test('API direta rejeita campos inválidos em inserções e atualizações', async () => {
       const invalidFields = [
-        ['descricao', ''], ['descricao', ' \t\r\n'], ['descricao', '\u00a0\u2003\ufeff'],
-        ['valor', 0], ['valor', -1], ['valor', 'NaN'], ['valor', 10000000000],
-        ['categoria', 'arbitrária'], ['forma_pagamento', 'arbitrária'],
-        ['data', 'infinity'], ['data', '-infinity'], ['data', '10000-01-01'],
+        ['descricao', ''],
+        ['descricao', ' \t\r\n'],
+        ['descricao', '\u00a0\u2003\ufeff'],
+        ['valor', 0],
+        ['valor', -1],
+        ['valor', 'NaN'],
+        ['valor', 10000000000],
+        ['categoria', 'arbitrária'],
+        ['forma_pagamento', 'arbitrária'],
+        ['data', 'infinity'],
+        ['data', '-infinity'],
+        ['data', '10000-01-01'],
       ];
-      const valid = { descricao: 'Teste', valor: 0.01, tipo: 'receita', forma_pagamento: 'Pix', status: 'pago', categoria: 'Outros', data: '2026-10-14' };
+      const valid = {
+        descricao: 'Teste',
+        valor: 0.01,
+        tipo: 'receita',
+        forma_pagamento: 'Pix',
+        status: 'pago',
+        categoria: 'Outros',
+        data: '2026-10-14',
+      };
       for (const [field, value] of invalidFields) {
         const input = { ...valid, [field]: value };
-        await assert.rejects(db.query(
-          'INSERT INTO public.transacoes (descricao, valor, tipo, forma_pagamento, status, categoria, data) VALUES ($1,$2,$3,$4,$5,$6,$7)',
-          Object.values(input),
-        ), error => ['23514', '22003'].includes(error.code));
-        await assert.rejects(db.query(
-          `UPDATE public.transacoes SET ${field} = $1 WHERE id = $2`, [value, transactionA],
-        ), error => ['23514', '22003'].includes(error.code));
+        await assert.rejects(
+          db.query(
+            'INSERT INTO public.transacoes (descricao, valor, tipo, forma_pagamento, status, categoria, data) VALUES ($1,$2,$3,$4,$5,$6,$7)',
+            Object.values(input),
+          ),
+          (error) => ['23514', '22003'].includes(error.code),
+        );
+        await assert.rejects(
+          db.query(`UPDATE public.transacoes SET ${field} = $1 WHERE id = $2`, [
+            value,
+            transactionA,
+          ]),
+          (error) => ['23514', '22003'].includes(error.code),
+        );
       }
-      assert.equal((await db.query('SELECT descricao FROM public.transacoes WHERE id = $1', [transactionA])).rows[0].descricao, 'Teste A');
+      assert.equal(
+        (await db.query('SELECT descricao FROM public.transacoes WHERE id = $1', [transactionA]))
+          .rows[0].descricao,
+        'Teste A',
+      );
     });
 
     await t.test('cliente não pode falsificar nem consultar logs', async () => {
-      await assert.rejects(db.query("INSERT INTO public.logs_atividades (acao, user_id) VALUES ('falso', 'victim')"), error => error.code === '42501');
-      await assert.rejects(db.query('SELECT * FROM public.logs_atividades'), error => error.code === '42501');
+      await assert.rejects(
+        db.query("INSERT INTO public.logs_atividades (acao, user_id) VALUES ('falso', 'victim')"),
+        (error) => error.code === '42501',
+      );
+      await assert.rejects(
+        db.query('SELECT * FROM public.logs_atividades'),
+        (error) => error.code === '42501',
+      );
     });
     await db.exec(`SELECT set_config('request.jwt.claim.sub', '${accountB}', false);`);
-    await t.test('conta B não acessa nem modifica registros de A mesmo com política antiga permissiva', async () => {
-      assert.equal((await db.query('SELECT * FROM public.transacoes')).rows.length, 0);
-      assert.equal((await db.query("UPDATE public.transacoes SET descricao = 'invadido' WHERE id = $1 RETURNING id", [transactionA])).rows.length, 0);
-      assert.equal((await db.query('DELETE FROM public.transacoes WHERE id = $1 RETURNING id', [transactionA])).rows.length, 0);
-      await assert.rejects(db.query(`INSERT INTO public.transacoes
+    await t.test(
+      'conta B não acessa nem modifica registros de A mesmo com política antiga permissiva',
+      async () => {
+        assert.equal((await db.query('SELECT * FROM public.transacoes')).rows.length, 0);
+        assert.equal(
+          (
+            await db.query(
+              "UPDATE public.transacoes SET descricao = 'invadido' WHERE id = $1 RETURNING id",
+              [transactionA],
+            )
+          ).rows.length,
+          0,
+        );
+        assert.equal(
+          (
+            await db.query('DELETE FROM public.transacoes WHERE id = $1 RETURNING id', [
+              transactionA,
+            ])
+          ).rows.length,
+          0,
+        );
+        await assert.rejects(
+          db.query(
+            `INSERT INTO public.transacoes
         (user_id, descricao, valor, tipo, forma_pagamento, status, categoria)
-        VALUES ($1, 'Inválido', 10, 'receita', 'Pix', 'pago', 'Outros')`, [accountA]), error => error.code === '42501');
-    });
+        VALUES ($1, 'Inválido', 10, 'receita', 'Pix', 'pago', 'Outros')`,
+            [accountA],
+          ),
+          (error) => error.code === '42501',
+        );
+      },
+    );
     await db.exec(`SELECT set_config('request.jwt.claim.sub', '${accountA}', false);`);
     await t.test('proprietário não transfere registro para outra conta', async () => {
-      await assert.rejects(db.query('UPDATE public.transacoes SET user_id = $1 WHERE id = $2', [accountB, transactionA]), error => error.code === '42501');
+      await assert.rejects(
+        db.query('UPDATE public.transacoes SET user_id = $1 WHERE id = $2', [
+          accountB,
+          transactionA,
+        ]),
+        (error) => error.code === '42501',
+      );
     });
-    await db.query("UPDATE public.transacoes SET status = 'pendente' WHERE id = $1", [transactionA]);
+    await db.query("UPDATE public.transacoes SET status = 'pendente' WHERE id = $1", [
+      transactionA,
+    ]);
     await db.query('DELETE FROM public.transacoes WHERE id = $1', [transactionA]);
     await db.exec('RESET ROLE;');
     await t.test('CRUD direto também gera logs com identidade e horário do servidor', async () => {
-      const { rows } = await db.query('SELECT user_id, user_email, acao, detalhes, created_at FROM public.logs_atividades ORDER BY created_at, acao');
+      const { rows } = await db.query(
+        'SELECT user_id, user_email, acao, detalhes, created_at FROM public.logs_atividades ORDER BY created_at, acao',
+      );
       assert.equal(rows.length, 3);
-      assert.deepEqual(rows.map(row => row.acao).sort(), ['criar_transacao', 'editar_transacao', 'excluir_transacao']);
+      assert.deepEqual(rows.map((row) => row.acao).sort(), [
+        'criar_transacao',
+        'editar_transacao',
+        'excluir_transacao',
+      ]);
       for (const row of rows) {
         assert.equal(row.user_id, accountA);
         assert.equal(row.user_email, 'a@example.invalid');
@@ -273,89 +502,168 @@ test('migração protege dados e gera auditoria no PostgreSQL local', async t =>
     });
     await db.exec('SET ROLE anon;');
     await t.test('acesso anônimo a transações e auditoria é bloqueado', async () => {
-      await assert.rejects(db.query('SELECT * FROM public.transacoes'), error => error.code === '42501');
-      await assert.rejects(db.query("INSERT INTO public.logs_atividades (acao) VALUES ('falso')"), error => error.code === '42501');
+      await assert.rejects(
+        db.query('SELECT * FROM public.transacoes'),
+        (error) => error.code === '42501',
+      );
+      await assert.rejects(
+        db.query("INSERT INTO public.logs_atividades (acao) VALUES ('falso')"),
+        (error) => error.code === '42501',
+      );
     });
   } finally {
     await db.close();
   }
 });
 
-
 test('demonstração mantém CRUD, parcelas e cancelamento locais mesmo com sessão real disponível', async () => {
   const { service, calls, storage } = await loadServices({ authenticated: true });
-  const account='demo-user-id';
-  const draft={descricao:'Somente local',valor:100,tipo:'despesa',data:'2026-10-20',forma_pagamento:'Pix',status:'pendente',categoria:'Outros'};
-  const rows=await service.fetchTransactionsService(account,true);
-  const removed=rows.find(row=>row.id==='demo-1');
-  await service.deleteTransactionService(removed.id,true,account);
-  assert.ok(!service.getLocalTransactions().some(row=>row.id===removed.id));
-  const created=await service.addTransactionService(draft,true,account);
-  await service.updateTransactionService(created.id,{valor:120},true,account);
-  await service.toggleStatusService(created.id,'pendente',true,account);
-  await service.saveScheduledTransaction(draft,{mode:'installments',count:3},true,account);
-  const state=service.getLocalState();
-  const series=state.series.find(s=>s.template.descricao===draft.descricao);
-  const selected=state.transactions.find(row=>row.serie_id===series.id);
-  await service.saveScheduledTransaction({...draft,valor:60},{mode:'single',scope:'following'},true,account,selected.id);
-  await service.saveScheduledTransaction(draft,{mode:'single',scope:'following',cancel:true},true,account,selected.id);
-  assert.ok(!service.getLocalTransactions().some(row=>row.serie_id===series.id));
+  const account = 'demo-user-id';
+  const draft = {
+    descricao: 'Somente local',
+    valor: 100,
+    tipo: 'despesa',
+    data: '2026-10-20',
+    forma_pagamento: 'Pix',
+    status: 'pendente',
+    categoria: 'Outros',
+  };
+  const rows = await service.fetchTransactionsService(account, true);
+  const removed = rows.find((row) => row.id === 'demo-1');
+  await service.deleteTransactionService(removed.id, true, account);
+  assert.ok(!service.getLocalTransactions().some((row) => row.id === removed.id));
+  const created = await service.addTransactionService(draft, true, account);
+  await service.updateTransactionService(created.id, { valor: 120 }, true, account);
+  await service.toggleStatusService(created.id, 'pendente', true, account);
+  await service.saveScheduledTransaction(draft, { mode: 'installments', count: 3 }, true, account);
+  const state = service.getLocalState();
+  const series = state.series.find((s) => s.template.descricao === draft.descricao);
+  const selected = state.transactions.find((row) => row.serie_id === series.id);
+  await service.saveScheduledTransaction(
+    { ...draft, valor: 60 },
+    { mode: 'single', scope: 'following' },
+    true,
+    account,
+    selected.id,
+  );
+  await service.saveScheduledTransaction(
+    draft,
+    { mode: 'single', scope: 'following', cancel: true },
+    true,
+    account,
+    selected.id,
+  );
+  assert.ok(!service.getLocalTransactions().some((row) => row.serie_id === series.id));
   assert.ok(storage.has('gf_local_transactions'));
-  assert.equal(calls.length,0,'Nenhuma consulta ou RPC pode chegar ao banco');
+  assert.equal(calls.length, 0, 'Nenhuma consulta ou RPC pode chegar ao banco');
 });
 
 test('identidade e IDs da demonstração são bloqueados antes do acesso remoto, mesmo com modo incorreto', async () => {
-  const { service, calls } = await loadServices({ authenticated:true });
-  const account='demo-user-id';
-  const draft={descricao:'Teste',valor:10,tipo:'despesa',data:'2026-10-20',forma_pagamento:'Pix',status:'pendente',categoria:'Outros'};
+  const { service, calls } = await loadServices({ authenticated: true });
+  const account = 'demo-user-id';
+  const draft = {
+    descricao: 'Teste',
+    valor: 10,
+    tipo: 'despesa',
+    data: '2026-10-20',
+    forma_pagamento: 'Pix',
+    status: 'pendente',
+    categoria: 'Outros',
+  };
   await assert.rejects(service.requireAuthenticatedClient(account), /demonstração/);
-  await assert.rejects(service.fetchTransactionsService(account,false), /demonstração/);
-  await assert.rejects(service.addTransactionService(draft,false,account), /demonstração/);
-  await assert.rejects(service.updateTransactionService('demo-1',draft,false), /demonstração/);
-  await assert.rejects(service.deleteTransactionService('demo-1',false,'account-a'), /demonstração/);
-  await assert.rejects(service.deleteTransactionService('tx-123-local',false), /demonstração/);
-  await assert.rejects(service.toggleStatusService('demo-1','pago',false), /demonstração/);
-  await assert.rejects(service.saveScheduledTransaction(draft,{mode:'monthly'},false,account), /demonstração/);
-  await assert.rejects(service.saveScheduledTransaction(draft,{mode:'single',scope:'following',cancel:true},false,'account-a','demo-series-internet-0'), /demonstração/);
-  await assert.rejects(service.deleteTransactionService('id',undefined,'account-a'), /Modo de acesso/);
-  await assert.rejects(service.deleteTransactionService('id',true,'account-a'), /identidade local/);
-  assert.equal(calls.length,0);
+  await assert.rejects(service.fetchTransactionsService(account, false), /demonstração/);
+  await assert.rejects(service.addTransactionService(draft, false, account), /demonstração/);
+  await assert.rejects(service.updateTransactionService('demo-1', draft, false), /demonstração/);
+  await assert.rejects(
+    service.deleteTransactionService('demo-1', false, 'account-a'),
+    /demonstração/,
+  );
+  await assert.rejects(service.deleteTransactionService('tx-123-local', false), /demonstração/);
+  await assert.rejects(service.toggleStatusService('demo-1', 'pago', false), /demonstração/);
+  await assert.rejects(
+    service.saveScheduledTransaction(draft, { mode: 'monthly' }, false, account),
+    /demonstração/,
+  );
+  await assert.rejects(
+    service.saveScheduledTransaction(
+      draft,
+      { mode: 'single', scope: 'following', cancel: true },
+      false,
+      'account-a',
+      'demo-series-internet-0',
+    ),
+    /demonstração/,
+  );
+  await assert.rejects(
+    service.deleteTransactionService('id', undefined, 'account-a'),
+    /Modo de acesso/,
+  );
+  await assert.rejects(
+    service.deleteTransactionService('id', true, 'account-a'),
+    /identidade local/,
+  );
+  assert.equal(calls.length, 0);
 });
-
 
 test('consulta global de vencimentos mantém proprietário e não aplica período mensal', async () => {
-  const { service, calls } = await loadServices({pages:[[]]});
+  const { service, calls } = await loadServices({ pages: [[]] });
   await service.fetchTransactionsService('account-a', false, undefined, '2026-10-28');
-  assert.ok(calls.some(c=>c[0]==='eq' && c[1]==='user_id' && c[2]==='account-a'));
-  assert.ok(calls.some(c=>c[0]==='eq' && c[1]==='status' && c[2]==='pendente'));
-  assert.ok(calls.some(c=>c[0]==='eq' && c[1]==='tipo' && c[2]==='despesa'));
-  assert.ok(calls.some(c=>c[0]==='lte' && c[1]==='data' && c[2]==='2026-10-28'));
-  assert.ok(!calls.some(c=>c[0]==='gte'));
+  assert.ok(calls.some((c) => c[0] === 'eq' && c[1] === 'user_id' && c[2] === 'account-a'));
+  assert.ok(calls.some((c) => c[0] === 'eq' && c[1] === 'status' && c[2] === 'pendente'));
+  assert.ok(calls.some((c) => c[0] === 'eq' && c[1] === 'tipo' && c[2] === 'despesa'));
+  assert.ok(calls.some((c) => c[0] === 'lte' && c[1] === 'data' && c[2] === '2026-10-28'));
+  assert.ok(!calls.some((c) => c[0] === 'gte'));
 });
 test('alternar situação registra pagamento e limpa data ao reabrir', async () => {
-  for(const status of ['pendente','pago']) {
-    const {service,calls}=await loadServices();
-    await service.toggleStatusService('1',status,false,'account-a');
-    const payload=calls.find(c=>c[0]==='update')[1];
-    assert.equal(payload.status,status==='pago'?'pendente':'pago');
-    if(status==='pago') assert.equal(payload.data_pagamento,null);
-    else assert.match(payload.data_pagamento,/^\d{4}-\d{2}-\d{2}$/);
+  for (const status of ['pendente', 'pago']) {
+    const { service, calls } = await loadServices();
+    await service.toggleStatusService('1', status, false, 'account-a');
+    const payload = calls.find((c) => c[0] === 'update')[1];
+    assert.equal(payload.status, status === 'pago' ? 'pendente' : 'pago');
+    if (status === 'pago') assert.equal(payload.data_pagamento, null);
+    else assert.match(payload.data_pagamento, /^\d{4}-\d{2}-\d{2}$/);
   }
 });
-
 
 test('leitura da demonstração aplica período e limite de pendências sem acesso remoto', async () => {
   const { service, calls, storage } = await loadServices();
   const rows = [
-    { ...validTx, id: 'old', user_id: 'demo-user-id', tipo: 'despesa', status: 'pendente', data: '2025-12-01' },
-    { ...validTx, id: 'due', user_id: 'demo-user-id', tipo: 'despesa', status: 'pendente', data: '2026-10-05' },
+    {
+      ...validTx,
+      id: 'old',
+      user_id: 'demo-user-id',
+      tipo: 'despesa',
+      status: 'pendente',
+      data: '2025-12-01',
+    },
+    {
+      ...validTx,
+      id: 'due',
+      user_id: 'demo-user-id',
+      tipo: 'despesa',
+      status: 'pendente',
+      data: '2026-10-05',
+    },
     { ...validTx, id: 'paid', user_id: 'demo-user-id', tipo: 'despesa' },
     { ...validTx, id: 'income', user_id: 'demo-user-id', status: 'pendente' },
-    { ...validTx, id: 'future', user_id: 'demo-user-id', tipo: 'despesa', status: 'pendente', data: '2026-11-01' },
+    {
+      ...validTx,
+      id: 'future',
+      user_id: 'demo-user-id',
+      tipo: 'despesa',
+      status: 'pendente',
+      data: '2026-11-01',
+    },
   ];
-  storage.set('gf_local_transactions', JSON.stringify({ transactions: rows, series: [], examplesVersion: 999 }));
-  const readIds = async (period, limit) => Array.from(
-    await service.fetchTransactionsService('demo-user-id', true, period, limit), row => row.id);
+  storage.set(
+    'gf_local_transactions',
+    JSON.stringify({ transactions: rows, series: [], examplesVersion: 999 }),
+  );
+  const readIds = async (period, limit) =>
+    Array.from(
+      await service.fetchTransactionsService('demo-user-id', true, period, limit),
+      (row) => row.id,
+    );
   assert.deepEqual(await readIds({ month: 9, year: 2026 }), ['due', 'paid', 'income']);
   assert.deepEqual(await readIds({ month: -1, year: 2026 }), ['due', 'paid', 'income', 'future']);
   assert.deepEqual(await readIds(undefined, '2026-10-28'), ['old', 'due']);

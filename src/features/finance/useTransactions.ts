@@ -3,8 +3,12 @@ import { upcomingLimit } from './dueDates';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AppUser } from '../auth/session';
 import type { Transaction, TransactionDraft, TransactionStatus, ScheduleOptions } from './types';
-import { fetchTransactionsService, saveScheduledTransaction,
-  deleteTransactionService, toggleStatusService } from './transactionsService';
+import {
+  fetchTransactionsService,
+  saveScheduledTransaction,
+  deleteTransactionService,
+  toggleStatusService,
+} from './transactionsService';
 
 // Coordena leitura, alterações e recarga dos lançamentos da conta e do período selecionados.
 // Os serviços persistem os dados; este hook mantém a interface sincronizada com o resultado.
@@ -23,23 +27,35 @@ export function useTransactions(user: AppUser, month: number, year: number) {
   // para que callbacks antigos não publiquem dados de outra seleção.
   const activeKey = useRef(key);
   activeKey.current = key;
-  const invalidate = useCallback(() => { version.current++; }, []);
+  const invalidate = useCallback(() => {
+    version.current++;
+  }, []);
   const loadTransactions = useCallback(async () => {
     if (!mounted.current || activeKey.current !== key) return;
     const request = ++version.current;
     setLoading(true);
     setLoadError('');
     try {
-      const [data, pending] = await Promise.all([fetchTransactionsService(user.id, user.isDemo, { month, year }), fetchTransactionsService(user.id, user.isDemo, undefined, upcomingLimit(localDate()))]);
-      if (mounted.current && request === version.current && activeKey.current === key) { setTransactions(data); setPendingTransactions(pending); }
+      const [data, pending] = await Promise.all([
+        fetchTransactionsService(user.id, user.isDemo, { month, year }),
+        fetchTransactionsService(user.id, user.isDemo, undefined, upcomingLimit(localDate())),
+      ]);
+      if (mounted.current && request === version.current && activeKey.current === key) {
+        setTransactions(data);
+        setPendingTransactions(pending);
+      }
     } catch (error) {
       if (mounted.current && request === version.current && activeKey.current === key) {
-        setLoadError(user.isDemo && error instanceof Error ? error.message :
-          'Não foi possível carregar os lançamentos. Os valores exibidos podem estar desatualizados. Tente novamente.');
+        setLoadError(
+          user.isDemo && error instanceof Error
+            ? error.message
+            : 'Não foi possível carregar os lançamentos. Os valores exibidos podem estar desatualizados. Tente novamente.',
+        );
       }
     } finally {
       if (mounted.current && request === version.current && activeKey.current === key) {
-        setLoading(false); setIsRefreshing(false);
+        setLoading(false);
+        setIsRefreshing(false);
       }
     }
   }, [key, user.id, user.isDemo, month, year]);
@@ -48,12 +64,19 @@ export function useTransactions(user: AppUser, month: number, year: number) {
   useEffect(() => {
     mounted.current = true;
     void loadTransactions();
-    return () => { mounted.current = false; invalidate(); };
+    return () => {
+      mounted.current = false;
+      invalidate();
+    };
   }, [loadTransactions, invalidate]);
   // Com ID, edita; sem ID, cria. Após cada alteração confirmada, relê a lista
   // para refletir a persistência e os filtros do período, sem atualização otimista.
   // Falhas de gravação são propagadas ao formulário; falhas de leitura viram loadError.
-  const saveTransaction = async (data: TransactionDraft, id?: string, options: ScheduleOptions = { mode: 'single' }) => {
+  const saveTransaction = async (
+    data: TransactionDraft,
+    id?: string,
+    options: ScheduleOptions = { mode: 'single' },
+  ) => {
     await saveScheduledTransaction(data, options, user.isDemo, user.id, id);
     await loadTransactions();
   };
@@ -65,6 +88,19 @@ export function useTransactions(user: AppUser, month: number, year: number) {
     await toggleStatusService(id, status, user.isDemo, user.id);
     await loadTransactions();
   };
-  const refresh = async () => { setIsRefreshing(true); await loadTransactions(); };
-  return { transactions, pendingTransactions, loading, loadError, isRefreshing, saveTransaction, deleteTransaction, toggleStatus, refresh };
+  const refresh = async () => {
+    setIsRefreshing(true);
+    await loadTransactions();
+  };
+  return {
+    transactions,
+    pendingTransactions,
+    loading,
+    loadError,
+    isRefreshing,
+    saveTransaction,
+    deleteTransaction,
+    toggleStatus,
+    refresh,
+  };
 }

@@ -24,9 +24,17 @@ export function validateSupabaseCredentials(url: string, key: string): void {
   const configuredHost = import.meta.env.VITE_SUPABASE_URL
     ? new URL(import.meta.env.VITE_SUPABASE_URL).host
     : null;
-  if (parsed.protocol !== 'https:' || parsed.username || parsed.password || parsed.search || parsed.hash ||
-      (parsed.pathname !== '/' && parsed.pathname !== '') ||
-      (configuredHost ? parsed.host !== configuredHost : !/^[a-z0-9-]+\.supabase\.co$/.test(parsed.host))) {
+  if (
+    parsed.protocol !== 'https:' ||
+    parsed.username ||
+    parsed.password ||
+    parsed.search ||
+    parsed.hash ||
+    (parsed.pathname !== '/' && parsed.pathname !== '') ||
+    (configuredHost
+      ? parsed.host !== configuredHost
+      : !/^[a-z0-9-]+\.supabase\.co$/.test(parsed.host))
+  ) {
     throw new Error('Use a URL HTTPS do projeto Supabase autorizado.');
   }
   if (/^sb_publishable_[A-Za-z0-9_-]+$/.test(key)) return;
@@ -38,7 +46,9 @@ export function validateSupabaseCredentials(url: string, key: string): void {
   } catch {
     // A assinatura da chave é validada pelo servidor; aqui verificamos o formato e o tipo.
   }
-  throw new Error('Use somente a chave pública anon ou publishable; chaves secretas não são permitidas.');
+  throw new Error(
+    'Use somente a chave pública anon ou publishable; chaves secretas não são permitidas.',
+  );
 }
 
 // Salva ou remove a configuração local e atualiza a conexão reutilizada pela aplicação.
@@ -85,12 +95,14 @@ export function getSupabaseClient(): SupabaseClient | null {
 
 // Confirma a identidade no servidor antes de acessar os dados de uma conta real.
 export async function requireAuthenticatedClient(expectedUserId?: string) {
-  if (expectedUserId === 'demo-user-id') throw new Error('A demonstração não pode acessar o banco.');
+  if (expectedUserId === 'demo-user-id')
+    throw new Error('A demonstração não pode acessar o banco.');
   const client = getSupabaseClient();
   if (!client) throw new Error('Supabase não configurado.');
   const { data, error } = await client.auth.getUser();
   if (error || !data.user) throw new Error('Sessão inválida. Entre novamente com o Google.');
   // Uma ação iniciada na conta anterior não deve gravar na conta recém-selecionada.
-  if (expectedUserId && expectedUserId !== data.user.id) throw new Error('A conta mudou. Tente novamente na conta atual.');
+  if (expectedUserId && expectedUserId !== data.user.id)
+    throw new Error('A conta mudou. Tente novamente na conta atual.');
   return { client, user: data.user };
 }

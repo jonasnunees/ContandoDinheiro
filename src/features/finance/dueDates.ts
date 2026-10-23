@@ -8,12 +8,13 @@ export function upcomingLimit(today: string): string {
 }
 export function dueGroups(rows: Transaction[], today = localDate()) {
   const limit = upcomingLimit(today);
-  const pending = rows.filter(t => t.tipo === 'despesa' && t.status === 'pendente' && t.data <= limit)
+  const pending = rows
+    .filter((t) => t.tipo === 'despesa' && t.status === 'pendente' && t.data <= limit)
     .sort((a, b) => a.data.localeCompare(b.data) || a.id.localeCompare(b.id));
   return [
-    { title: 'Atrasadas', rows: pending.filter(t => t.data < today) },
-    { title: 'Vencem hoje', rows: pending.filter(t => t.data === today) },
-    { title: 'Próximos 7 dias', rows: pending.filter(t => t.data > today) },
+    { title: 'Atrasadas', rows: pending.filter((t) => t.data < today) },
+    { title: 'Vencem hoje', rows: pending.filter((t) => t.data === today) },
+    { title: 'Próximos 7 dias', rows: pending.filter((t) => t.data > today) },
   ];
 }
 export function overdueDays(due: string, today: string): number {

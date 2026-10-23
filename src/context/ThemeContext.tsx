@@ -36,7 +36,11 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       root.classList.add('light');
     }
     root.setAttribute('data-theme', theme);
-    try { writeStorage(THEME_STORAGE_KEY, theme); } catch { /* A aparência muda mesmo se o navegador não permitir salvar a preferência. */ }
+    try {
+      writeStorage(THEME_STORAGE_KEY, theme);
+    } catch {
+      /* A aparência muda mesmo se o navegador não permitir salvar a preferência. */
+    }
   }, [theme]);
 
   const toggleTheme = () => {

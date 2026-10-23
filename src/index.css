@@ -1,32 +1,98 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 /* Aplica estilos escuros aos elementos dentro de uma página com a classe dark. */
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* A ordem de leitura acompanha a sequência visual, inclusive no celular. */
-.getting-started-timeline { position: relative; list-style: none; padding: 0; margin: 0; }
-.getting-started-timeline::before { content: ''; position: absolute; top: 24px; bottom: 24px; left: 12px; width: 2px; background: #059669; }
-.getting-started-step { position: relative; display: grid; grid-template-columns: 26px minmax(0, 1fr); column-gap: 16px; padding-bottom: 32px; }
-.getting-started-step:last-child { padding-bottom: 0; }
-.getting-started-marker { position: absolute; left: 6px; top: 24px; width: 14px; height: 14px; border-radius: 50%; }
-.getting-started-card { grid-column: 2; }
-.getting-started-icon { display: none; }
+.getting-started-timeline {
+  position: relative;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.getting-started-timeline::before {
+  content: '';
+  position: absolute;
+  top: 24px;
+  bottom: 24px;
+  left: 12px;
+  width: 2px;
+  background: #059669;
+}
+.getting-started-step {
+  position: relative;
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr);
+  column-gap: 16px;
+  padding-bottom: 32px;
+}
+.getting-started-step:last-child {
+  padding-bottom: 0;
+}
+.getting-started-marker {
+  position: absolute;
+  left: 6px;
+  top: 24px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+}
+.getting-started-card {
+  grid-column: 2;
+}
+.getting-started-icon {
+  display: none;
+}
 @media (min-width: 640px) {
-  .getting-started-timeline::before { left: calc(50% - 1px); }
-  .getting-started-step { grid-template-columns: minmax(0, 1fr) 64px minmax(0, 1fr); gap: 0; padding-bottom: 40px; align-items: center; }
-  .getting-started-marker { left: calc(50% - 7px); top: 28px; }
-  .getting-started-card { grid-column: 3; grid-row: 1; }
-  .getting-started-icon { display: flex; justify-content: center; grid-column: 1; grid-row: 1; }
-  .getting-started-step:nth-child(even) .getting-started-card { grid-column: 1; }
-  .getting-started-step:nth-child(even) .getting-started-icon { grid-column: 3; }
+  .getting-started-timeline::before {
+    left: calc(50% - 1px);
+  }
+  .getting-started-step {
+    grid-template-columns: minmax(0, 1fr) 64px minmax(0, 1fr);
+    gap: 0;
+    padding-bottom: 40px;
+    align-items: center;
+  }
+  .getting-started-marker {
+    left: calc(50% - 7px);
+    top: 28px;
+  }
+  .getting-started-card {
+    grid-column: 3;
+    grid-row: 1;
+  }
+  .getting-started-icon {
+    display: flex;
+    justify-content: center;
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .getting-started-step:nth-child(even) .getting-started-card {
+    grid-column: 1;
+  }
+  .getting-started-step:nth-child(even) .getting-started-icon {
+    grid-column: 3;
+  }
 }
 @media (prefers-reduced-motion: no-preference) {
-  .getting-started-card, .getting-started-icon { transition: opacity 800ms ease, transform 800ms ease; }
+  .getting-started-card,
+  .getting-started-icon {
+    transition:
+      opacity 800ms ease,
+      transform 800ms ease;
+  }
   .getting-started-step[data-pending] .getting-started-card,
-  .getting-started-step[data-pending] .getting-started-icon { opacity: 0; transform: translateY(24px); }
+  .getting-started-step[data-pending] .getting-started-icon {
+    opacity: 0;
+    transform: translateY(24px);
+  }
 }
 @media print {
-  .getting-started-step .getting-started-card, .getting-started-step .getting-started-icon { opacity: 1 !important; transform: none !important; }
+  .getting-started-step .getting-started-card,
+  .getting-started-step .getting-started-icon {
+    opacity: 1 !important;
+    transform: none !important;
+  }
 }
 
 @layer base {
@@ -36,32 +102,56 @@
   }
 
   /* Evita rolagem horizontal da página; tabelas usam seus próprios contêineres roláveis. */
-  html, body {
+  html,
+  body {
     max-width: 100%;
     overflow-x: hidden;
   }
 }
 
 /* Centraliza a janela, limita sua altura e permite rolar conteúdos maiores. */
-.modal-dialog { margin: auto; padding: 0; width: calc(100% - 2rem); max-height: 92dvh; overflow-y: auto; }
-.modal-dialog::backdrop { background: rgb(0 0 0 / 70%); backdrop-filter: blur(4px); }
+.modal-dialog {
+  margin: auto;
+  padding: 0;
+  width: calc(100% - 2rem);
+  max-height: 92dvh;
+  overflow-y: auto;
+}
+.modal-dialog::backdrop {
+  background: rgb(0 0 0 / 70%);
+  backdrop-filter: blur(4px);
+}
 /* Destaca o elemento selecionado ao navegar usando o teclado. */
 :is(button, a, input, select, textarea, summary):focus-visible {
   outline: 3px solid #059669 !important;
   outline-offset: 3px;
 }
 /* Garante um tamanho mínimo de interação e sinaliza ações temporariamente indisponíveis. */
-button { min-height: 24px; min-width: 24px; }
-button:disabled { cursor: wait; opacity: .6; }
+button {
+  min-height: 24px;
+  min-width: 24px;
+}
+button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
 /* Respeita a preferência do sistema por menos animações. */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* Anima apenas o cartão sob o ponteiro, sem deslocar a grade ao redor. */
 .card-lift {
-  transition: translate 250ms cubic-bezier(0.2, 0.8, 0.2, 1),
-    box-shadow 250ms ease, border-color 250ms ease,
+  transition:
+    translate 250ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 250ms ease,
+    border-color 250ms ease,
     background-color 250ms ease;
 }
 
@@ -73,17 +163,92 @@ button:disabled { cursor: wait; opacity: .6; }
 }
 
 /* Composição da apresentação: celular e resumo em camadas. */
-.finance-scene { position: relative; min-height: 490px; padding-bottom: 32px; isolation: isolate; }
-.finance-orbit { position: absolute; width: 370px; height: 370px; border-radius: 50%; left: 0; top: 52px; z-index: -1; }
-.finance-phone { position: relative; margin-left: auto; width: 250px; right: 24px; top: 6px; padding: 18px; border-width: 3px; border-radius: 34px; transform: rotate(9deg); box-shadow: 12px 20px 35px rgb(15 23 42 / 12%); }
-.finance-expenses { position: absolute; width: 265px; left: 8px; top: 100px; padding: 24px; border-radius: 12px; transform: rotate(-7deg); box-shadow: 0 18px 40px rgb(15 23 42 / 16%); }
-.finance-donut { width: 118px; height: 118px; border-radius: 50%; background: conic-gradient(#059669 0% 52%, #14b8a6 52% 83%, #cbd5e1 83% 100%); margin: 20px auto; padding: 19px; }
-.finance-donut > div { width: 100%; height: 100%; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
-@media (max-width: 1023px) { .finance-scene { width: 480px; max-width: 100%; margin: 0 auto; } }
+.finance-scene {
+  position: relative;
+  min-height: 490px;
+  padding-bottom: 32px;
+  isolation: isolate;
+}
+.finance-orbit {
+  position: absolute;
+  width: 370px;
+  height: 370px;
+  border-radius: 50%;
+  left: 0;
+  top: 52px;
+  z-index: -1;
+}
+.finance-phone {
+  position: relative;
+  margin-left: auto;
+  width: 250px;
+  right: 24px;
+  top: 6px;
+  padding: 18px;
+  border-width: 3px;
+  border-radius: 34px;
+  transform: rotate(9deg);
+  box-shadow: 12px 20px 35px rgb(15 23 42 / 12%);
+}
+.finance-expenses {
+  position: absolute;
+  width: 265px;
+  left: 8px;
+  top: 100px;
+  padding: 24px;
+  border-radius: 12px;
+  transform: rotate(-7deg);
+  box-shadow: 0 18px 40px rgb(15 23 42 / 16%);
+}
+.finance-donut {
+  width: 118px;
+  height: 118px;
+  border-radius: 50%;
+  background: conic-gradient(#059669 0% 52%, #14b8a6 52% 83%, #cbd5e1 83% 100%);
+  margin: 20px auto;
+  padding: 19px;
+}
+.finance-donut > div {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+@media (max-width: 1023px) {
+  .finance-scene {
+    width: 480px;
+    max-width: 100%;
+    margin: 0 auto;
+  }
+}
 @media (max-width: 480px) {
-  .finance-scene { min-height: 430px; }
-  .finance-orbit { width: 280px; height: 280px; top: 60px; }
-  .finance-phone { width: 210px; right: 8px; padding: 15px; transform: rotate(7deg); }
-  .finance-expenses { width: 220px; left: 0; top: 100px; padding: 18px; transform: rotate(-6deg); }
-  .finance-donut { width: 100px; height: 100px; padding: 16px; margin: 16px auto; }
+  .finance-scene {
+    min-height: 430px;
+  }
+  .finance-orbit {
+    width: 280px;
+    height: 280px;
+    top: 60px;
+  }
+  .finance-phone {
+    width: 210px;
+    right: 8px;
+    padding: 15px;
+    transform: rotate(7deg);
+  }
+  .finance-expenses {
+    width: 220px;
+    left: 0;
+    top: 100px;
+    padding: 18px;
+    transform: rotate(-6deg);
+  }
+  .finance-donut {
+    width: 100px;
+    height: 100px;
+    padding: 16px;
+    margin: 16px auto;
+  }
 }

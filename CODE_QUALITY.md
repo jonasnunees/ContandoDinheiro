@@ -20,15 +20,15 @@ A principal dívida é de legibilidade e tamanho de alguns componentes. `Transac
 
 ## Melhorias aplicadas
 
-| Ponto encontrado | Alteração | Motivo |
-| --- | --- | --- |
-| Serviço local ignorava período e limite de pendências | Aplicação desses filtros também à demonstração; predicado de período compartilhado | Manter o mesmo contrato de leitura nos dois modos, sem depender de um segundo filtro da tela |
-| Datas finais das séries eram verificadas apenas por formato | Validador de calendário compartilhado | Rejeitar datas como 30/fev antes da geração de ocorrências |
+| Ponto encontrado                                                           | Alteração                                                                            | Motivo                                                                                            |
+| -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------- |
+| Serviço local ignorava período e limite de pendências                      | Aplicação desses filtros também à demonstração; predicado de período compartilhado   | Manter o mesmo contrato de leitura nos dois modos, sem depender de um segundo filtro da tela      |
+| Datas finais das séries eram verificadas apenas por formato                | Validador de calendário compartilhado                                                | Rejeitar datas como 30/fev antes da geração de ocorrências                                        |
 | Validação de séries embutida em uma condição extensa e ausente na gravação | `isTransactionSeries` usado na leitura e escrita; validação de cancelamento booleano | Tornar as regras identificáveis e impedir salvar conteúdo que seria rejeitado na próxima abertura |
-| Rolagem, animações e posicionamento misturados à composição do painel | Extração de `useWorkspaceScroll` | Concentrar os efeitos e sua limpeza em um único lugar |
-| Agrupamento financeiro usava um objeto com propriedades herdadas | Acumulador sem protótipo | Evitar colisões de rótulos com nomes como `constructor` |
-| Mês dos cartões de vencimentos com contraste insuficiente no tema claro | Texto escurecido, preservando o tema escuro | Corrigir a falha identificada pelo axe nos testes de navegador |
-| Efeitos das funções de séries pouco explícitos | Comentários sobre avanço do cursor e preservação do histórico | Explicar por que série e ocorrências devem ser persistidas juntas |
+| Rolagem, animações e posicionamento misturados à composição do painel      | Extração de `useWorkspaceScroll`                                                     | Concentrar os efeitos e sua limpeza em um único lugar                                             |
+| Agrupamento financeiro usava um objeto com propriedades herdadas           | Acumulador sem protótipo                                                             | Evitar colisões de rótulos com nomes como `constructor`                                           |
+| Mês dos cartões de vencimentos com contraste insuficiente no tema claro    | Texto escurecido, preservando o tema escuro                                          | Corrigir a falha identificada pelo axe nos testes de navegador                                    |
+| Efeitos das funções de séries pouco explícitos                             | Comentários sobre avanço do cursor e preservação do histórico                        | Explicar por que série e ocorrências devem ser persistidas juntas                                 |
 
 Os testes de regressão cobrem filtros locais, isolamento remoto, calendário, séries inválidas, preservação de conteúdo corrompido e colisões nos agrupamentos.
 

@@ -22,7 +22,7 @@ Uma aplicação web para organizar receitas, despesas e compromissos futuros, co
 
 ![Painel no computador com resumo do mês, despesas por categoria, formas de pagamento e fluxo de caixa](public/screenshots/painel-desktop.png)
 
-*As capturas desta página utilizam dados fictícios da demonstração.*
+_As capturas desta página utilizam dados fictícios da demonstração._
 
 ## A proposta
 
@@ -43,17 +43,17 @@ Os dados da demonstração ficam no navegador. Para salvar seus próprios regist
 
 ## Funcionalidades
 
-| Recurso | O que entrega |
-| --- | --- |
-| **Resumo financeiro** | Receitas recebidas, despesas pagas, saldo, taxa de economia e totais a pagar e receber. |
-| **Gestão de lançamentos** | Cadastro, edição e exclusão com descrição, valor, vencimento, data efetiva do pagamento, categoria, forma de pagamento e status. |
-| **Pendências por vencimento** | Contas atrasadas, de hoje e dos próximos sete dias, incluindo meses anteriores e sem depender do período selecionado. |
-| **Recorrências mensais** | Contas e receitas recorrentes, com ou sem data de término. |
-| **Compras parceladas** | Divisão do valor total em 2 a 360 parcelas, preservando a soma exata dos centavos. |
-| **Edição de séries** | Alteração de uma ocorrência ou dela e das próximas pendentes; cancelamento futuro preservando o histórico pago. |
-| **Busca e filtros** | Consulta por período, tipo, status, descrição, categoria e forma de pagamento. |
-| **Gráficos e exportação** | Despesas por categoria, distribuição por pagamento, comparação de receitas e despesas e exportação CSV da lista exibida. |
-| **Experiência responsiva** | Interface em português, temas claro e escuro e instalação como PWA em navegadores compatíveis. |
+| Recurso                       | O que entrega                                                                                                                    |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| **Resumo financeiro**         | Receitas recebidas, despesas pagas, saldo, taxa de economia e totais a pagar e receber.                                          |
+| **Gestão de lançamentos**     | Cadastro, edição e exclusão com descrição, valor, vencimento, data efetiva do pagamento, categoria, forma de pagamento e status. |
+| **Pendências por vencimento** | Contas atrasadas, de hoje e dos próximos sete dias, incluindo meses anteriores e sem depender do período selecionado.            |
+| **Recorrências mensais**      | Contas e receitas recorrentes, com ou sem data de término.                                                                       |
+| **Compras parceladas**        | Divisão do valor total em 2 a 360 parcelas, preservando a soma exata dos centavos.                                               |
+| **Edição de séries**          | Alteração de uma ocorrência ou dela e das próximas pendentes; cancelamento futuro preservando o histórico pago.                  |
+| **Busca e filtros**           | Consulta por período, tipo, status, descrição, categoria e forma de pagamento.                                                   |
+| **Gráficos e exportação**     | Despesas por categoria, distribuição por pagamento, comparação de receitas e despesas e exportação CSV da lista exibida.         |
+| **Experiência responsiva**    | Interface em português, temas claro e escuro e instalação como PWA em navegadores compatíveis.                                   |
 
 ![Lista de lançamentos com busca, filtros, valores e status de pagamento](public/screenshots/lancamentos.png)
 
@@ -82,16 +82,16 @@ A migração `20261021231121_payment_dates.sql` deve ser aplicada antes da publi
 
 O projeto vai além do cadastro de receitas e despesas: trata regras financeiras, limites entre dados locais e autenticados e qualidade da experiência. Alguns exemplos verificáveis no código:
 
-| Desafio | Solução implementada | Onde explorar |
-| --- | --- | --- |
-| **Precisão monetária** | Somas em centavos e distribuição do restante entre parcelas, sem alterar o valor total. | [Cálculos](src/features/finance/calculations.ts) e [agendamento](src/features/finance/scheduling.ts) |
-| **Datas e recorrências** | Ajuste ao último dia disponível do mês, retomando o dia original nos meses seguintes; ocorrências futuras começam pendentes. | [Regras de agendamento](src/features/finance/scheduling.ts) |
-| **Consistência das séries** | Operações atômicas no banco para geração, edição e cancelamento de ocorrências. | [Migração de recorrências](supabase/migrations/20261020173827_recurring_transactions.sql) |
-| **Acesso aos dados** | Autenticação com Google, políticas por proprietário no banco e registro de auditoria das alterações de transações. | [Autenticação](src/features/auth) e [migrações](supabase/migrations) |
-| **Demonstração isolada** | Persistência local e bloqueio de identidades e IDs de demonstração antes do acesso autenticado. Teste de navegador exige zero requisições à API do banco durante as operações locais. | [Serviço de transações](src/features/finance/transactionsService.ts) e [teste de isolamento](e2e/demo-isolation.spec.ts) |
-| **Acessibilidade** | Tabelas alternativas aos gráficos, verificações de foco e teclado e testes com axe nos temas claro e escuro, em celular e computador. | [Gráficos](src/features/finance/components/FinancialCharts.tsx) e [testes de acessibilidade](e2e/accessibility.spec.ts) |
-| **Carregamento e uso offline** | Painel carregado sob demanda; a apresentação não cria dados de exemplo. A demonstração tem teste de recarga offline após o primeiro acesso. | [Entrada da aplicação](src/App.tsx) e [teste offline](e2e/production/demo-offline.spec.ts) |
-| **Exportação CSV** | Tratamento de textos que poderiam ser interpretados como fórmulas por planilhas. | [Exportação](src/features/finance/csv.ts) |
+| Desafio                        | Solução implementada                                                                                                                                                                  | Onde explorar                                                                                                            |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| **Precisão monetária**         | Somas em centavos e distribuição do restante entre parcelas, sem alterar o valor total.                                                                                               | [Cálculos](src/features/finance/calculations.ts) e [agendamento](src/features/finance/scheduling.ts)                     |
+| **Datas e recorrências**       | Ajuste ao último dia disponível do mês, retomando o dia original nos meses seguintes; ocorrências futuras começam pendentes.                                                          | [Regras de agendamento](src/features/finance/scheduling.ts)                                                              |
+| **Consistência das séries**    | Operações atômicas no banco para geração, edição e cancelamento de ocorrências.                                                                                                       | [Migração de recorrências](supabase/migrations/20261020173827_recurring_transactions.sql)                                |
+| **Acesso aos dados**           | Autenticação com Google, políticas por proprietário no banco e registro de auditoria das alterações de transações.                                                                    | [Autenticação](src/features/auth) e [migrações](supabase/migrations)                                                     |
+| **Demonstração isolada**       | Persistência local e bloqueio de identidades e IDs de demonstração antes do acesso autenticado. Teste de navegador exige zero requisições à API do banco durante as operações locais. | [Serviço de transações](src/features/finance/transactionsService.ts) e [teste de isolamento](e2e/demo-isolation.spec.ts) |
+| **Acessibilidade**             | Tabelas alternativas aos gráficos, verificações de foco e teclado e testes com axe nos temas claro e escuro, em celular e computador.                                                 | [Gráficos](src/features/finance/components/FinancialCharts.tsx) e [testes de acessibilidade](e2e/accessibility.spec.ts)  |
+| **Carregamento e uso offline** | Painel carregado sob demanda; a apresentação não cria dados de exemplo. A demonstração tem teste de recarga offline após o primeiro acesso.                                           | [Entrada da aplicação](src/App.tsx) e [teste offline](e2e/production/demo-offline.spec.ts)                               |
+| **Exportação CSV**             | Tratamento de textos que poderiam ser interpretados como fórmulas por planilhas.                                                                                                      | [Exportação](src/features/finance/csv.ts)                                                                                |
 
 ### Organização do código
 
@@ -126,13 +126,32 @@ A avaliação de manutenção, as melhorias aplicadas e as convenções para nov
 
 As verificações cobrem regras financeiras, validação, recorrências, dados de demonstração, segurança e navegação de autenticação. Os testes de recorrência também exercitam as operações SQL em PostgreSQL local via PGlite. Os fluxos com Playwright verificam a experiência no navegador, incluindo isolamento da demonstração e acessibilidade.
 
-| Comando | Verificação |
-| --- | --- |
-| `npm test` | Regras e serviços, incluindo cálculos, recorrências e segurança. |
-| `npm run test:e2e` | Fluxos de interface no navegador. |
+| Comando                       | Verificação                                                                         |
+| ----------------------------- | ----------------------------------------------------------------------------------- |
+| `npm test`                    | Regras e serviços, incluindo cálculos, recorrências e segurança.                    |
+| `npm run test:e2e`            | Fluxos de interface no navegador.                                                   |
 | `npm run test:e2e:production` | Compilação e testes da versão compilada, incluindo recarga offline da demonstração. |
-| `npm run lint` | Tipagem TypeScript e análise estática com ESLint. |
-| `npm run build` | Compilação para produção. |
+| `npm run lint`                | Tipagem TypeScript e análise estática com ESLint.                                   |
+| `npm run format`              | Aplica a formatação automática com Prettier.                                        |
+| `npm run format:check`        | Verifica a formatação sem alterar arquivos.                                         |
+| `npm run build`               | Compilação para produção.                                                           |
+
+### Formatação
+
+Após `npm ci`, use `npm run format` antes de enviar alterações e
+`npm run format:check` para conferir o resultado. O Prettier formata TypeScript,
+TSX/JSX, JavaScript, JSON, CSS, HTML, Markdown e YAML compatíveis, com indentação
+de dois espaços, ponto e vírgula, aspas simples em JavaScript/TypeScript, largura
+de referência de 100 colunas e finais de linha LF em todos os sistemas.
+
+A configuração está em `.prettierrc.json`. O `.prettierignore` exclui o lockfile
+gerenciado pelo npm e recursos visuais exportados; arquivos ignorados pelo
+`.gitignore`, incluindo dependências, builds, relatórios e arquivos locais,
+também ficam fora. SQL e outros formatos sem suporte nativo permanecem intactos.
+O ESLint continua responsável por tipos, erros, hooks e acessibilidade;
+`eslint-config-prettier` fica por último para desativar regras de estilo
+conflitantes. A formatação é verificada separadamente no CI. Em editores com
+suporte ao Prettier, a formatação ao salvar pode usar esta mesma configuração.
 
 ### Integração contínua
 

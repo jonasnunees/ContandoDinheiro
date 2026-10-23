@@ -3,6 +3,7 @@ import tseslint from 'typescript-eslint';
 import hooks from 'eslint-plugin-react-hooks';
 import a11y from 'eslint-plugin-jsx-a11y';
 import globals from 'globals';
+import prettier from 'eslint-config-prettier/flat';
 
 // Verifica padrões de código, uso dos hooks do React e acessibilidade dos elementos da tela.
 export default tseslint.config(
@@ -17,8 +18,13 @@ export default tseslint.config(
       ...a11y.configs.recommended.rules,
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'error',
-      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^React$|^_' }],
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^React$|^_' },
+      ],
     },
   },
   { files: ['scripts/**/*.{js,mjs}', '*.js', '*.ts'], languageOptions: { globals: globals.node } },
+  // Deve ficar por último para desativar regras de estilo incompatíveis com o Prettier.
+  prettier,
 );

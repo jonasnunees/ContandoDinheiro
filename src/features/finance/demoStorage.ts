@@ -106,7 +106,7 @@ const INITIAL_DEMO_TRANSACTIONS: Transaction[] = [
 
 // Copia os objetos para que alterações na lista não modifiquem os exemplos originais.
 function demoTransactions(): Transaction[] {
-  return INITIAL_DEMO_TRANSACTIONS.map(tx => ({ ...tx }));
+  return INITIAL_DEMO_TRANSACTIONS.map((tx) => ({ ...tx }));
 }
 
 // Sem conteúdo salvo, oferece exemplos. Uma lista vazia salva continua vazia:
@@ -117,26 +117,47 @@ export function getLocalState(): DemoState {
   if (!raw) {
     const examples = createDemoExamples();
     // A versão só é confirmada quando a leitura inicial persiste os exemplos.
-    return { ...examples, examplesVersion: undefined, transactions: [...demoTransactions(), ...examples.transactions] };
+    return {
+      ...examples,
+      examplesVersion: undefined,
+      transactions: [...demoTransactions(), ...examples.transactions],
+    };
   }
   try {
     const parsed: unknown = JSON.parse(raw);
-    if (Array.isArray(parsed) && parsed.every(isTransaction)) return upgradeDemoExamples({ transactions: parsed, series: [] });
-    if (parsed && typeof parsed === 'object' && 'transactions' in parsed && 'series' in parsed &&
-      (!('examplesVersion' in parsed) || Number.isInteger(parsed.examplesVersion) && Number(parsed.examplesVersion) >= 0) &&
-      Array.isArray(parsed.transactions) && parsed.transactions.every(isTransaction) && Array.isArray(parsed.series) && parsed.series.every(isTransactionSeries)) {
+    if (Array.isArray(parsed) && parsed.every(isTransaction))
+      return upgradeDemoExamples({ transactions: parsed, series: [] });
+    if (
+      parsed &&
+      typeof parsed === 'object' &&
+      'transactions' in parsed &&
+      'series' in parsed &&
+      (!('examplesVersion' in parsed) ||
+        (Number.isInteger(parsed.examplesVersion) && Number(parsed.examplesVersion) >= 0)) &&
+      Array.isArray(parsed.transactions) &&
+      parsed.transactions.every(isTransaction) &&
+      Array.isArray(parsed.series) &&
+      parsed.series.every(isTransactionSeries)
+    ) {
       return upgradeDemoExamples(parsed as DemoState);
     }
-  } catch { /* Preserva o conteúdo original para permitir recuperação. */ }
-  throw new Error('Os dados da demonstração estão inválidos. O conteúdo salvo foi preservado; não foi substituído por exemplos.');
+  } catch {
+    /* Preserva o conteúdo original para permitir recuperação. */
+  }
+  throw new Error(
+    'Os dados da demonstração estão inválidos. O conteúdo salvo foi preservado; não foi substituído por exemplos.',
+  );
 }
 
 // Expõe apenas os lançamentos para operações que não alteram a configuração das séries.
-export function getLocalTransactions(): Transaction[] { return getLocalState().transactions; }
+export function getLocalTransactions(): Transaction[] {
+  return getLocalState().transactions;
+}
 // A gravação usa as mesmas regras da leitura: uma alteração nunca deve salvar
 // séries que a próxima abertura da demonstração rejeitaria.
 export function saveLocalState(state: DemoState) {
-  if (!state.transactions.every(isTransaction) || !state.series.every(isTransactionSeries)) throw new Error('Dados de demonstração inválidos.');
+  if (!state.transactions.every(isTransaction) || !state.series.every(isTransactionSeries))
+    throw new Error('Dados de demonstração inválidos.');
   writeStorage(STORAGE_KEYS.LOCAL_TRANSACTIONS, JSON.stringify(state));
 }
 export function saveLocalTransactions(transactions: Transaction[]) {

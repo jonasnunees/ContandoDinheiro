@@ -7,7 +7,7 @@ import zlib from 'zlib';
 function createPNG(width, height, drawFn) {
   // Cada pixel ocupa quatro bytes: vermelho, verde, azul e transparência (RGBA).
   const buffer = Buffer.alloc(width * height * 4);
-  
+
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const idx = (y * width + x) * 4;
@@ -39,15 +39,15 @@ function createPNG(width, height, drawFn) {
     for (let n = 0; n < 256; n++) {
       c = n;
       for (let k = 0; k < 8; k++) {
-        c = ((c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1));
+        c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
       }
       crcTable[n] = c;
     }
-    let crc = 0 ^ (-1);
+    let crc = 0 ^ -1;
     for (let i = 0; i < buf.length; i++) {
-      crc = (crc >>> 8) ^ crcTable[(crc ^ buf[i]) & 0xFF];
+      crc = (crc >>> 8) ^ crcTable[(crc ^ buf[i]) & 0xff];
     }
-    return (crc ^ (-1)) >>> 0;
+    return (crc ^ -1) >>> 0;
   }
 
   // Cada bloco contém tamanho, tipo, dados e CRC, nessa ordem.
@@ -61,7 +61,7 @@ function createPNG(width, height, drawFn) {
     return Buffer.concat([len, combined, crcBuf]);
   }
 
-  const signature = Buffer.from([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]);
+  const signature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
   const ihdrData = Buffer.alloc(13);
   ihdrData.writeUInt32BE(width, 0);
   ihdrData.writeUInt32BE(height, 4);
@@ -136,13 +136,25 @@ if (!fs.existsSync(publicDir)) {
 }
 
 // Ícone pequeno usado pelo manifesto da PWA.
-fs.writeFileSync(path.join(publicDir, 'pwa-192x192.png'), createPNG(192, 192, (x, y, w, h) => drawFinanceIcon(x, y, w, h, false)));
+fs.writeFileSync(
+  path.join(publicDir, 'pwa-192x192.png'),
+  createPNG(192, 192, (x, y, w, h) => drawFinanceIcon(x, y, w, h, false)),
+);
 // Ícone grande usado na instalação.
-fs.writeFileSync(path.join(publicDir, 'pwa-512x512.png'), createPNG(512, 512, (x, y, w, h) => drawFinanceIcon(x, y, w, h, false)));
+fs.writeFileSync(
+  path.join(publicDir, 'pwa-512x512.png'),
+  createPNG(512, 512, (x, y, w, h) => drawFinanceIcon(x, y, w, h, false)),
+);
 // Versão com fundo completo e desenho central para recortes do sistema.
-fs.writeFileSync(path.join(publicDir, 'pwa-maskable-512x512.png'), createPNG(512, 512, (x, y, w, h) => drawFinanceIcon(x, y, w, h, true)));
+fs.writeFileSync(
+  path.join(publicDir, 'pwa-maskable-512x512.png'),
+  createPNG(512, 512, (x, y, w, h) => drawFinanceIcon(x, y, w, h, true)),
+);
 // Ícone da tela inicial em dispositivos Apple.
-fs.writeFileSync(path.join(publicDir, 'apple-touch-icon.png'), createPNG(180, 180, (x, y, w, h) => drawFinanceIcon(x, y, w, h, false)));
+fs.writeFileSync(
+  path.join(publicDir, 'apple-touch-icon.png'),
+  createPNG(180, 180, (x, y, w, h) => drawFinanceIcon(x, y, w, h, false)),
+);
 
 // Ícone vetorial da aba; inclui a linha de tendência que não aparece nos PNGs.
 const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">

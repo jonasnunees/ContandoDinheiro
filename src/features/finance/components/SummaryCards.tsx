@@ -1,6 +1,14 @@
 import React from 'react';
 import { SummaryStats } from '../types';
-import { TrendingUp, TrendingDown, Wallet, Clock, PiggyBank, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import {
+  TrendingUp,
+  TrendingDown,
+  Wallet,
+  Clock,
+  PiggyBank,
+  ArrowUpRight,
+  ArrowDownRight,
+} from 'lucide-react';
 
 interface SummaryCardsProps {
   stats: SummaryStats;
@@ -41,7 +49,10 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({ stats }) => {
               Recebido no período
             </span>
             {stats.totalPendentesReceber > 0 && (
-              <span className="text-amber-800 dark:text-amber-400 text-[11px] font-medium" title="A receber">
+              <span
+                className="text-amber-800 dark:text-amber-400 text-[11px] font-medium"
+                title="A receber"
+              >
                 + {formatCurrency(stats.totalPendentesReceber)} pendente
               </span>
             )}
@@ -71,7 +82,10 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({ stats }) => {
               Gasto no período
             </span>
             {stats.totalPendentesPagar > 0 && (
-              <span className="text-amber-800 dark:text-amber-400 text-[11px] font-medium" title="A pagar">
+              <span
+                className="text-amber-800 dark:text-amber-400 text-[11px] font-medium"
+                title="A pagar"
+              >
                 + {formatCurrency(stats.totalPendentesPagar)} a pagar
               </span>
             )}
@@ -100,7 +114,9 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({ stats }) => {
         <div className="mt-3">
           <div
             className={`text-2xl font-black tracking-tight ${
-              isSaldoPositive ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'
+              isSaldoPositive
+                ? 'text-emerald-700 dark:text-emerald-400'
+                : 'text-rose-700 dark:text-rose-400'
             }`}
           >
             {formatCurrency(stats.saldoAtual)}
@@ -108,9 +124,13 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({ stats }) => {
           <div className="mt-2 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
             <span>
               {isSaldoPositive ? (
-                <span className="text-emerald-700 dark:text-emerald-400 font-semibold">Superávit (No Azul)</span>
+                <span className="text-emerald-700 dark:text-emerald-400 font-semibold">
+                  Superávit (No Azul)
+                </span>
               ) : (
-                <span className="text-rose-700 dark:text-rose-400 font-semibold">Déficit (No Vermelho)</span>
+                <span className="text-rose-700 dark:text-rose-400 font-semibold">
+                  Déficit (No Vermelho)
+                </span>
               )}
             </span>
             <span className="text-slate-500 dark:text-slate-400">

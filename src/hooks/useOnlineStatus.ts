@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 // Esse sinal não garante que o servidor esteja acessível.
 export function useOnlineStatus() {
   const [isOnline, setIsOnline] = useState(
-    typeof navigator !== 'undefined' ? navigator.onLine : true
+    typeof navigator !== 'undefined' ? navigator.onLine : true,
   );
 
   useEffect(() => {

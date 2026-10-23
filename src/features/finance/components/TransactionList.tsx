@@ -3,16 +3,16 @@ import { localDate } from '../validation';
 import React, { useState, useRef } from 'react';
 import { Transaction, TransactionStatus, FilterState } from '../types';
 import { serializeCSV } from '../csv';
-import { 
-  Search, 
-  Trash2, 
-  Edit3, 
-  CheckCircle2, 
-  Clock, 
-  ArrowUpRight, 
-  ArrowDownRight, 
+import {
+  Search,
+  Trash2,
+  Edit3,
+  CheckCircle2,
+  Clock,
+  ArrowUpRight,
+  ArrowDownRight,
   Download,
-  FileSpreadsheet
+  FileSpreadsheet,
 } from 'lucide-react';
 
 interface TransactionListProps {
@@ -62,9 +62,17 @@ export const TransactionList: React.FC<TransactionListProps> = ({
     pending.current.add(id);
     setBusyIds(new Set(pending.current));
     setActionError('');
-    try { await action(); setDeleteConfirmId(null); }
-    catch { setActionError('Não foi possível concluir a operação. Verifique sua conexão e tente novamente.'); }
-    finally { pending.current.delete(id); setBusyIds(new Set(pending.current)); }
+    try {
+      await action();
+      setDeleteConfirmId(null);
+    } catch {
+      setActionError(
+        'Não foi possível concluir a operação. Verifique sua conexão e tente novamente.',
+      );
+    } finally {
+      pending.current.delete(id);
+      setBusyIds(new Set(pending.current));
+    }
   };
 
   // Formata valores em reais usando a escrita brasileira, como R$ 1.234,56.
@@ -86,7 +94,18 @@ export const TransactionList: React.FC<TransactionListProps> = ({
   // Monta uma tabela dos lançamentos exibidos e cria um arquivo CSV para baixar.
   const handleExportCSV = () => {
     if (transactions.length === 0) return;
-    const header = ['ID', 'Vencimento', 'Data do pagamento', 'Descrição', 'Tipo', 'Categoria', 'Forma de Pagamento', 'Valor', 'Status', 'Recorrência / Parcela'];
+    const header = [
+      'ID',
+      'Vencimento',
+      'Data do pagamento',
+      'Descrição',
+      'Tipo',
+      'Categoria',
+      'Forma de Pagamento',
+      'Valor',
+      'Status',
+      'Recorrência / Parcela',
+    ];
     const rows = transactions.map((t) => [
       t.id,
       t.data,
@@ -99,7 +118,9 @@ export const TransactionList: React.FC<TransactionListProps> = ({
       t.status,
       occurrenceLabel(t),
     ]);
-    const objectUrl = URL.createObjectURL(new Blob([serializeCSV([header, ...rows])], { type: 'text/csv;charset=utf-8' }));
+    const objectUrl = URL.createObjectURL(
+      new Blob([serializeCSV([header, ...rows])], { type: 'text/csv;charset=utf-8' }),
+    );
     const link = document.createElement('a');
     link.setAttribute('href', objectUrl);
     link.setAttribute('download', `transacoes_contandodinheiro_${localDate()}.csv`);
@@ -113,7 +134,11 @@ export const TransactionList: React.FC<TransactionListProps> = ({
 
   return (
     <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-xl overflow-hidden transition-colors">
-      {actionError && <p role="alert" className="p-4 text-rose-700 dark:text-rose-300">{actionError}</p>}
+      {actionError && (
+        <p role="alert" className="p-4 text-rose-700 dark:text-rose-300">
+          {actionError}
+        </p>
+      )}
       {/* Busca e opções que definem quais lançamentos aparecem. */}
       <div className="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/40 space-y-3">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
@@ -122,7 +147,8 @@ export const TransactionList: React.FC<TransactionListProps> = ({
             <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-600 dark:text-slate-400" />
             <input
               type="text"
-              aria-label="Buscar transações" value={filterState.searchTerm}
+              aria-label="Buscar transações"
+              value={filterState.searchTerm}
               onChange={(e) => onFilterChange({ searchTerm: e.target.value })}
               placeholder="Buscar por descrição..."
               className="w-full rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 pl-10 pr-4 py-2 text-xs sm:text-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-emerald-500 shadow-sm"
@@ -133,8 +159,13 @@ export const TransactionList: React.FC<TransactionListProps> = ({
           <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
             {/* Escolhe receitas, despesas ou ambas. */}
             <select
-              aria-label="Filtrar por tipo" value={filterState.type}
-              onChange={(e) => onFilterChange({ type: e.target.value as TransactionListProps['filterState']['type'] })}
+              aria-label="Filtrar por tipo"
+              value={filterState.type}
+              onChange={(e) =>
+                onFilterChange({
+                  type: e.target.value as TransactionListProps['filterState']['type'],
+                })
+              }
               className="rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:border-emerald-500 cursor-pointer shadow-sm"
             >
               <option value="todos">Todos os Tipos</option>
@@ -144,8 +175,13 @@ export const TransactionList: React.FC<TransactionListProps> = ({
 
             {/* Escolhe lançamentos pagos, pendentes ou ambos. */}
             <select
-              aria-label="Filtrar por situação" value={filterState.status}
-              onChange={(e) => onFilterChange({ status: e.target.value as TransactionListProps['filterState']['status'] })}
+              aria-label="Filtrar por situação"
+              value={filterState.status}
+              onChange={(e) =>
+                onFilterChange({
+                  status: e.target.value as TransactionListProps['filterState']['status'],
+                })
+              }
               className="rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:border-emerald-500 cursor-pointer shadow-sm"
             >
               <option value="todos">Todos os Status</option>
@@ -155,7 +191,8 @@ export const TransactionList: React.FC<TransactionListProps> = ({
 
             {/* Baixa os lançamentos exibidos em um arquivo para planilhas. */}
             <button
-              aria-label="Exportar transações para CSV" onClick={handleExportCSV}
+              aria-label="Exportar transações para CSV"
+              onClick={handleExportCSV}
               disabled={transactions.length === 0}
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 disabled:opacity-40 transition cursor-pointer shadow-sm"
               title="Exportar dados para planilha Excel / CSV"
@@ -173,9 +210,12 @@ export const TransactionList: React.FC<TransactionListProps> = ({
           <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/60 text-slate-600 dark:text-slate-400 flex items-center justify-center mx-auto">
             <FileSpreadsheet className="w-6 h-6" />
           </div>
-          <h3 className="text-base font-bold text-slate-900 dark:text-white">Nenhuma transação encontrada</h3>
+          <h3 className="text-base font-bold text-slate-900 dark:text-white">
+            Nenhuma transação encontrada
+          </h3>
           <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
-            Não há lançamentos para os filtros ou mês selecionados. Que tal cadastrar uma nova transação agora?
+            Não há lançamentos para os filtros ou mês selecionados. Que tal cadastrar uma nova
+            transação agora?
           </p>
           <button
             onClick={onOpenNewModal}
@@ -191,14 +231,30 @@ export const TransactionList: React.FC<TransactionListProps> = ({
             <table className="w-full text-left border-collapse text-xs sm:text-sm">
               <thead>
                 <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                  <th scope="col" className="py-3 px-4">Tipo</th>
-                  <th scope="col" className="py-3 px-4">Descrição</th>
-                  <th scope="col" className="py-3 px-4">Categoria</th>
-                  <th scope="col" className="py-3 px-4">Pagamento</th>
-                  <th scope="col" className="py-3 px-4">Vencimento / pagamento</th>
-                  <th scope="col" className="py-3 px-4 text-right">Valor</th>
-                  <th scope="col" className="py-3 px-4 text-center">Status</th>
-                  <th scope="col" className="py-3 px-4 text-right">Ações</th>
+                  <th scope="col" className="py-3 px-4">
+                    Tipo
+                  </th>
+                  <th scope="col" className="py-3 px-4">
+                    Descrição
+                  </th>
+                  <th scope="col" className="py-3 px-4">
+                    Categoria
+                  </th>
+                  <th scope="col" className="py-3 px-4">
+                    Pagamento
+                  </th>
+                  <th scope="col" className="py-3 px-4">
+                    Vencimento / pagamento
+                  </th>
+                  <th scope="col" className="py-3 px-4 text-right">
+                    Valor
+                  </th>
+                  <th scope="col" className="py-3 px-4 text-center">
+                    Status
+                  </th>
+                  <th scope="col" className="py-3 px-4 text-right">
+                    Ações
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 dark:divide-slate-800/60 text-slate-700 dark:text-slate-300">
@@ -231,7 +287,10 @@ export const TransactionList: React.FC<TransactionListProps> = ({
 
                       {/* Descrição */}
                       <td className="py-3.5 px-4 font-semibold text-slate-900 dark:text-white">
-                        {tx.descricao}{tx.serie_id && <span className="ml-2 text-xs font-normal">({occurrenceLabel(tx)})</span>}
+                        {tx.descricao}
+                        {tx.serie_id && (
+                          <span className="ml-2 text-xs font-normal">({occurrenceLabel(tx)})</span>
+                        )}
                       </td>
 
                       {/* Selo colorido que identifica a categoria. */}
@@ -250,13 +309,23 @@ export const TransactionList: React.FC<TransactionListProps> = ({
 
                       {/* Data */}
                       <td className="py-3.5 px-4 text-slate-500 dark:text-slate-400 whitespace-nowrap">
-                        Venc.: {formatDate(tx.data)}{tx.status === 'pago' && <span className="block text-xs">{tx.tipo === 'receita' ? 'Recebido' : 'Pago'}: {tx.data_pagamento ? formatDate(tx.data_pagamento) : 'data não informada'}</span>}
+                        Venc.: {formatDate(tx.data)}
+                        {tx.status === 'pago' && (
+                          <span className="block text-xs">
+                            {tx.tipo === 'receita' ? 'Recebido' : 'Pago'}:{' '}
+                            {tx.data_pagamento
+                              ? formatDate(tx.data_pagamento)
+                              : 'data não informada'}
+                          </span>
+                        )}
                       </td>
 
                       {/* Valor */}
                       <td
                         className={`py-3.5 px-4 text-right font-bold whitespace-nowrap ${
-                          isReceita ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'
+                          isReceita
+                            ? 'text-emerald-700 dark:text-emerald-400'
+                            : 'text-rose-700 dark:text-rose-400'
                         }`}
                       >
                         {isReceita ? '+ ' : '- '}
@@ -266,7 +335,9 @@ export const TransactionList: React.FC<TransactionListProps> = ({
                       {/* Botão que alterna o lançamento entre pago e pendente. */}
                       <td className="py-3.5 px-4 text-center whitespace-nowrap">
                         <button
-                          disabled={busyIds.has(tx.id)} aria-label={`Alterar situação de ${tx.descricao}`} onClick={() => runAction(tx.id, () => onToggleStatus(tx.id, tx.status))}
+                          disabled={busyIds.has(tx.id)}
+                          aria-label={`Alterar situação de ${tx.descricao}`}
+                          onClick={() => runAction(tx.id, () => onToggleStatus(tx.id, tx.status))}
                           className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border transition cursor-pointer ${
                             isPago
                               ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-800/20'
@@ -292,15 +363,21 @@ export const TransactionList: React.FC<TransactionListProps> = ({
                       <td className="py-3.5 px-4 text-right whitespace-nowrap">
                         {deleteConfirmId === tx.id ? (
                           <div className="inline-flex items-center gap-1.5">
-                            <span className="text-[11px] text-rose-700 dark:text-rose-400 font-medium">Excluir?</span>
+                            <span className="text-[11px] text-rose-700 dark:text-rose-400 font-medium">
+                              Excluir?
+                            </span>
                             <button
-                              disabled={busyIds.has(tx.id)} aria-label={`Confirmar exclusão de ${tx.descricao}`} onClick={() => runAction(tx.id, () => onDelete(tx.id))}
+                              disabled={busyIds.has(tx.id)}
+                              aria-label={`Confirmar exclusão de ${tx.descricao}`}
+                              onClick={() => runAction(tx.id, () => onDelete(tx.id))}
                               className="px-2 py-0.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-[11px] font-bold"
                             >
                               Sim
                             </button>
                             <button
-                              disabled={busyIds.size > 0} aria-label="Cancelar exclusão" onClick={() => setDeleteConfirmId(null)}
+                              disabled={busyIds.size > 0}
+                              aria-label="Cancelar exclusão"
+                              onClick={() => setDeleteConfirmId(null)}
                               className="px-2 py-0.5 rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[11px]"
                             >
                               Não
@@ -309,14 +386,18 @@ export const TransactionList: React.FC<TransactionListProps> = ({
                         ) : (
                           <div className="inline-flex items-center gap-1">
                             <button
-                              disabled={busyIds.has(tx.id)} aria-label={`Editar ${tx.descricao}`} onClick={() => onEdit(tx)}
+                              disabled={busyIds.has(tx.id)}
+                              aria-label={`Editar ${tx.descricao}`}
+                              onClick={() => onEdit(tx)}
                               className="p-1.5 rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
                               title="Editar transação"
                             >
                               <Edit3 className="w-4 h-4" />
                             </button>
                             <button
-                              disabled={busyIds.has(tx.id)} aria-label={`Excluir ${tx.descricao}`} onClick={() => setDeleteConfirmId(tx.id)}
+                              disabled={busyIds.has(tx.id)}
+                              aria-label={`Excluir ${tx.descricao}`}
+                              onClick={() => setDeleteConfirmId(tx.id)}
                               className="p-1.5 rounded-lg text-slate-600 dark:text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
                               title="Excluir transação"
                             >
@@ -357,9 +438,26 @@ export const TransactionList: React.FC<TransactionListProps> = ({
                         )}
                       </div>
                       <div>
-                        <h3 className="text-sm font-bold text-slate-900 dark:text-white">{tx.descricao}{tx.serie_id && <span className="ml-2 text-xs font-normal">({occurrenceLabel(tx)})</span>}</h3>
+                        <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                          {tx.descricao}
+                          {tx.serie_id && (
+                            <span className="ml-2 text-xs font-normal">
+                              ({occurrenceLabel(tx)})
+                            </span>
+                          )}
+                        </h3>
                         <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                          <span>Venc.: {formatDate(tx.data)}{tx.status === 'pago' && <span className="block text-xs">{tx.tipo === 'receita' ? 'Recebido' : 'Pago'}: {tx.data_pagamento ? formatDate(tx.data_pagamento) : 'data não informada'}</span>}</span>
+                          <span>
+                            Venc.: {formatDate(tx.data)}
+                            {tx.status === 'pago' && (
+                              <span className="block text-xs">
+                                {tx.tipo === 'receita' ? 'Recebido' : 'Pago'}:{' '}
+                                {tx.data_pagamento
+                                  ? formatDate(tx.data_pagamento)
+                                  : 'data não informada'}
+                              </span>
+                            )}
+                          </span>
                           <span>•</span>
                           <span>{tx.forma_pagamento}</span>
                         </div>
@@ -368,7 +466,9 @@ export const TransactionList: React.FC<TransactionListProps> = ({
 
                     <div
                       className={`text-right font-black text-sm ${
-                        isReceita ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'
+                        isReceita
+                          ? 'text-emerald-700 dark:text-emerald-400'
+                          : 'text-rose-700 dark:text-rose-400'
                       }`}
                     >
                       {isReceita ? '+ ' : '- '}
@@ -378,19 +478,27 @@ export const TransactionList: React.FC<TransactionListProps> = ({
 
                   <div className="flex items-center justify-between pt-1">
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium border ${catColor}`}>
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-[11px] font-medium border ${catColor}`}
+                      >
                         {tx.categoria}
                       </span>
                       {/* Botão que alterna o lançamento entre pago e pendente. */}
                       <button
-                        disabled={busyIds.has(tx.id)} aria-label={`Alterar situação de ${tx.descricao}`} onClick={() => runAction(tx.id, () => onToggleStatus(tx.id, tx.status))}
+                        disabled={busyIds.has(tx.id)}
+                        aria-label={`Alterar situação de ${tx.descricao}`}
+                        onClick={() => runAction(tx.id, () => onToggleStatus(tx.id, tx.status))}
                         className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold border transition cursor-pointer ${
                           isPago
                             ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30'
                             : 'bg-amber-500/10 text-amber-800 dark:text-amber-400 border-amber-500/30'
                         }`}
                       >
-                        {isPago ? <CheckCircle2 className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
+                        {isPago ? (
+                          <CheckCircle2 className="w-3 h-3" />
+                        ) : (
+                          <Clock className="w-3 h-3" />
+                        )}
                         <span>{isPago ? (isReceita ? 'Recebido' : 'Pago') : 'Pendente'}</span>
                       </button>
                     </div>
@@ -399,13 +507,17 @@ export const TransactionList: React.FC<TransactionListProps> = ({
                     {deleteConfirmId === tx.id ? (
                       <div className="flex items-center gap-1">
                         <button
-                          disabled={busyIds.has(tx.id)} aria-label={`Confirmar exclusão de ${tx.descricao}`} onClick={() => runAction(tx.id, () => onDelete(tx.id))}
+                          disabled={busyIds.has(tx.id)}
+                          aria-label={`Confirmar exclusão de ${tx.descricao}`}
+                          onClick={() => runAction(tx.id, () => onDelete(tx.id))}
                           className="px-2 py-1 rounded bg-rose-600 text-white text-xs font-bold"
                         >
                           Confirmar
                         </button>
                         <button
-                          disabled={busyIds.size > 0} aria-label="Cancelar exclusão" onClick={() => setDeleteConfirmId(null)}
+                          disabled={busyIds.size > 0}
+                          aria-label="Cancelar exclusão"
+                          onClick={() => setDeleteConfirmId(null)}
                           className="px-2 py-1 rounded bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs"
                         >
                           X
@@ -414,13 +526,17 @@ export const TransactionList: React.FC<TransactionListProps> = ({
                     ) : (
                       <div className="flex items-center gap-1">
                         <button
-                          disabled={busyIds.has(tx.id)} aria-label={`Editar ${tx.descricao}`} onClick={() => onEdit(tx)}
+                          disabled={busyIds.has(tx.id)}
+                          aria-label={`Editar ${tx.descricao}`}
+                          onClick={() => onEdit(tx)}
                           className="p-1.5 rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
                         >
                           <Edit3 className="w-4 h-4" />
                         </button>
                         <button
-                          disabled={busyIds.has(tx.id)} aria-label={`Excluir ${tx.descricao}`} onClick={() => setDeleteConfirmId(tx.id)}
+                          disabled={busyIds.has(tx.id)}
+                          aria-label={`Excluir ${tx.descricao}`}
+                          onClick={() => setDeleteConfirmId(tx.id)}
                           className="p-1.5 rounded-lg text-slate-600 dark:text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-800"
                         >
                           <Trash2 className="w-4 h-4" />

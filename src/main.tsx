@@ -1,6 +1,6 @@
-import {createRoot} from 'react-dom/client';
+import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
-import {ThemeProvider} from './context/ThemeContext';
+import { ThemeProvider } from './context/ThemeContext';
 import './index.css';
 
 // Encontra o espaço da página onde o React desenha o aplicativo.
@@ -8,5 +8,5 @@ import './index.css';
 createRoot(document.getElementById('root')!).render(
   <ThemeProvider>
     <App />
-  </ThemeProvider>
+  </ThemeProvider>,
 );
