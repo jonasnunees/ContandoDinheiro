@@ -605,6 +605,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               {frequentlyAskedQuestions.map(({ question, answer }) => (
                 <details
                   key={question}
+                  name="faq"
                   className="group rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 open:border-emerald-300 dark:open:border-emerald-700 transition-colors"
                 >
                   <summary className="flex items-center justify-between gap-4 rounded-2xl px-5 py-5 sm:px-6 text-sm sm:text-base font-semibold text-slate-900 dark:text-slate-100 cursor-pointer list-none [&::-webkit-details-marker]:hidden hover:text-emerald-700 dark:hover:text-emerald-400 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-600">
