@@ -1,3 +1,8 @@
+import {
+  createCategoryChartConfig,
+  createPaymentChartConfig,
+  createCashflowChartConfig,
+} from './financialChartConfig';
 import { groupTransactionValues, summarizeTransactions } from '../calculations';
 import React, { useEffect, useRef, useMemo } from 'react';
 import { Transaction } from '../types';
@@ -33,29 +38,6 @@ interface FinancialChartsProps {
   transactions: Transaction[];
 }
 
-const CATEGORY_PALETTE: Record<string, string> = {
-  Alimentação: '#f97316',
-  Moradia: '#6366f1',
-  Transporte: '#06b6d4',
-  Saúde: '#f43f5e',
-  Educação: '#3b82f6',
-  Lazer: '#a855f7',
-  Salário: '#10b981',
-  Investimentos: '#14b8a6',
-  Serviços: '#eab308',
-  Outros: '#94a3b8',
-};
-
-const PAYMENT_PALETTE: Record<string, string> = {
-  Pix: '#10b981',
-  'Cartão de Crédito': '#f43f5e',
-  'Cartão de Débito': '#0ea5e9',
-  Dinheiro: '#eab308',
-  Boleto: '#8b5cf6',
-  Transferência: '#06b6d4',
-  Outro: '#64748b',
-};
-
 export const FinancialCharts: React.FC<FinancialChartsProps> = ({ transactions }) => {
   const { theme } = useTheme();
   const isLight = theme === 'light';
@@ -83,10 +65,6 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ transactions }
   );
   const summary = useMemo(() => summarizeTransactions(transactions), [transactions]);
 
-  const textColor = isLight ? '#475569' : '#94a3b8';
-  const gridColor = isLight ? '#e2e8f0' : '#1e293b';
-  const doughnutBorder = isLight ? '#ffffff' : '#0f172a';
-
   // Recria o gráfico de categorias quando os gastos ou as cores do tema mudam.
   useEffect(() => {
     if (!categoryCanvasRef.current) return;
@@ -99,62 +77,13 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ transactions }
 
     if (expenses.length === 0) return;
 
-    // Usa os totais já calculados para definir o tamanho das fatias.
-    const catTotals = categoryTotals;
-
-    const labels = Object.keys(catTotals);
-    const data = Object.values(catTotals);
-    const backgroundColor = labels.map((l) => CATEGORY_PALETTE[l] || '#94a3b8');
-
     const ctx = categoryCanvasRef.current.getContext('2d');
     if (!ctx) return;
 
-    categoryChartInstance.current = new ChartJS(ctx, {
-      type: 'doughnut',
-      data: {
-        labels,
-        datasets: [
-          {
-            data,
-            backgroundColor,
-            borderColor: doughnutBorder,
-            borderWidth: 2,
-            hoverOffset: 6,
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-        animation: window.matchMedia('(prefers-reduced-motion: reduce)').matches
-          ? false
-          : undefined,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            position: 'bottom',
-            labels: {
-              boxWidth: 12,
-              padding: 12,
-              color: textColor,
-              font: {
-                size: 11,
-                family: 'system-ui, -apple-system, sans-serif',
-              },
-            },
-          },
-          tooltip: {
-            callbacks: {
-              label: (context) => {
-                const label = context.label || '';
-                const val = context.raw as number;
-                return ` ${label}: R$ ${val.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
-              },
-            },
-          },
-        },
-        cutout: '68%',
-      },
-    });
+    categoryChartInstance.current = new ChartJS(
+      ctx,
+      createCategoryChartConfig(categoryTotals, isLight),
+    );
 
     return () => {
       if (categoryChartInstance.current) {
@@ -162,7 +91,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ transactions }
         categoryChartInstance.current = null;
       }
     };
-  }, [expenses, categoryTotals, isLight, textColor, doughnutBorder]);
+  }, [expenses, categoryTotals, isLight]);
 
   // Recria o gráfico que compara as formas de pagamento.
   useEffect(() => {
@@ -175,72 +104,13 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ transactions }
 
     if (transactions.length === 0) return;
 
-    // Soma os valores por forma de pagamento, incluindo lançamentos pendentes.
-    const pmTotals = paymentTotals;
-
-    const labels = Object.keys(pmTotals);
-    const data = Object.values(pmTotals);
-    const backgroundColor = labels.map((l) => PAYMENT_PALETTE[l] || '#64748b');
-
     const ctx = paymentCanvasRef.current.getContext('2d');
     if (!ctx) return;
 
-    paymentChartInstance.current = new ChartJS(ctx, {
-      type: 'bar',
-      data: {
-        labels,
-        datasets: [
-          {
-            label: 'Volume (R$)',
-            data,
-            backgroundColor,
-            borderRadius: 8,
-            borderSkipped: false,
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-        animation: window.matchMedia('(prefers-reduced-motion: reduce)').matches
-          ? false
-          : undefined,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            display: false,
-          },
-          tooltip: {
-            callbacks: {
-              label: (context) => {
-                const val = context.raw as number;
-                return ` Total: R$ ${val.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
-              },
-            },
-          },
-        },
-        scales: {
-          x: {
-            grid: {
-              display: false,
-            },
-            ticks: {
-              color: textColor,
-              font: { size: 10 },
-            },
-          },
-          y: {
-            grid: {
-              color: gridColor,
-            },
-            ticks: {
-              color: textColor,
-              font: { size: 10 },
-              callback: (value) => `R$ ${value}`,
-            },
-          },
-        },
-      },
-    });
+    paymentChartInstance.current = new ChartJS(
+      ctx,
+      createPaymentChartConfig(paymentTotals, isLight),
+    );
 
     return () => {
       if (paymentChartInstance.current) {
@@ -248,7 +118,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ transactions }
         paymentChartInstance.current = null;
       }
     };
-  }, [transactions, paymentTotals, isLight, textColor, gridColor]);
+  }, [transactions, paymentTotals, isLight]);
 
   // Compara os totais já recebidos e pagos em duas barras.
   useEffect(() => {
@@ -261,57 +131,13 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ transactions }
 
     if (transactions.length === 0) return;
 
-    const totalEntradas = summary.totalEntradas;
-    const totalSaidas = summary.totalSaidas;
-
     const ctx = cashflowCanvasRef.current.getContext('2d');
     if (!ctx) return;
 
-    cashflowChartInstance.current = new ChartJS(ctx, {
-      type: 'bar',
-      data: {
-        labels: ['Entradas', 'Saídas'],
-        datasets: [
-          {
-            label: 'Total (R$)',
-            data: [totalEntradas, totalSaidas],
-            backgroundColor: ['#10b981', '#f43f5e'],
-            borderRadius: 8,
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-        animation: window.matchMedia('(prefers-reduced-motion: reduce)').matches
-          ? false
-          : undefined,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            callbacks: {
-              label: (context) => {
-                const val = context.raw as number;
-                return ` R$ ${val.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
-              },
-            },
-          },
-        },
-        scales: {
-          x: {
-            grid: { display: false },
-            ticks: { color: textColor },
-          },
-          y: {
-            grid: { color: gridColor },
-            ticks: {
-              color: textColor,
-              callback: (value) => `R$ ${value}`,
-            },
-          },
-        },
-      },
-    });
+    cashflowChartInstance.current = new ChartJS(
+      ctx,
+      createCashflowChartConfig(summary.totalEntradas, summary.totalSaidas, isLight),
+    );
 
     return () => {
       if (cashflowChartInstance.current) {
@@ -319,7 +145,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ transactions }
         cashflowChartInstance.current = null;
       }
     };
-  }, [summary, transactions, isLight, textColor, gridColor]);
+  }, [summary, transactions, isLight]);
 
   return (
     <div>
