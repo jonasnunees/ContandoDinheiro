@@ -82,6 +82,66 @@ export function ReleaseNotes() {
         </p>
 
         <article
+          aria-labelledby="version-1-3-0"
+          className="mt-10 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+        >
+          <div className="border-b border-slate-200 bg-emerald-50 p-6 sm:p-8">
+            <div className="flex flex-wrap items-center gap-3">
+              <h2 id="version-1-3-0" className="text-2xl font-bold">
+                Versão 1.3.0
+              </h2>
+              <span className="rounded-full border border-emerald-200 bg-white px-3 py-1 text-xs font-semibold text-emerald-800">
+                Orçamento mensal por categoria
+              </span>
+            </div>
+            <p className="mt-3 text-sm text-slate-600">
+              <time dateTime="2026-10-24">24 de outubro de 2026</time>
+            </p>
+            <p className="mt-4 leading-relaxed text-slate-700">
+              Defina quanto pretende gastar em cada categoria e acompanhe o que ainda cabe no
+              orçamento do mês, direto no painel.
+            </p>
+          </div>
+          <ul className="space-y-6 p-6 sm:p-8">
+            <li>
+              <h3 className="font-semibold">Defina limites para cada mês</h3>
+              <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                Selecione um mês e informe um limite para alimentação, moradia, transporte ou outra
+                categoria. Você pode editar ou remover cada limite quando precisar. Na visão do ano
+                inteiro, uma orientação indica que é necessário selecionar um mês para acompanhar o
+                orçamento.
+              </p>
+            </li>
+            <li>
+              <h3 className="font-semibold">Veja quanto usou e quanto resta</h3>
+              <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                Cada categoria com limite definido mostra o valor utilizado, o valor restante e uma
+                barra de progresso. Por exemplo: com um limite de R$ 800 e R$ 620 em despesas pagas,
+                você vê R$ 180 restantes. Ao ultrapassar o limite, um aviso discreto informa o valor
+                excedido.
+              </p>
+            </li>
+            <li>
+              <h3 className="font-semibold">Acompanhe os gastos sem interferência da busca</h3>
+              <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                O orçamento considera somente despesas pagas do mês e ano selecionados, seguindo a
+                data do lançamento, assim como os gráficos. Receitas e despesas pendentes ficam fora
+                desse cálculo. A busca e os filtros do extrato não alteram o valor utilizado.
+              </p>
+            </li>
+            <li>
+              <h3 className="font-semibold">Retome seus limites neste navegador</h3>
+              <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                Os limites ficam salvos apenas neste navegador, separados por conta, mês e ano. Os
+                orçamentos da demonstração também ficam separados dos da sua conta. Eles não são
+                sincronizados com outros dispositivos e podem ser perdidos ao limpar os dados do
+                navegador.
+              </p>
+            </li>
+          </ul>
+        </article>
+
+        <article
           aria-labelledby="version-1-2-1"
           className="mt-10 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
         >
