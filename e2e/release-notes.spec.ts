@@ -12,7 +12,7 @@ test('notas públicas em modo claro com navegação e preferência de tema prese
   await expect(page.getByRole('heading', { name: 'Versão 1.0', exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Versão 1.0.1', exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Versão 1.1.0', exact: true })).toBeVisible();
-  await expect(page.locator('article').first()).toHaveAccessibleName('Versão 1.5.0');
+  await expect(page.locator('article').first()).toHaveAccessibleName('Versão 1.6.0');
   await expect(
     page
       .getByRole('article', { name: 'Versão 1.4.1', exact: true })

@@ -82,6 +82,59 @@ export function ReleaseNotes() {
         </p>
 
         <article
+          aria-labelledby="version-1-6-0"
+          className="mt-10 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+        >
+          <div className="border-b border-slate-200 bg-emerald-50 p-6 sm:p-8">
+            <div className="flex flex-wrap items-center gap-3">
+              <h2 id="version-1-6-0" className="text-2xl font-bold">
+                Versão 1.6.0
+              </h2>
+              <span className="rounded-full border border-emerald-200 bg-white px-3 py-1 text-xs font-semibold text-emerald-800">
+                Duplicar lançamento
+              </span>
+            </div>
+            <p className="mt-3 text-sm text-slate-600">
+              <time dateTime="2026-10-24">24 de outubro de 2026</time>
+            </p>
+            <p className="mt-4 leading-relaxed text-slate-700">
+              Cadastre movimentações semelhantes com menos digitação, usando um lançamento como
+              ponto de partida no celular ou no computador.
+            </p>
+          </div>
+          <ul className="space-y-6 p-6 sm:p-8">
+            <li>
+              <h3 className="font-semibold">Reaproveite os dados e revise antes de salvar</h3>
+              <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                Na lista, use “Duplicar lançamento” para abrir um novo formulário com descrição,
+                valor, tipo, categoria e forma de pagamento preenchidos. O vencimento começa no dia
+                de hoje e pode ser alterado. A cópia começa pendente, sem data de pagamento, mesmo
+                quando o original já foi pago ou recebido. Só a confirmação salva o novo lançamento;
+                cancelar não grava e o original permanece intacto.
+              </p>
+            </li>
+            <li>
+              <h3 className="font-semibold">Duplique uma ocorrência como lançamento avulso</h3>
+              <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                Ao duplicar uma recorrência ou parcela, você copia somente a ocorrência escolhida,
+                com o valor dela. A repetição começa como avulsa; criar uma nova série exige uma
+                escolha no formulário. Se a categoria original estiver arquivada, escolha uma
+                categoria ativa antes de salvar.
+              </p>
+            </li>
+            <li>
+              <h3 className="font-semibold">Encontre a cópia após salvar</h3>
+              <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                Se o vencimento ficar fora do período exibido, o aviso de sucesso indica a data para
+                você selecionar o período correspondente. Se houver falha ao salvar, os campos
+                continuam preenchidos para tentar novamente. Na demonstração, as cópias ficam
+                somente neste navegador.
+              </p>
+            </li>
+          </ul>
+        </article>
+
+        <article
           aria-labelledby="version-1-5-0"
           className="mt-10 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
         >
