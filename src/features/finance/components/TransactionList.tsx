@@ -202,6 +202,13 @@ export const TransactionList: React.FC<TransactionListProps> = ({
             </button>
           </div>
         </div>
+        <button
+          type="button"
+          onClick={() => onFilterChange({ type: 'todos', status: 'todos', searchTerm: '' })}
+          className="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 dark:focus-visible:outline-emerald-400 cursor-pointer transition"
+        >
+          Limpar busca e filtros
+        </button>
       </div>
 
       {/* Mostra a lista ou uma mensagem quando não há lançamentos. */}
