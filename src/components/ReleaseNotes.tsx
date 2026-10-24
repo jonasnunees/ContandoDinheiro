@@ -82,6 +82,65 @@ export function ReleaseNotes() {
         </p>
 
         <article
+          aria-labelledby="version-1-5-0"
+          className="mt-10 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+        >
+          <div className="border-b border-slate-200 bg-emerald-50 p-6 sm:p-8">
+            <div className="flex flex-wrap items-center gap-3">
+              <h2 id="version-1-5-0" className="text-2xl font-bold">
+                Versão 1.5.0
+              </h2>
+              <span className="rounded-full border border-emerald-200 bg-white px-3 py-1 text-xs font-semibold text-emerald-800">
+                Categorias do seu jeito
+              </span>
+            </div>
+            <p className="mt-3 text-sm text-slate-600">
+              <time dateTime="2026-10-24">24 de outubro de 2026</time>
+            </p>
+            <p className="mt-4 leading-relaxed text-slate-700">
+              Crie categorias para sua rotina, arquive as que não usa mais e reative quando
+              precisar, sem perder seu histórico financeiro.
+            </p>
+          </div>
+          <ul className="space-y-6 p-6 sm:p-8">
+            <li>
+              <h3 className="font-semibold">Crie e organize suas categorias</h3>
+              <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                No painel, abra “Gerenciar categorias” para consultar as ativas e arquivadas e criar
+                novas opções, como Pets, Viagens ou Projetos. As categorias que você já usava
+                continuam disponíveis. A janela tem ações claras e se adapta ao celular e ao
+                computador, nos temas claro e escuro.
+              </p>
+            </li>
+            <li>
+              <h3 className="font-semibold">Arquive sem apagar o passado</h3>
+              <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                Uma categoria arquivada deixa de aparecer nas opções de novos lançamentos. Os
+                registros existentes continuam na busca, nos gráficos, nos orçamentos e na
+                exportação CSV. Ao editar um lançamento antigo, você pode manter sua categoria,
+                identificada como arquivada, ou escolher uma ativa.
+              </p>
+            </li>
+            <li>
+              <h3 className="font-semibold">Mantenha suas recorrências e parcelas</h3>
+              <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                Arquivar uma categoria não interrompe séries existentes: suas próximas ocorrências
+                continuam com a mesma categoria. Você pode reativá-la a qualquer momento para voltar
+                a usá-la em novos lançamentos.
+              </p>
+            </li>
+            <li>
+              <h3 className="font-semibold">Experimente também na demonstração</h3>
+              <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                As categorias da sua conta ficam separadas das de outros usuários. Na demonstração,
+                criar, arquivar ou reativar altera somente os dados locais deste navegador,
+                preservando os exemplos e as alterações já salvas.
+              </p>
+            </li>
+          </ul>
+        </article>
+
+        <article
           aria-labelledby="version-1-4-1"
           className="mt-10 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
         >
