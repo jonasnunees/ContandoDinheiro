@@ -89,6 +89,64 @@ export default function AccountWorkspace({
   );
   const stats = useMemo(() => summarizeTransactions(filteredTransactions), [filteredTransactions]);
 
+  const searchTerm = filterState.searchTerm.trim();
+  const hasAdditionalFilters =
+    !!searchTerm || filterState.type !== 'todos' || filterState.status !== 'todos';
+  const periodLabel =
+    currentMonth === -1
+      ? `Todo o ano de ${currentYear}`
+      : `${new Intl.DateTimeFormat('pt-BR', { month: 'long' }).format(new Date(currentYear, currentMonth))} de ${currentYear}`;
+  // O mesmo contexto acompanha cartões e gráficos, sem uma segunda lista ou estado.
+  // Sem região viva: digitar na busca não dispara anúncios a cada tecla.
+  const summaryContext = (
+    <div
+      aria-label="Escopo do resumo"
+      role="group"
+      className="mb-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 text-sm text-slate-700 dark:text-slate-200 break-words"
+    >
+      <p className="font-semibold">
+        {hasAdditionalFilters ? 'Resumo dos resultados filtrados' : 'Resumo do período selecionado'}
+      </p>
+      <p>Período selecionado: {periodLabel}.</p>
+      <p>
+        Filtros adicionais:{' '}
+        {hasAdditionalFilters ? (
+          <>
+            {searchTerm && <span>Busca: “{searchTerm}”. </span>}
+            {filterState.type !== 'todos' && (
+              <span>Tipo: {filterState.type === 'receita' ? 'Receitas' : 'Despesas'}. </span>
+            )}
+            {filterState.status !== 'todos' && (
+              <span>
+                Status: {filterState.status === 'pago' ? 'Pagos / Recebidos' : 'Pendentes'}.{' '}
+              </span>
+            )}
+          </>
+        ) : (
+          'Nenhum.'
+        )}
+      </p>
+      <p>
+        {loading
+          ? 'Aguardando leitura dos resultados.'
+          : loadError
+            ? 'Resultados indisponíveis: a leitura falhou.'
+            : `${filteredTransactions.length} resultado${filteredTransactions.length === 1 ? '' : 's'} no período selecionado.`}
+      </p>
+      <p className="mt-1 text-xs">
+        Busca e filtros adicionais se aplicam aos cartões, gráficos e CSV. A comparação entre meses
+        usa o intervalo indicado no próprio gráfico.
+      </p>
+      <button
+        type="button"
+        onClick={() => setFilterState({ type: 'todos', status: 'todos', searchTerm: '' })}
+        className="mt-2 rounded-lg px-2 py-2 font-semibold text-emerald-800 dark:text-emerald-300 underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 dark:focus-visible:outline-emerald-400"
+      >
+        Limpar busca e filtros
+      </button>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-sans transition-colors duration-200">
       {/* Cabeçalho com período selecionado e ações da conta. */}
@@ -204,16 +262,22 @@ export default function AccountWorkspace({
         )}
 
         {/* Totais do recorte atual; ocultos durante carregamento ou erro de leitura. */}
+        {summaryContext}
         {!loading && !loadError && <SummaryCards stats={stats} />}
 
         {!loading && !loadError && (
-          <DueDates
-            transactions={pendingTransactions}
-            onPay={(tx) => {
-              setTransactionToEdit({ ...tx, status: 'pago', data_pagamento: localDate() });
-              setIsTransactionModalOpen(true);
-            }}
-          />
+          <div>
+            <p className="mb-2 text-xs text-slate-600 dark:text-slate-300">
+              Vencimentos: independem do período, da busca e dos filtros do resumo.
+            </p>
+            <DueDates
+              transactions={pendingTransactions}
+              onPay={(tx) => {
+                setTransactionToEdit({ ...tx, status: 'pago', data_pagamento: localDate() });
+                setIsTransactionModalOpen(true);
+              }}
+            />
+          </div>
         )}
 
         {/* Botões que escolhem a seção exibida no celular. */}
@@ -282,6 +346,7 @@ export default function AccountWorkspace({
               Categorias, Métodos de Pagamento e Fluxo
             </span>
           </div>
+          {summaryContext}
           {!loadError && (
             <div hidden={loading}>
               <Suspense
@@ -315,7 +380,7 @@ export default function AccountWorkspace({
               <ListOrdered className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
               Lançamentos & Extrato
               <span className="text-xs px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-400 font-mono">
-                {filteredTransactions.length}
+                {loading || loadError ? '—' : filteredTransactions.length}
               </span>
             </h2>
             <button

@@ -1,0 +1,86 @@
+import { test, expect } from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
+
+for (const theme of ['light', 'dark']) {
+  for (const width of [390, 1280]) {
+    test(`resumo filtrado, limpeza e teclado: ${theme}, ${width}px`, async ({ page }) => {
+      await page.clock.setFixedTime(new Date('2026-10-24T12:00:00-03:00'));
+      await page.setViewportSize({ width, height: 900 });
+      await page.addInitScript((value) => localStorage.setItem('gf_app_theme', value), theme);
+      await page.goto('/demo');
+      const search = page.getByRole('textbox', { name: 'Buscar transações' });
+      await expect(search).toBeVisible();
+      const notice = page.getByText('Resumo dos resultados filtrados', { exact: true });
+      await search.fill('   ');
+      await expect(notice).toHaveCount(0);
+      await search.fill('  Salário Mensal  ');
+      await expect(notice).toHaveCount(2);
+      await expect(
+        page.getByText('Busca: “Salário Mensal”.', { exact: false }).first(),
+      ).toBeVisible();
+      await expect(
+        page.getByText('1 resultado no período selecionado.', { exact: true }).first(),
+      ).toBeVisible();
+      await expect(
+        page.getByRole('button', { name: 'Editar Salário Mensal', exact: true }).first(),
+      ).toBeVisible();
+      await expect(page.getByText('R$ 6.500,00', { exact: true }).first()).toBeVisible();
+      const downloadEvent = page.waitForEvent('download');
+      await page.getByRole('button', { name: 'Exportar transações para CSV' }).click();
+      const stream = await (await downloadEvent).createReadStream();
+      let csv = '';
+      for await (const chunk of stream!) csv += chunk.toString();
+      expect(csv).toContain('Salário Mensal');
+      expect(csv).not.toContain('Aluguel do Apartamento');
+      await page.getByLabel('Filtrar por tipo').selectOption('receita');
+      await page.getByLabel('Filtrar por situação').selectOption('pendente');
+      await expect(
+        page.getByText('0 resultados no período selecionado.', { exact: true }).first(),
+      ).toBeVisible();
+      await expect(page.getByText('Tipo: Receitas.', { exact: false }).first()).toBeVisible();
+      await expect(page.getByText('Status: Pendentes.', { exact: false }).first()).toBeVisible();
+      const audit = await new AxeBuilder({ page })
+        .include('[aria-label="Escopo do resumo"]')
+        .analyze();
+      expect(audit.violations.map((v) => v.id)).toEqual([]);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+        true,
+      );
+      const clear = page.getByRole('button', { name: 'Limpar busca e filtros' }).first();
+      await clear.focus();
+      await page.keyboard.press('Enter');
+      await expect(clear).toBeFocused();
+      await expect(notice).toHaveCount(0);
+      await expect(search).toHaveValue('');
+      await expect(page.getByLabel('Filtrar por tipo')).toHaveValue('todos');
+      await expect(page.getByLabel('Filtrar por situação')).toHaveValue('todos');
+      await expect(page.getByLabel('Mês dos lançamentos')).toHaveValue('9');
+      await expect(page.getByLabel('Ano dos lançamentos')).toHaveValue('2026');
+      await page.getByLabel('Mês dos lançamentos').selectOption('-1');
+      await search.fill('<img src=x onerror=alert(1)>');
+      await expect(notice).toHaveCount(2);
+      await clear.click();
+      await expect(page.getByLabel('Mês dos lançamentos')).toHaveValue('-1');
+    });
+  }
+}
+
+test('falha de leitura remove totais e contagem confirmada e permite recuperar', async ({
+  page,
+}) => {
+  await page.goto('/demo');
+  await expect(page.getByRole('textbox', { name: 'Buscar transações' })).toBeVisible();
+  const saved = await page.evaluate(() => localStorage.getItem('gf_local_transactions')!);
+  await page.evaluate(() => localStorage.setItem('gf_local_transactions', '{invalid'));
+  await page.getByRole('button', { name: 'Recarregar lançamentos' }).click();
+  await expect(page.getByRole('alert').first()).toBeVisible();
+  await expect(
+    page.getByText('Resultados indisponíveis: a leitura falhou.', { exact: true }).first(),
+  ).toBeVisible();
+  await expect(page.getByText('Saldo do Período', { exact: true })).toHaveCount(0);
+  await expect(page.getByRole('textbox', { name: 'Buscar transações' })).toHaveCount(0);
+  await page.evaluate((value) => localStorage.setItem('gf_local_transactions', value), saved);
+  await page.getByRole('button', { name: 'Tentar novamente' }).click();
+  await expect(page.getByRole('textbox', { name: 'Buscar transações' })).toBeVisible();
+  await expect(page.getByText('Saldo do Período', { exact: true })).toBeVisible();
+});

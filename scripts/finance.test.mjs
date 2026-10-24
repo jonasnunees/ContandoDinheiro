@@ -220,3 +220,21 @@ test('comparação visual mantém uma linha por grupo e preserva meses sem gasto
     else globalThis.window = previous;
   }
 });
+
+test('busca isolada e espaços mantêm resumo e agrupamentos no mesmo recorte da lista', () => {
+  const rows = [tx('1', 10), tx('2', 20, 'despesa'), tx('3', 30, 'receita', 'pendente')];
+  rows[1].descricao = 'Mercado';
+  const period = { month: 9, year: 2026 };
+  const filters = { type: 'todos', status: 'todos', searchTerm: '  mercado  ' };
+  const selected = filterTransactions(rows, period, filters);
+  assert.deepEqual(
+    selected.map((row) => row.id),
+    ['2'],
+  );
+  assert.equal(summarizeTransactions(selected).totalSaidas, 20);
+  assert.equal(groupTransactionValues(selected, 'forma_pagamento').Pix, 20);
+  assert.equal(filterTransactions(rows, period, { ...filters, searchTerm: '   ' }).length, 3);
+  const empty = filterTransactions(rows, period, { ...filters, searchTerm: 'ausente' });
+  assert.equal(summarizeTransactions(empty).quantidadeTransacoes, 0);
+  assert.deepEqual(groupTransactionValues(empty, 'categoria'), {});
+});
