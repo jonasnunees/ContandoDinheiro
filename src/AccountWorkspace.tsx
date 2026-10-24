@@ -3,6 +3,8 @@ import { LegalLinks } from './features/legal/LegalLinks';
 import { localDate } from './features/finance/validation';
 import { DueDates } from './features/finance/components/DueDates';
 import { DemoGuide } from './features/finance/components/DemoGuide';
+import { MonthlyBudgets } from './features/finance/components/MonthlyBudgets';
+import { budgetStorageKey } from './features/finance/budgets';
 import React, { lazy, Suspense, useState, useMemo } from 'react';
 import type { Transaction, FilterState } from './features/finance/types';
 import type { AppUser } from './features/auth/session';
@@ -251,6 +253,21 @@ export default function AccountWorkspace({
 
         {/* Gráficos do mesmo recorte da lista; a aba controla a visibilidade no celular. */}
         <div className={activeTab === 'transactions' ? 'hidden sm:block' : 'block'}>
+          {!loading &&
+            !loadError &&
+            (currentMonth === -1 ? (
+              <p className="mb-4 text-sm text-slate-600 dark:text-slate-300">
+                Selecione um mês para definir e acompanhar o orçamento por categoria.
+              </p>
+            ) : (
+              <MonthlyBudgets
+                key={budgetStorageKey(user.id, currentMonth, currentYear, user.isDemo)}
+                storageKey={budgetStorageKey(user.id, currentMonth, currentYear, user.isDemo)}
+                transactions={transactions}
+                month={currentMonth}
+                year={currentYear}
+              />
+            ))}
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
               <PieChart className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
@@ -367,7 +384,7 @@ export default function AccountWorkspace({
             <LegalLinks />
             <a
               href="#notas-da-versao"
-              className="rounded text-slate-600 dark:text-slate-400 hover:text-emerald-700 dark:hover:text-emerald-400"
+              className="rounded underline underline-offset-4 text-slate-600 dark:text-slate-400 hover:text-emerald-700 dark:hover:text-emerald-400"
             >
               Notas da versão
             </a>

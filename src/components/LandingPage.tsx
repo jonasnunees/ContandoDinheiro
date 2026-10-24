@@ -641,7 +641,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             <LegalLinks />
             <a
               href="#notas-da-versao"
-              className="rounded hover:text-emerald-700 dark:hover:text-emerald-400"
+              className="rounded underline underline-offset-4 hover:text-emerald-700 dark:hover:text-emerald-400"
             >
               Notas da versão
             </a>
