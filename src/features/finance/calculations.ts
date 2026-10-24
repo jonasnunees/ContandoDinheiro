@@ -76,3 +76,41 @@ export function groupTransactionValues(
     cents[tx[field]] = (cents[tx[field]] || 0) + Math.round(tx.valor * 100);
   return Object.fromEntries(Object.entries(cents).map(([key, value]) => [key, value / 100]));
 }
+
+// Reutiliza os filtros e as regras de valores realizados do painel.
+export function compareTransactionMonths(
+  transactions: Transaction[],
+  period: TransactionPeriod,
+  filters: FilterState,
+) {
+  const periods =
+    period.month === -1
+      ? Array.from({ length: 12 }, (_, month) => ({ month, year: period.year }))
+      : [
+          period.month === 0
+            ? { month: 11, year: period.year - 1 }
+            : { ...period, month: period.month - 1 },
+          period,
+        ];
+  return periods.map((item) => {
+    const rows = filterTransactions(transactions, item, filters);
+    return {
+      ...item,
+      label: new Intl.DateTimeFormat('pt-BR', { month: 'short', year: 'numeric' }).format(
+        new Date(item.year, item.month, 1),
+      ),
+      ...summarizeTransactions(rows),
+      categories: groupTransactionValues(
+        rows.filter((tx) => tx.tipo === 'despesa' && tx.status === 'pago'),
+        'categoria',
+      ),
+      payments: groupTransactionValues(
+        rows.filter((tx) => tx.tipo === 'despesa' && tx.status === 'pago'),
+        'forma_pagamento',
+      ),
+      count: rows.length,
+    };
+  });
+}
+
+export type ComparisonRange = 'selected' | 'quarter' | 'semester';

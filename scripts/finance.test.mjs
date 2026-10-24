@@ -147,3 +147,76 @@ test('configurações dos gráficos preservam tema, valores, tooltips e moviment
     else globalThis.window = previousWindow;
   }
 });
+
+test('comparação mensal cruza o ano, mantém filtros e exclui pendentes dos valores', async () => {
+  const { compareTransactionMonths } = await import('../src/features/finance/calculations.ts');
+  const rows = [
+    tx('1', 0.1, 'despesa', 'pago', '2025-12-05'),
+    tx('2', 0.2, 'despesa', 'pago', '2025-12-06'),
+    tx('3', 5, 'despesa', 'pago', '2026-01-05'),
+    tx('4', 50, 'despesa', 'pendente', '2026-01-06'),
+  ];
+  const filters = { type: 'todos', status: 'todos', searchTerm: '' };
+  const months = compareTransactionMonths(rows, { month: 0, year: 2026 }, filters);
+  assert.deepEqual(
+    months.map(({ month, year, totalSaidas }) => [month, year, totalSaidas]),
+    [
+      [11, 2025, 0.3],
+      [0, 2026, 5],
+    ],
+  );
+  assert.equal(months[0].categories.Outros, 0.3);
+  assert.equal(months[1].categories.Outros, 5);
+  assert.equal(months[1].payments.Pix, 5);
+  assert.equal(
+    compareTransactionMonths(
+      rows,
+      { month: 0, year: 2026 },
+      { ...filters, searchTerm: 'inexistente' },
+    )[1].totalSaidas,
+    0,
+  );
+  const annual = compareTransactionMonths(rows, { month: -1, year: 2026 }, filters);
+  assert.equal(annual.length, 12);
+  assert.equal(annual[0].totalSaidas, 5);
+  assert.equal(annual[1].totalSaidas, 0);
+});
+
+test('comparação visual mantém uma linha por grupo e preserva meses sem gasto', async () => {
+  const { createGroupedMonthlyChartConfig, createSingleCategoryChartConfig } =
+    await import('../src/features/finance/components/financialChartConfig.ts');
+  const previous = globalThis.window;
+  globalThis.window = { matchMedia: () => ({ matches: true }) };
+  try {
+    const months = [
+      { label: 'set.', categories: { Moradia: 100, Lazer: 20 } },
+      { label: 'out.', categories: { Moradia: 150, Transporte: 50 } },
+    ];
+    const all = createGroupedMonthlyChartConfig(months, true);
+    assert.equal(all.type, 'line');
+    assert.deepEqual(all.data.labels, ['set.', 'out.']);
+    assert.deepEqual(
+      all.data.datasets.map((item) => item.data),
+      [
+        [100, 150],
+        [0, 50],
+        [20, 0],
+      ],
+    );
+    assert.deepEqual(
+      all.data.datasets.map((item) => item.label),
+      ['Moradia', 'Transporte', 'Lazer'],
+    );
+    const single = createSingleCategoryChartConfig(months, 'Lazer', false);
+    assert.equal(single.type, 'line');
+    assert.equal(single.data.datasets[0].pointRadius, 4);
+    assert.equal(single.plugins, undefined);
+    assert.equal(single.options.interaction.mode, 'index');
+    assert.equal(single.options.interaction.intersect, false);
+    assert.deepEqual(single.data.labels, ['set.', 'out.']);
+    assert.deepEqual(single.data.datasets[0].data, [20, 0]);
+  } finally {
+    if (previous === undefined) delete globalThis.window;
+    else globalThis.window = previous;
+  }
+});

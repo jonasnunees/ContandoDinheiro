@@ -60,28 +60,45 @@ async function prepareTransactionRead(userId: string): Promise<ReadContext> {
   return context;
 }
 
-// Uma carga possui uma barreira de preparação e duas leituras em paralelo.
+function previousPeriod(period: TransactionPeriod): TransactionPeriod {
+  return period.month === 0
+    ? { month: 11, year: period.year - 1 }
+    : { ...period, month: period.month - 1 };
+}
+
+// Prepara uma vez e lê período, pendências e, quando solicitado, mês anterior em paralelo.
 export async function fetchTransactionLoadService(
   userId: string,
   isDemo: boolean,
   period: TransactionPeriod,
   pendingUntil: string,
+  includePrevious = false,
 ): Promise<[Transaction[], Transaction[]]> {
   assertTransactionContext(isDemo, userId);
   if (isDemo) {
     const rows = await fetchTransactionsService(userId, true);
     return [
-      rows.filter((row) => matchesTransactionPeriod(row, period)),
+      rows.filter(
+        (row) =>
+          matchesTransactionPeriod(row, period) ||
+          (includePrevious &&
+            period.month !== -1 &&
+            matchesTransactionPeriod(row, previousPeriod(period))),
+      ),
       rows.filter(
         (row) => row.status === 'pendente' && row.tipo === 'despesa' && row.data <= pendingUntil,
       ),
     ];
   }
   const context = await prepareTransactionRead(userId);
-  return Promise.all([
+  const [current, pending, previous] = await Promise.all([
     readTransactions(userId, false, period, undefined, context),
     readTransactions(userId, false, undefined, pendingUntil, context),
+    includePrevious && period.month !== -1
+      ? readTransactions(userId, false, previousPeriod(period), undefined, context)
+      : Promise.resolve([]),
   ]);
+  return [[...current, ...previous], pending];
 }
 
 // Busca lançamentos da conta confirmada; na demonstração, lê os exemplos locais.

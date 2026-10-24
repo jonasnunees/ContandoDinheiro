@@ -41,6 +41,7 @@ export function useTransactions(user: AppUser, month: number, year: number) {
         user.isDemo,
         { month, year },
         upcomingLimit(localDate()),
+        true,
       );
       if (mounted.current && request === version.current && activeKey.current === key) {
         setTransactions(data);

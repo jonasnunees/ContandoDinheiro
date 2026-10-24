@@ -9,7 +9,11 @@ import React, { lazy, Suspense, useState, useMemo } from 'react';
 import type { Transaction, FilterState } from './features/finance/types';
 import type { AppUser } from './features/auth/session';
 import { useTransactions } from './features/finance/useTransactions';
-import { filterTransactions, summarizeTransactions } from './features/finance/calculations';
+import {
+  filterTransactions,
+  summarizeTransactions,
+  ComparisonRange,
+} from './features/finance/calculations';
 import { Header } from './components/Header';
 import { SummaryCards } from './features/finance/components/SummaryCards';
 import { TransactionList } from './features/finance/components/TransactionList';
@@ -48,6 +52,7 @@ export default function AccountWorkspace({
     useWorkspaceScroll();
 
   const [currentMonth, setCurrentMonth] = useState<number>(currentDate.getMonth());
+  const [comparisonRange, setComparisonRange] = useState<ComparisonRange>('selected');
   const [currentYear, setCurrentYear] = useState<number>(currentDate.getFullYear());
 
   const {
@@ -60,7 +65,7 @@ export default function AccountWorkspace({
     deleteTransaction: handleDeleteTransaction,
     toggleStatus: handleToggleStatus,
     refresh: handleRefresh,
-  } = useTransactions(user, currentMonth, currentYear);
+  } = useTransactions(user, comparisonRange === 'selected' ? currentMonth : -1, currentYear);
 
   // Controla quais janelas estão abertas e qual lançamento será editado.
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
@@ -277,16 +282,25 @@ export default function AccountWorkspace({
               Categorias, Métodos de Pagamento e Fluxo
             </span>
           </div>
-          {!loading && !loadError && (
-            <Suspense
-              fallback={
-                <p role="status" className="min-h-96 p-6">
-                  Carregando gráficos...
-                </p>
-              }
-            >
-              <FinancialCharts transactions={filteredTransactions} />
-            </Suspense>
+          {!loadError && (
+            <div hidden={loading}>
+              <Suspense
+                fallback={
+                  <p role="status" className="min-h-96 p-6">
+                    Carregando gráficos...
+                  </p>
+                }
+              >
+                <FinancialCharts
+                  comparisonRange={comparisonRange}
+                  onComparisonRangeChange={setComparisonRange}
+                  transactions={filteredTransactions}
+                  comparisonTransactions={transactions}
+                  period={{ month: currentMonth, year: currentYear }}
+                  filters={filterState}
+                />
+              </Suspense>
+            </div>
           )}
         </div>
 
