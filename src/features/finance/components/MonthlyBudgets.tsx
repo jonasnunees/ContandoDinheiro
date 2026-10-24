@@ -78,7 +78,7 @@ export function MonthlyBudgets({
               if (persist({ ...budgets, [category]: Math.round(limit * 100) / 100 })) setAmount('');
             }}
           >
-            <label className="text-sm">
+            <label className="field-label">
               Categoria
               <select
                 className="block mt-1 rounded-lg border border-slate-400 bg-white dark:bg-slate-950 p-2"
@@ -94,7 +94,7 @@ export function MonthlyBudgets({
                 ))}
               </select>
             </label>
-            <label className="text-sm">
+            <label className="field-label">
               Limite mensal (R$)
               <input
                 className="block mt-1 w-44 rounded-lg border border-slate-400 bg-white dark:bg-slate-950 p-2"

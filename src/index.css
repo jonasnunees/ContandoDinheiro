@@ -95,6 +95,13 @@
   }
 }
 
+/* Tipografia compartilhada pelos labels, baseada nos filtros do comparativo. */
+@layer components {
+  .field-label {
+    @apply text-sm font-medium text-slate-900 dark:text-slate-100;
+  }
+}
+
 @layer base {
   /* Suaviza a navegação entre seções pelos links da página. */
   html {

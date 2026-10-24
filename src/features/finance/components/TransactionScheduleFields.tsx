@@ -39,7 +39,7 @@ export function TransactionScheduleFields({
     <>
       {!isEditing && (
         <div className="space-y-2">
-          <label htmlFor="tx-repeat" className="block text-xs font-medium">
+          <label htmlFor="tx-repeat" className="field-label block">
             Repetição
           </label>
           <select
@@ -55,7 +55,7 @@ export function TransactionScheduleFields({
           </select>
           {mode === 'monthly' && (
             <>
-              <label htmlFor="tx-end" className="block text-xs">
+              <label htmlFor="tx-end" className="field-label block">
                 Repetir até (opcional)
               </label>
               <input
@@ -74,7 +74,7 @@ export function TransactionScheduleFields({
           )}
           {mode === 'installments' && (
             <>
-              <label htmlFor="tx-count" className="block text-xs">
+              <label htmlFor="tx-count" className="field-label block">
                 Número de parcelas
               </label>
               <input
@@ -103,7 +103,7 @@ export function TransactionScheduleFields({
       )}
       {hasSeries && (
         <div className="space-y-2">
-          <label htmlFor="tx-scope" className="block text-xs font-medium">
+          <label htmlFor="tx-scope" className="field-label block">
             Aplicar alteração
           </label>
           <select
@@ -124,7 +124,7 @@ export function TransactionScheduleFields({
             pagas e mantêm as demais pendentes.
           </p>
           {scope === 'following' && (
-            <label className="flex gap-2 text-sm">
+            <label className="field-label flex gap-2">
               <input
                 type="checkbox"
                 checked={cancelSeries}

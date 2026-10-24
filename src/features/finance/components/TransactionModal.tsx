@@ -268,10 +268,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
 
         {/* Valor */}
         <div className="space-y-1.5">
-          <label
-            htmlFor="tx-valor"
-            className="text-xs font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1.5"
-          >
+          <label htmlFor="tx-valor" className="field-label flex items-center gap-1.5">
             <DollarSign className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
             {!transactionToEdit && mode === 'installments'
               ? 'Valor total da compra (R$)'
@@ -298,10 +295,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
 
         {/* Descrição */}
         <div className="space-y-1.5">
-          <label
-            htmlFor="tx-descricao"
-            className="text-xs font-medium text-slate-700 dark:text-slate-300"
-          >
+          <label htmlFor="tx-descricao" className="field-label">
             Descrição
           </label>
           <input
@@ -320,10 +314,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
         {/* Categoria & Forma de Pagamento */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="space-y-1.5">
-            <label
-              htmlFor="tx-categoria"
-              className="text-xs font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1.5"
-            >
+            <label htmlFor="tx-categoria" className="field-label flex items-center gap-1.5">
               <Tag className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
               Categoria
             </label>
@@ -348,10 +339,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
           </div>
 
           <div className="space-y-1.5">
-            <label
-              htmlFor="tx-pagamento"
-              className="text-xs font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1.5"
-            >
+            <label htmlFor="tx-pagamento" className="field-label flex items-center gap-1.5">
               <CreditCard className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
               Forma de Pagamento
             </label>

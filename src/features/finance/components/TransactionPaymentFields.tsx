@@ -31,10 +31,7 @@ export function TransactionPaymentFields({
       {/* Data & Status */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="space-y-1.5">
-          <label
-            htmlFor="tx-data"
-            className="text-xs font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1.5"
-          >
+          <label htmlFor="tx-data" className="field-label flex items-center gap-1.5">
             <CalendarIcon className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
             Vencimento
           </label>
@@ -51,10 +48,7 @@ export function TransactionPaymentFields({
         </div>
 
         <div className="space-y-1.5">
-          <div
-            id="status-label"
-            className="text-xs font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1.5"
-          >
+          <div id="status-label" className="field-label flex items-center gap-1.5">
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
             Situação / Status
           </div>
@@ -91,7 +85,7 @@ export function TransactionPaymentFields({
 
       {status === 'pago' && (
         <div className="space-y-1.5">
-          <label htmlFor="tx-paid-date" className="block text-xs font-medium">
+          <label htmlFor="tx-paid-date" className="field-label block">
             {tipo === 'receita' ? 'Data do recebimento' : 'Data do pagamento'}
           </label>
           <input

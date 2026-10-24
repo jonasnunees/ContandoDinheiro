@@ -13,7 +13,7 @@ import {
   groupTransactionValues,
   summarizeTransactions,
 } from '../calculations';
-import React, { useEffect, useRef, useMemo, useState } from 'react';
+import React, { useEffect, useRef, useMemo, useState, useCallback } from 'react';
 import { CATEGORIES, PAYMENT_METHODS, Transaction, TransactionPeriod, FilterState } from '../types';
 import { useTheme } from '../../../context/ThemeContext';
 import {
@@ -31,6 +31,7 @@ import {
   DoughnutController,
   BarController,
 } from 'chart.js';
+import type { ChartType, TooltipModel } from 'chart.js';
 import { PieChart, BarChart3, TrendingUp, AlertCircle } from 'lucide-react';
 
 // Habilita os tipos de gráfico, eixos e recursos que a biblioteca usará.
@@ -49,7 +50,8 @@ ChartJS.register(
   BarController,
 );
 
-interface ComparisonTooltip {
+interface ChartTooltip {
+  heading: string;
   title: string;
   rows: { label: string; value: number; color: string }[];
   left: number;
@@ -75,7 +77,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({
   filters,
 }) => {
   const { theme } = useTheme();
-  const [tooltip, setTooltip] = useState<ComparisonTooltip | null>(null);
+  const [tooltip, setTooltip] = useState<ChartTooltip | null>(null);
   const tooltipRef = useRef<HTMLDivElement | null>(null);
   const [legendMonthLabel, setLegendMonthLabel] = useState<string | null>(null);
   const [hiddenGroups, setHiddenGroups] = useState<Record<string, boolean>>({});
@@ -96,9 +98,59 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({
   const paymentCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const cashflowCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  const categoryChartInstance = useRef<ChartJS | null>(null);
-  const paymentChartInstance = useRef<ChartJS | null>(null);
-  const cashflowChartInstance = useRef<ChartJS | null>(null);
+  const categoryChartInstance = useRef<ChartJS<'doughnut'> | null>(null);
+  const paymentChartInstance = useRef<ChartJS<'bar', number[]> | null>(null);
+  const cashflowChartInstance = useRef<ChartJS<'line', number[]> | null>(null);
+
+  // Todos os gráficos compartilham o mesmo cartão de detalhes e limites da tela.
+  const showChartTooltip = useCallback(
+    <T extends ChartType>({
+      chart,
+      tooltip: model,
+    }: {
+      chart: ChartJS;
+      tooltip: TooltipModel<T>;
+    }) => {
+      if (!model.opacity) {
+        if (!tooltipRef.current?.matches(':hover')) setTooltip(null);
+        return;
+      }
+      const chartType = 'type' in chart.config ? chart.config.type : undefined;
+      const rect = chart.canvas.getBoundingClientRect();
+      const width = Math.min(320, window.innerWidth - 32);
+      const rows = model.dataPoints.map((point, index) => ({
+        label:
+          chartType === 'line'
+            ? (chart.data.datasets[point.datasetIndex]?.label ?? '')
+            : point.label,
+        value: point.raw as number,
+        color: String(model.labelColors[index]?.backgroundColor ?? '#94a3b8'),
+      }));
+      const height = Math.min(360, window.innerHeight - 32, 80 + rows.length * 36);
+      const x = rect.left + model.caretX;
+      const y = rect.top + model.caretY;
+      setTooltip({
+        heading:
+          chartType === 'line'
+            ? 'Resumo do mês'
+            : chartType === 'doughnut'
+              ? 'Despesas por categoria'
+              : 'Volume por forma de pagamento',
+        title: model.title.join(' '),
+        rows,
+        width,
+        left: Math.max(16, Math.min(window.innerWidth - width - 16, x - width / 2)),
+        top: Math.max(
+          16,
+          Math.min(
+            window.innerHeight - height - 16,
+            y - height - 16 > 16 ? y - height - 16 : y + 16,
+          ),
+        ),
+      });
+    },
+    [],
+  );
 
   // Categorias usam somente despesas pagas. Formas de pagamento somam receitas e
   // despesas, incluindo pendentes; o fluxo usa entradas/saídas realizadas do resumo.
@@ -218,7 +270,9 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({
     const dismiss = (event: Event) => {
       if (
         event.target instanceof Node &&
-        (cashflowCanvasRef.current?.contains(event.target) ||
+        (categoryCanvasRef.current?.contains(event.target) ||
+          paymentCanvasRef.current?.contains(event.target) ||
+          cashflowCanvasRef.current?.contains(event.target) ||
           tooltipRef.current?.contains(event.target))
       )
         return;
@@ -250,10 +304,9 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({
     const ctx = categoryCanvasRef.current.getContext('2d');
     if (!ctx) return;
 
-    categoryChartInstance.current = new ChartJS(
-      ctx,
-      createCategoryChartConfig(categoryTotals, isLight),
-    );
+    const config = createCategoryChartConfig(categoryTotals, isLight);
+    config.options!.plugins!.tooltip = { enabled: false, external: showChartTooltip };
+    categoryChartInstance.current = new ChartJS(ctx, config);
 
     return () => {
       if (categoryChartInstance.current) {
@@ -261,7 +314,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({
         categoryChartInstance.current = null;
       }
     };
-  }, [expenses, categoryTotals, isLight]);
+  }, [expenses, categoryTotals, isLight, showChartTooltip]);
 
   // Recria o gráfico que compara as formas de pagamento.
   useEffect(() => {
@@ -277,10 +330,9 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({
     const ctx = paymentCanvasRef.current.getContext('2d');
     if (!ctx) return;
 
-    paymentChartInstance.current = new ChartJS(
-      ctx,
-      createPaymentChartConfig(paymentTotals, isLight),
-    );
+    const config = createPaymentChartConfig(paymentTotals, isLight);
+    config.options!.plugins!.tooltip = { enabled: false, external: showChartTooltip };
+    paymentChartInstance.current = new ChartJS(ctx, config);
 
     return () => {
       if (paymentChartInstance.current) {
@@ -288,7 +340,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({
         paymentChartInstance.current = null;
       }
     };
-  }, [transactions, paymentTotals, isLight]);
+  }, [transactions, paymentTotals, isLight, showChartTooltip]);
 
   // Mostra dois meses ou os doze meses do ano.
   useEffect(() => {
@@ -320,35 +372,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({
     config.options!.plugins!.tooltip = {
       ...config.options!.plugins!.tooltip,
       enabled: false,
-      external: ({ chart, tooltip: model }) => {
-        if (!model.opacity) {
-          if (!tooltipRef.current?.matches(':hover')) setTooltip(null);
-          return;
-        }
-        const rect = chart.canvas.getBoundingClientRect();
-        const width = Math.min(320, window.innerWidth - 32);
-        const rows = model.dataPoints.map((point) => ({
-          label: point.dataset.label ?? '',
-          value: point.raw as number,
-          color: String(point.dataset.borderColor),
-        }));
-        const height = Math.min(360, window.innerHeight - 32, 80 + rows.length * 36);
-        const x = rect.left + model.caretX;
-        const y = rect.top + model.caretY;
-        setTooltip({
-          title: model.title.join(' '),
-          rows,
-          width,
-          left: Math.max(16, Math.min(window.innerWidth - width - 16, x - width / 2)),
-          top: Math.max(
-            16,
-            Math.min(
-              window.innerHeight - height - 16,
-              y - height - 16 > 16 ? y - height - 16 : y + 16,
-            ),
-          ),
-        });
-      },
+      external: showChartTooltip,
     };
     cashflowChartInstance.current = new ChartJS<'line', number[]>(ctx, config);
 
@@ -368,6 +392,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({
     selectedGroup,
     isPayment,
     hiddenGroups,
+    showChartTooltip,
   ]);
 
   return (
@@ -471,7 +496,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({
           </div>
 
           <div className="flex flex-wrap items-end gap-4 mt-4">
-            <label className="flex flex-col gap-1 text-sm font-medium">
+            <label className="field-label flex flex-col gap-1">
               Período do comparativo
               <select
                 aria-label="Período do comparativo"
@@ -495,7 +520,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({
               </select>
             </label>
             {isExtended && (
-              <label className="flex flex-col gap-1 text-sm font-medium">
+              <label className="field-label flex flex-col gap-1">
                 {comparisonRange === 'quarter' ? 'Trimestre' : 'Semestre'}
                 <select
                   aria-label="Intervalo do comparativo"
@@ -511,7 +536,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({
                 </select>
               </label>
             )}
-            <label className="flex flex-col gap-1 text-sm font-medium">
+            <label className="field-label flex flex-col gap-1">
               O que comparar
               <select
                 value={comparisonMode}
@@ -526,7 +551,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({
               </select>
             </label>
             {comparisonMode === 'category' && (
-              <label className="flex flex-col gap-1 text-sm font-medium">
+              <label className="field-label flex flex-col gap-1">
                 Categoria
                 <select
                   aria-label="Categoria"
@@ -541,7 +566,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({
               </label>
             )}
             {comparisonMode === 'payment' && (
-              <label className="flex flex-col gap-1 text-sm font-medium">
+              <label className="field-label flex flex-col gap-1">
                 Forma de pagamento
                 <select
                   aria-label="Forma de pagamento da comparação"
@@ -614,7 +639,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({
           </div>
           {hasFlow && (
             <div className="mt-4 border-t border-slate-200 dark:border-slate-800 pt-4">
-              <label className="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
+              <label className="field-label flex items-center gap-2">
                 Valores de
                 <select
                   aria-label="Mês dos valores da legenda"
@@ -677,7 +702,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({
               <div className="flex items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 px-4 py-3">
                 <div>
                   <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400">
-                    Resumo do mês
+                    {tooltip.heading}
                   </p>
                   <p className="mt-0.5 text-sm font-semibold text-slate-900 dark:text-white">
                     {tooltip.title}
