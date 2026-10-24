@@ -98,3 +98,9 @@ export interface TransactionPeriod {
   month: number;
   year: number;
 }
+
+// O contrato distingue criação, edição e duplicação sem usar o ID da origem como edição.
+export type TransactionFormIntent =
+  | { mode: 'create' }
+  | { mode: 'edit'; transaction: Transaction }
+  | { mode: 'duplicate'; draft: TransactionDraft };

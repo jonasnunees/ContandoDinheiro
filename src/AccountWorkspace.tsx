@@ -3,12 +3,13 @@ import { CategoryManager } from './features/finance/components/CategoryManager';
 import { useWorkspaceScroll } from './hooks/useWorkspaceScroll';
 import { LegalLinks } from './features/legal/LegalLinks';
 import { localDate } from './features/finance/validation';
+import { duplicateTransactionDraft } from './features/finance/duplication';
 import { DueDates } from './features/finance/components/DueDates';
 import { DemoGuide } from './features/finance/components/DemoGuide';
 import { MonthlyBudgets } from './features/finance/components/MonthlyBudgets';
 import { budgetStorageKey } from './features/finance/budgets';
 import React, { lazy, Suspense, useState, useMemo } from 'react';
-import type { Transaction, FilterState } from './features/finance/types';
+import type { Transaction, TransactionFormIntent, FilterState } from './features/finance/types';
 import type { AppUser } from './features/auth/session';
 import { useTransactions } from './features/finance/useTransactions';
 import {
@@ -73,6 +74,8 @@ function Workspace({
   // Controla quais janelas estão abertas e qual lançamento será editado.
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
   const [transactionToEdit, setTransactionToEdit] = useState<Transaction | null>(null);
+  const [duplicateIntent, setDuplicateIntent] = useState<TransactionFormIntent | null>(null);
+  const [saveNotice, setSaveNotice] = useState('');
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   // No celular, mostra apenas a seção escolhida na navegação inferior.
@@ -128,6 +131,9 @@ function Workspace({
         tabIndex={-1}
         className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 space-y-6 pb-24 md:pb-12"
       >
+        <p role="status" className="text-sm">
+          {saveNotice}
+        </p>
         <CategoryManager errorAlreadyShown={loadError} />
         {sessionError && (
           <p
@@ -342,6 +348,14 @@ function Workspace({
 
           {!loading && !loadError && (
             <TransactionList
+              onDuplicate={(tx) => {
+                setTransactionToEdit(null);
+                setDuplicateIntent({
+                  mode: 'duplicate',
+                  draft: duplicateTransactionDraft(tx, categories, user.id),
+                });
+                setIsTransactionModalOpen(true);
+              }}
               transactions={filteredTransactions}
               onEdit={(tx) => {
                 setTransactionToEdit(tx);
@@ -433,9 +447,22 @@ function Workspace({
         onClose={() => {
           setIsTransactionModalOpen(false);
           setTransactionToEdit(null);
+          setDuplicateIntent(null);
         }}
-        onSave={handleSaveTransaction}
-        transactionToEdit={transactionToEdit}
+        onSave={async (draft, id, options) => {
+          await handleSaveTransaction(draft, id, options);
+          const outside = !draft.data.startsWith(
+            `${currentYear}-${currentMonth === -1 ? '' : String(currentMonth + 1).padStart(2, '0')}`,
+          );
+          setSaveNotice(
+            `Lançamento salvo com sucesso.${outside ? ` Para encontrá-lo, selecione o período de vencimento ${draft.data.split('-').reverse().join('/')}.` : ' Consulte a lista de lançamentos; limpe a busca e os filtros se necessário.'}`,
+          );
+        }}
+        intent={
+          transactionToEdit
+            ? { mode: 'edit', transaction: transactionToEdit }
+            : (duplicateIntent ?? { mode: 'create' })
+        }
       />
 
       <AuthModal
@@ -454,7 +481,7 @@ function Workspace({
 
 export default function AccountWorkspace(props: Parameters<typeof Workspace>[0]) {
   return (
-    <CategoryProvider user={props.user}>
+    <CategoryProvider key={`${props.user.id}:${props.user.isDemo}`} user={props.user}>
       <Workspace {...props} />
     </CategoryProvider>
   );

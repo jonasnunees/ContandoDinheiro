@@ -80,6 +80,8 @@ export function useTransactions(user: AppUser, month: number, year: number) {
     id?: string,
     options: ScheduleOptions = { mode: 'single' },
   ) => {
+    if (!mounted.current || activeKey.current !== key)
+      throw new Error('A conta ou o período mudou. Abra o formulário novamente.');
     await saveScheduledTransaction(data, options, user.isDemo, user.id, id);
     await loadTransactions();
   };

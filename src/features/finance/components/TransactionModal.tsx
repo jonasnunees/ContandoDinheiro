@@ -1,11 +1,12 @@
 import { useCategories } from '../CategoryContext';
+import { assertCategory } from '../categories';
 import { TransactionScheduleFields } from './TransactionScheduleFields';
 import { TransactionPaymentFields } from './TransactionPaymentFields';
 import { localDate, parseMoney } from '../validation';
 import { Modal } from '../../../components/Modal';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
-  Transaction,
+  TransactionFormIntent,
   TransactionDraft,
   TransactionType,
   TransactionStatus,
@@ -29,15 +30,19 @@ interface TransactionModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (data: TransactionDraft, id?: string, options?: ScheduleOptions) => Promise<void>;
-  transactionToEdit?: Transaction | null;
+  intent: TransactionFormIntent;
 }
 
 export const TransactionModal: React.FC<TransactionModalProps> = ({
   isOpen,
   onClose,
   onSave,
-  transactionToEdit,
+  intent,
 }) => {
+  const transactionToEdit = intent.mode === 'edit' ? intent.transaction : null;
+  const initialDraft = intent.mode === 'duplicate' ? intent.draft : transactionToEdit;
+  const pending = useRef(false);
+  const initialized = useRef(false);
   // Cada estado guarda um campo do formulário ou uma informação de carregamento/erro.
   const { categories, error: categoryError } = useCategories();
   const active = categories.filter((c) => !c.archived);
@@ -60,17 +65,24 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
 
   // Ao abrir, preenche os campos para edição ou restaura os valores de um novo lançamento.
   useEffect(() => {
-    if (transactionToEdit) {
-      setDescricao(transactionToEdit.descricao);
-      setValor(transactionToEdit.valor.toFixed(2).replace('.', ','));
-      setTipo(transactionToEdit.tipo);
-      setData(transactionToEdit.data);
-      setDataPagamento(transactionToEdit.data_pagamento ?? '');
-      setFormaPagamento(transactionToEdit.forma_pagamento);
-      setStatus(transactionToEdit.status);
+    if (!isOpen) {
+      initialized.current = false;
+      return;
+    }
+    if (initialized.current) return;
+    if (!categories.length) return;
+    initialized.current = true;
+    if (initialDraft) {
+      setDescricao(initialDraft.descricao);
+      setValor(initialDraft.valor.toFixed(2).replace('.', ','));
+      setTipo(initialDraft.tipo);
+      setData(initialDraft.data);
+      setDataPagamento(initialDraft.data_pagamento ?? '');
+      setFormaPagamento(initialDraft.forma_pagamento);
+      setStatus(initialDraft.status);
       setCategoria(
-        transactionToEdit.categoria_id ??
-          categories.find((c) => c.name === transactionToEdit.categoria)?.id ??
+        initialDraft.categoria_id ??
+          categories.find((c) => c.name === initialDraft.categoria)?.id ??
           '',
       );
     } else {
@@ -89,7 +101,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
     setScope('one');
     setCancelSeries(false);
     setError('');
-  }, [transactionToEdit, isOpen, categories]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [intent, isOpen, categories]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Ao alternar receita/despesa, ajusta a categoria padrão de salário/alimentação.
   const handleTypeChange = (newType: TransactionType) => {
@@ -115,7 +127,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
     e.preventDefault();
     setError('');
 
-    if (loading) return;
+    if (pending.current) return;
     let numericValue: number;
     try {
       numericValue = parseMoney(valor);
@@ -127,6 +139,13 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
       setError('Informe a descrição da transação.');
       return;
     }
+    try {
+      assertCategory(categories, categoria, transactionToEdit?.categoria_id);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Escolha uma categoria ativa.');
+      return;
+    }
+    pending.current = true;
     setLoading(true);
     try {
       // Envia apenas o rascunho editável; o ID opcional distingue edição de criação.
@@ -160,6 +179,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
           : 'Não foi possível salvar a transação. Verifique os dados e tente novamente.',
       );
     } finally {
+      pending.current = false;
       setLoading(false);
     }
   };
@@ -185,7 +205,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
           ) : (
             <>
               <Plus className="w-5 h-5 text-emerald-700 dark:text-emerald-400" />
-              Nova Transação
+              {intent.mode === 'duplicate' ? 'Duplicar lançamento' : 'Nova Transação'}
             </>
           )}
         </h2>
@@ -201,6 +221,12 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
 
       {/* Campos preenchidos pela pessoa para cadastrar ou editar o lançamento. */}
       <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        {intent.mode === 'duplicate' && !categoria && (
+          <p role="status" className="text-sm">
+            A categoria original está arquivada ou indisponível. Escolha uma categoria ativa antes
+            de salvar.
+          </p>
+        )}
         {visibleError && (
           <div
             id="transaction-error"
@@ -296,6 +322,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
             type="text"
             required
             id="tx-descricao"
+            data-initial-focus
             aria-describedby={visibleError ? 'transaction-error' : undefined}
             disabled={loading}
             value={descricao}

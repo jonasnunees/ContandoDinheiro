@@ -21,11 +21,24 @@ export function Modal({ titleId, onClose, busy = false, className, children }: P
     const previousFocus = document.activeElement;
     const previousOverflow = document.body.style.overflow;
     element?.showModal();
+    element?.querySelector<HTMLElement>('[data-initial-focus]')?.focus();
     document.body.style.overflow = 'hidden';
     return () => {
       element?.close();
       document.body.style.overflow = previousOverflow;
-      if (previousFocus instanceof HTMLElement && previousFocus.isConnected) previousFocus.focus();
+      if (previousFocus instanceof HTMLElement) {
+        if (previousFocus.isConnected) previousFocus.focus();
+        else {
+          // A recarga da lista pode substituir o botão por outro nó do mesmo lançamento.
+          const key = previousFocus.dataset.focusReturn;
+          if (key) {
+            const replacement = Array.from(
+              document.querySelectorAll<HTMLElement>(`[data-focus-return="${CSS.escape(key)}"]`),
+            ).find((control) => control.getClientRects().length > 0);
+            replacement?.focus();
+          }
+        }
+      }
     };
   }, []);
   // O portal coloca a janela diretamente no corpo da página, fora do layout da tela.

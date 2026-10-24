@@ -72,6 +72,15 @@ Os dados da demonstração ficam no navegador. Para salvar seus próprios regist
 
 ## Vencimentos e pagamentos
 
+Em cada lançamento, **Duplicar lançamento** abre um novo cadastro com descrição,
+valor da ocorrência, tipo, categoria e forma de pagamento preenchidos. A cópia começa
+pendente, sem data de pagamento, com vencimento no dia local de hoje e repetição
+avulsa. Recorrências e parcelas não carregam o vínculo da série original; uma nova
+série exige escolha explícita no formulário. Categorias arquivadas exigem a seleção
+de uma categoria ativa. Abrir ou cancelar não grava e o original permanece intacto.
+Após salvar fora do período exibido, o aviso indica o vencimento para localizar a cópia.
+Na demonstração, toda a operação permanece no navegador.
+
 A data do lançamento (`data`) representa o vencimento e continua determinando o período dos resumos, gráficos e extrato. A data efetiva (`data_pagamento`) é independente e aparece no histórico e no CSV. Pagamentos antigos permanecem com data não informada; não há preenchimento retroativo presumido.
 
 A seção de pendências reúne somente despesas pendentes, ordenadas pelo vencimento. Inclui todos os atrasos e os próximos sete dias, com totais por grupo. Registrar pagamento abre a edição com a data de hoje, que pode ser corrigida. Reabrir uma conta como pendente limpa sua data de pagamento. Cada parcela tem seu próprio registro.

@@ -7,6 +7,7 @@ import {
   Search,
   Trash2,
   Edit3,
+  Copy,
   CheckCircle2,
   Clock,
   ArrowUpRight,
@@ -18,6 +19,7 @@ import {
 interface TransactionListProps {
   transactions: Transaction[];
   onEdit: (transaction: Transaction) => void;
+  onDuplicate: (transaction: Transaction) => void;
   onDelete: (id: string) => Promise<void>;
   onToggleStatus: (id: string, currentStatus: TransactionStatus) => Promise<void>;
   filterState: FilterState;
@@ -42,6 +44,7 @@ const CATEGORY_COLORS: Record<string, string> = {
 export const TransactionList: React.FC<TransactionListProps> = ({
   transactions,
   onEdit,
+  onDuplicate,
   onDelete,
   onToggleStatus,
   filterState,
@@ -395,6 +398,17 @@ export const TransactionList: React.FC<TransactionListProps> = ({
                         ) : (
                           <div className="inline-flex items-center gap-1">
                             <button
+                              type="button"
+                              disabled={busyIds.has(tx.id)}
+                              aria-label={`Duplicar lançamento ${tx.descricao}`}
+                              data-focus-return={`duplicate-${tx.id}`}
+                              title="Duplicar lançamento"
+                              onClick={() => onDuplicate(tx)}
+                              className="p-1.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-emerald-600"
+                            >
+                              <Copy className="w-4 h-4" />
+                            </button>
+                            <button
                               disabled={busyIds.has(tx.id)}
                               aria-label={`Editar ${tx.descricao}`}
                               onClick={() => onEdit(tx)}
@@ -536,6 +550,17 @@ export const TransactionList: React.FC<TransactionListProps> = ({
                       </div>
                     ) : (
                       <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          disabled={busyIds.has(tx.id)}
+                          aria-label={`Duplicar lançamento ${tx.descricao}`}
+                          data-focus-return={`duplicate-${tx.id}`}
+                          title="Duplicar lançamento"
+                          onClick={() => onDuplicate(tx)}
+                          className="p-1.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-emerald-600"
+                        >
+                          <Copy className="w-4 h-4" />
+                        </button>
                         <button
                           disabled={busyIds.has(tx.id)}
                           aria-label={`Editar ${tx.descricao}`}
