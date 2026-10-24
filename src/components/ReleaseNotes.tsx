@@ -82,6 +82,56 @@ export function ReleaseNotes() {
         </p>
 
         <article
+          aria-labelledby="version-1-4-1"
+          className="mt-10 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+        >
+          <div className="border-b border-slate-200 bg-emerald-50 p-6 sm:p-8">
+            <div className="flex flex-wrap items-center gap-3">
+              <h2 id="version-1-4-1" className="text-2xl font-bold">
+                Versão 1.4.1
+              </h2>
+              <span className="rounded-full border border-emerald-200 bg-white px-3 py-1 text-xs font-semibold text-emerald-800">
+                Clareza no resumo filtrado
+              </span>
+            </div>
+            <p className="mt-3 text-sm text-slate-600">
+              <time dateTime="2026-10-24">24 de outubro de 2026</time>
+            </p>
+            <p className="mt-4 leading-relaxed text-slate-700">
+              Identifique quando a busca e os filtros de tipo e status alteram os cartões de resumo,
+              os gráficos e os resultados disponíveis para exportação.
+            </p>
+          </div>
+          <ul className="space-y-6 p-6 sm:p-8">
+            <li>
+              <h3 className="font-semibold">Saiba quais resultados compõem o resumo</h3>
+              <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                Junto aos cartões e gráficos, consulte o período selecionado, os filtros adicionais
+                ativos e a quantidade de resultados, inclusive quando nenhum lançamento corresponde
+                à busca. Uma busca contendo apenas espaços não ativa o aviso de resumo filtrado.
+              </p>
+            </li>
+            <li>
+              <h3 className="font-semibold">Limpe os filtros sem perder o período</h3>
+              <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                Use “Limpar busca e filtros” para voltar a todos os lançamentos do período,
+                preservando o mês e o ano escolhidos. O controle mantém o foco para continuar a
+                navegação por teclado.
+              </p>
+            </li>
+            <li>
+              <h3 className="font-semibold">Diferencie resultados confirmados e vencimentos</h3>
+              <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                Durante o carregamento ou uma falha de leitura, a contagem não apresenta resultados
+                antigos como confirmados. A seção de vencimentos continua independente do período,
+                da busca e dos filtros do resumo; a comparação entre meses mantém o intervalo
+                indicado no próprio gráfico.
+              </p>
+            </li>
+          </ul>
+        </article>
+
+        <article
           aria-labelledby="version-1-4-0"
           className="mt-10 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
         >
