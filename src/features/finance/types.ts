@@ -1,4 +1,4 @@
-// Fonte comum das opções dos formulários, dos tipos e da validação em execução.
+// Formas de pagamento fixas e nomes das categorias iniciais para migração/compatibilidade.
 // Ao mudar essas listas, revise também as restrições SQL das transações.
 export const PAYMENT_METHODS = [
   'Pix',
@@ -22,7 +22,13 @@ export const CATEGORIES = [
   'Outros',
 ] as const;
 export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
-export type Category = (typeof CATEGORIES)[number];
+export type Category = string;
+export interface UserCategory {
+  id: string;
+  user_id: string;
+  name: string;
+  archived: boolean;
+}
 export type TransactionType = 'receita' | 'despesa';
 export type TransactionStatus = 'pago' | 'pendente';
 
@@ -37,7 +43,8 @@ export interface Transaction {
   data_pagamento?: string | null; // Ausente nos pagamentos antigos sem data conhecida.
   forma_pagamento: PaymentMethod;
   status: TransactionStatus;
-  categoria: Category;
+  categoria: Category; // Texto de apresentação; categoria_id é o vínculo estável.
+  categoria_id?: string;
   created_at?: string;
   serie_id?: string | null;
   ocorrencia?: number | null;

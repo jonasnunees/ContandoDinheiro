@@ -1,3 +1,4 @@
+import { useCategories } from '../CategoryContext';
 import { TransactionScheduleFields } from './TransactionScheduleFields';
 import { TransactionPaymentFields } from './TransactionPaymentFields';
 import { localDate, parseMoney } from '../validation';
@@ -11,7 +12,6 @@ import {
   PaymentMethod,
   Category,
   PAYMENT_METHODS,
-  CATEGORIES,
   ScheduleOptions,
 } from '../types';
 import {
@@ -32,20 +32,6 @@ interface TransactionModalProps {
   transactionToEdit?: Transaction | null;
 }
 
-// Rótulos visuais das categorias; os valores persistidos continuam sendo os nomes de CATEGORIES.
-const CATEGORY_LABELS: Record<Category, string> = {
-  Alimentação: '🍔 Alimentação',
-  Moradia: '🏠 Moradia',
-  Transporte: '🚗 Transporte',
-  Saúde: '💊 Saúde',
-  Educação: '📚 Educação',
-  Lazer: '🎉 Lazer',
-  Salário: '💼 Salário',
-  Investimentos: '📈 Investimentos',
-  Serviços: '⚡ Serviços / Contas',
-  Outros: '📦 Outros',
-};
-
 export const TransactionModal: React.FC<TransactionModalProps> = ({
   isOpen,
   onClose,
@@ -53,6 +39,8 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
   transactionToEdit,
 }) => {
   // Cada estado guarda um campo do formulário ou uma informação de carregamento/erro.
+  const { categories, error: categoryError } = useCategories();
+  const active = categories.filter((c) => !c.archived);
   const [descricao, setDescricao] = useState('');
   const [valor, setValor] = useState('');
   const [tipo, setTipo] = useState<TransactionType>('despesa');
@@ -68,6 +56,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
   const [cancelSeries, setCancelSeries] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const visibleError = error || categoryError;
 
   // Ao abrir, preenche os campos para edição ou restaura os valores de um novo lançamento.
   useEffect(() => {
@@ -79,7 +68,11 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
       setDataPagamento(transactionToEdit.data_pagamento ?? '');
       setFormaPagamento(transactionToEdit.forma_pagamento);
       setStatus(transactionToEdit.status);
-      setCategoria(transactionToEdit.categoria);
+      setCategoria(
+        transactionToEdit.categoria_id ??
+          categories.find((c) => c.name === transactionToEdit.categoria)?.id ??
+          '',
+      );
     } else {
       setDescricao('');
       setValor('');
@@ -88,7 +81,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
       setDataPagamento(localDate());
       setFormaPagamento('Pix');
       setStatus('pago');
-      setCategoria('Alimentação');
+      setCategoria(active.find((c) => c.name === 'Alimentação')?.id ?? active[0]?.id ?? '');
     }
     setMode('single');
     setCount(2);
@@ -96,16 +89,16 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
     setScope('one');
     setCancelSeries(false);
     setError('');
-  }, [transactionToEdit, isOpen]);
+  }, [transactionToEdit, isOpen, categories]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Ao alternar receita/despesa, ajusta a categoria padrão de salário/alimentação.
   const handleTypeChange = (newType: TransactionType) => {
     setTipo(newType);
-    if (newType === 'receita' && categoria === 'Alimentação') {
-      setCategoria('Salário');
-    } else if (newType === 'despesa' && categoria === 'Salário') {
-      setCategoria('Alimentação');
-    }
+    const current = categories.find((c) => c.id === categoria);
+    const targetName = newType === 'receita' ? 'Salário' : 'Alimentação';
+    const target = active.find((c) => c.name === targetName);
+    if (target && current?.name === (newType === 'receita' ? 'Alimentação' : 'Salário'))
+      setCategoria(target.id);
   };
 
   // Marcar como pago sugere hoje sem alterar o vencimento. Reabrir pendência preserva
@@ -146,7 +139,8 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
           data_pagamento: status === 'pago' ? dataPagamento || null : null,
           forma_pagamento: formaPagamento,
           status,
-          categoria,
+          categoria: categories.find((c) => c.id === categoria)?.name ?? '',
+          categoria_id: categoria,
         },
         transactionToEdit ? transactionToEdit.id : undefined,
         {
@@ -207,13 +201,13 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
 
       {/* Campos preenchidos pela pessoa para cadastrar ou editar o lançamento. */}
       <form onSubmit={handleSubmit} className="p-6 space-y-4">
-        {error && (
+        {visibleError && (
           <div
             id="transaction-error"
             role="alert"
             className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs text-rose-700 dark:text-rose-300"
           >
-            {error}
+            {visibleError}
           </div>
         )}
 
@@ -283,7 +277,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
               required
               inputMode="decimal"
               id="tx-valor"
-              aria-describedby={error ? 'transaction-error' : undefined}
+              aria-describedby={visibleError ? 'transaction-error' : undefined}
               disabled={loading}
               value={valor}
               onChange={(e) => setValor(e.target.value)}
@@ -302,7 +296,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
             type="text"
             required
             id="tx-descricao"
-            aria-describedby={error ? 'transaction-error' : undefined}
+            aria-describedby={visibleError ? 'transaction-error' : undefined}
             disabled={loading}
             value={descricao}
             onChange={(e) => setDescricao(e.target.value)}
@@ -314,27 +308,35 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
         {/* Categoria & Forma de Pagamento */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="space-y-1.5">
+            {!active.length && !transactionToEdit && !categoryError && (
+              <p className="text-sm">
+                Crie ou reative uma categoria em Gerenciar categorias para cadastrar lançamentos.
+              </p>
+            )}
             <label htmlFor="tx-categoria" className="field-label flex items-center gap-1.5">
               <Tag className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
               Categoria
             </label>
             <select
               id="tx-categoria"
-              aria-describedby={error ? 'transaction-error' : undefined}
+              required
+              aria-describedby={visibleError ? 'transaction-error' : undefined}
               disabled={loading}
               value={categoria}
               onChange={(e) => setCategoria(e.target.value as Category)}
               className="w-full rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 px-3 py-2.5 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:border-emerald-500 cursor-pointer"
             >
-              {CATEGORIES.map((category) => (
-                <option
-                  key={category}
-                  value={category}
-                  className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100"
-                >
-                  {CATEGORY_LABELS[category]}
-                </option>
-              ))}
+              <option value="" disabled>
+                Escolha uma categoria ativa
+              </option>
+              {categories
+                .filter((c) => !c.archived || c.id === transactionToEdit?.categoria_id)
+                .map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                    {c.archived ? ' (arquivada)' : ''}
+                  </option>
+                ))}
             </select>
           </div>
 
@@ -345,7 +347,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
             </label>
             <select
               id="tx-pagamento"
-              aria-describedby={error ? 'transaction-error' : undefined}
+              aria-describedby={visibleError ? 'transaction-error' : undefined}
               disabled={loading}
               value={formaPagamento}
               onChange={(e) => setFormaPagamento(e.target.value as PaymentMethod)}

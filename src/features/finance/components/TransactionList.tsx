@@ -268,7 +268,9 @@ export const TransactionList: React.FC<TransactionListProps> = ({
                 {transactions.map((tx) => {
                   const isReceita = tx.tipo === 'receita';
                   const isPago = tx.status === 'pago';
-                  const catColor = CATEGORY_COLORS[tx.categoria] || CATEGORY_COLORS.Outros;
+                  const catColor = Object.hasOwn(CATEGORY_COLORS, tx.categoria)
+                    ? CATEGORY_COLORS[tx.categoria]
+                    : CATEGORY_COLORS.Outros;
 
                   return (
                     <tr
@@ -425,7 +427,9 @@ export const TransactionList: React.FC<TransactionListProps> = ({
             {transactions.map((tx) => {
               const isReceita = tx.tipo === 'receita';
               const isPago = tx.status === 'pago';
-              const catColor = CATEGORY_COLORS[tx.categoria] || CATEGORY_COLORS.Outros;
+              const catColor = Object.hasOwn(CATEGORY_COLORS, tx.categoria)
+                ? CATEGORY_COLORS[tx.categoria]
+                : CATEGORY_COLORS.Outros;
 
               return (
                 <div key={tx.id} className="p-4 space-y-2.5">

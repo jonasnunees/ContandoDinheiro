@@ -89,8 +89,9 @@ test('fluxo demonstrativo acessível: teclado, valores, gráficos e persistênci
   await expect(page.getByRole('cell', { name: /1.234,56/ }).first()).toBeVisible();
   await page.reload();
   await expect(page.getByText('Teste de acessibilidade', { exact: true }).first()).toBeVisible();
-  await page.getByText('Consultar valores dos gráficos em tabela').click();
-  await expect(page.getByRole('table').last()).toBeVisible();
+  await expect(
+    page.getByRole('table', { name: 'Valores agregados dos gráficos financeiros' }),
+  ).toBeAttached();
   expect(errors).toEqual([]);
   await page.screenshot({ path: 'test-results/dashboard.png', fullPage: true });
 });

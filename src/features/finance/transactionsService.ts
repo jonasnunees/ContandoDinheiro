@@ -1,3 +1,4 @@
+import { assertCategory } from './categories';
 import { matchesTransactionPeriod } from './calculations';
 import { DEMO_EXAMPLES_VERSION } from './demoExamples';
 import { materialize, editFollowing, validateSchedule } from './scheduling';
@@ -5,6 +6,7 @@ import { localDate, isTransaction } from './validation';
 import { requireAuthenticatedClient } from '../../services/supabase';
 import {
   getLocalTransactions,
+  withDemoLock,
   saveLocalTransactions,
   getLocalState,
   saveLocalState,
@@ -40,6 +42,7 @@ function editableTransactionFields(input: TransactionUpdate) {
     'forma_pagamento',
     'status',
     'categoria',
+    'categoria_id',
     'data_pagamento',
   ] as const;
   return Object.fromEntries(
@@ -161,28 +164,30 @@ async function readTransactions(
   }
 
   // Na demonstração, usa a lista salva neste navegador.
-  const state = getLocalState();
-  let changed = (state.examplesVersion ?? 0) < DEMO_EXAMPLES_VERSION;
-  if (changed) state.examplesVersion = DEMO_EXAMPLES_VERSION;
-  for (const series of state.series) {
-    const generated = materialize(series);
-    if (generated.length) {
-      state.transactions.push(...generated);
-      changed = true;
+  return withDemoLock(() => {
+    const state = getLocalState();
+    let changed = (state.examplesVersion ?? 0) < DEMO_EXAMPLES_VERSION;
+    if (changed) state.examplesVersion = DEMO_EXAMPLES_VERSION;
+    for (const series of state.series) {
+      const generated = materialize(series);
+      if (generated.length) {
+        state.transactions.push(...generated);
+        changed = true;
+      }
     }
-  }
-  if (changed) saveLocalState(state);
-  // Mantém o contrato da leitura remota: o período e o limite de pendências
-  // também se aplicam à demonstração, antes de entregar os dados à interface.
-  return state.transactions.filter(
-    (transaction) =>
-      (transaction.user_id === userId || userId === 'demo-user-id') &&
-      (!period || matchesTransactionPeriod(transaction, period)) &&
-      (!pendingUntil ||
-        (transaction.status === 'pendente' &&
-          transaction.tipo === 'despesa' &&
-          transaction.data <= pendingUntil)),
-  );
+    if (changed) saveLocalState(state);
+    // Mantém o contrato da leitura remota: o período e o limite de pendências
+    // também se aplicam à demonstração, antes de entregar os dados à interface.
+    return state.transactions.filter(
+      (transaction) =>
+        (transaction.user_id === userId || userId === 'demo-user-id') &&
+        (!period || matchesTransactionPeriod(transaction, period)) &&
+        (!pendingUntil ||
+          (transaction.status === 'pendente' &&
+            transaction.tipo === 'despesa' &&
+            transaction.data <= pendingUntil)),
+    );
+  });
 }
 
 // Cria um lançamento no banco ou na lista local, conforme o modo de acesso.
@@ -208,18 +213,29 @@ export async function addTransactionService(
   }
 
   // Na demonstração, usa a lista salva neste navegador.
-  const newTx: Transaction = {
-    ...editableTransactionFields(transactionData),
-    ...transactionData,
-    user_id: 'demo-user-id',
-    id: 'tx-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7),
-    created_at: new Date().toISOString(),
-  };
+  return withDemoLock(() => {
+    const newTx: Transaction = {
+      ...editableTransactionFields(transactionData),
+      ...transactionData,
+      user_id: 'demo-user-id',
+      id: 'tx-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7),
+      created_at: new Date().toISOString(),
+    };
 
-  const list = getLocalTransactions();
-  list.unshift(newTx);
-  saveLocalTransactions(list);
-  return newTx;
+    const local = getLocalState();
+    const c = assertCategory(
+      local.categories!,
+      transactionData.categoria_id,
+      undefined,
+      transactionData.categoria,
+    );
+    newTx.categoria = c.name;
+    newTx.categoria_id = c.id;
+    const list = local.transactions;
+    list.unshift(newTx);
+    saveLocalTransactions(list);
+    return newTx;
+  });
 }
 
 // Atualiza o lançamento pelo ID; no banco, também exige que pertença à conta atual.
@@ -249,13 +265,22 @@ export async function updateTransactionService(
   }
 
   // Na demonstração, usa a lista salva neste navegador.
-  const list = getLocalTransactions();
-  const index = list.findIndex((t) => t.id === id);
-  if (index === -1) throw new Error('Transação não encontrada.');
-  const updated = { ...list[index], ...editableTransactionFields(updates) };
-  list[index] = updated;
-  saveLocalTransactions(list);
-  return updated;
+  return withDemoLock(() => {
+    const list = getLocalTransactions();
+    const index = list.findIndex((t) => t.id === id);
+    if (index === -1) throw new Error('Transação não encontrada.');
+    const updated = { ...list[index], ...editableTransactionFields(updates) };
+    const c = assertCategory(
+      getLocalState().categories!,
+      updated.categoria_id,
+      list[index].categoria_id,
+      updated.categoria,
+    );
+    updated.categoria = c.name;
+    list[index] = updated;
+    saveLocalTransactions(list);
+    return updated;
+  });
 }
 
 // Exclui o lançamento no banco ou remove seu ID da lista da demonstração.
@@ -277,8 +302,10 @@ export async function deleteTransactionService(
   }
 
   // Na demonstração, usa a lista salva neste navegador.
-  const list = getLocalTransactions().filter((t) => t.id !== id);
-  saveLocalTransactions(list);
+  return withDemoLock(() => {
+    const list = getLocalTransactions().filter((t) => t.id !== id);
+    saveLocalTransactions(list);
+  });
 }
 
 // Alterna entre pago e pendente, reaproveitando o serviço de atualização.
@@ -326,23 +353,41 @@ export async function saveScheduledTransaction(
     if (error) throw error;
     return;
   }
-  const state = getLocalState();
-  if (id) {
-    const selected = state.transactions.find((row) => row.id === id);
-    const series = state.series.find((row) => row.id === selected?.serie_id);
-    if (!selected || !series) throw new Error('Série não encontrada.');
-    state.transactions = editFollowing(state.transactions, series, selected, draft, options.cancel);
-  } else {
-    const series: TransactionSeries = {
-      id: crypto.randomUUID(),
-      template: draft,
-      mode: options.mode as TransactionSeries['mode'],
-      count: options.count,
-      end: options.end,
-      next: 0,
-    };
-    state.series.push(series);
-    state.transactions.push(...materialize(series));
-  }
-  saveLocalState(state);
+  return withDemoLock(() => {
+    const state = getLocalState();
+    const previous = state.transactions.find((row) => row.id === id);
+    if (!options.cancel) {
+      const c = assertCategory(
+        state.categories!,
+        draft.categoria_id,
+        previous?.categoria_id,
+        draft.categoria,
+      );
+      draft = { ...draft, categoria: c.name, categoria_id: c.id };
+    }
+    if (id) {
+      const selected = state.transactions.find((row) => row.id === id);
+      const series = state.series.find((row) => row.id === selected?.serie_id);
+      if (!selected || !series) throw new Error('Série não encontrada.');
+      state.transactions = editFollowing(
+        state.transactions,
+        series,
+        selected,
+        draft,
+        options.cancel,
+      );
+    } else {
+      const series: TransactionSeries = {
+        id: crypto.randomUUID(),
+        template: draft,
+        mode: options.mode as TransactionSeries['mode'],
+        count: options.count,
+        end: options.end,
+        next: 0,
+      };
+      state.series.push(series);
+      state.transactions.push(...materialize(series));
+    }
+    saveLocalState(state);
+  });
 }

@@ -22,11 +22,14 @@ const client = { async rpc() { return { data: null, error: null }; }, auth: {
     user = null; callback('SIGNED_OUT', null); return { error: null };
   },
   async signInWithOAuth() { return { data: { url: null }, error: new Error('oauth unavailable') }; }
-}, from() {
+}, from(table) {
   const args = { account: user.id, offset: 0, action: 'read' };
   const query = {};
   for (const method of ['select', 'eq', 'order', 'gte', 'lt', 'lte', 'single']) query[method] = () => query;
   query.eq = (field, value) => { if (field === 'user_id') args.account = value; return query; };
+  query.gte = (field, value) => { args.start = value; return query; };
+  query.lt = (field, value) => { args.end = value; return query; };
+  if (table === 'categories') { query.range = offset => { args.offset = offset; return query; }; query.then = resolve => resolve({ data: args.offset > 0 ? [] : [{ id: 'category-' + args.account, user_id: args.account, name: 'Salário', archived: false }], error: null }); return query; }
   query.range = offset => { args.offset = offset; return query; };
   for (const method of ['insert', 'update', 'delete']) query[method] = () => { args.action = method; return query; };
   query.then = (resolve, reject) => fetch('/__test_transactions?' + new URLSearchParams(args))
@@ -74,7 +77,14 @@ test.beforeEach(async ({ page }) => {
       forma_pagamento: 'Pix',
       categoria: 'Salário',
     };
-    await route.fulfill({ json: Number(url.searchParams.get('offset')) > 0 ? [] : [tx] });
+    await route.fulfill({
+      json:
+        Number(url.searchParams.get('offset')) > 0 ||
+        (url.searchParams.get('start') && tx.data < url.searchParams.get('start')!) ||
+        (url.searchParams.get('end') && tx.data >= url.searchParams.get('end')!)
+          ? []
+          : [tx],
+    });
   });
 });
 

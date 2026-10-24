@@ -1,5 +1,6 @@
+import { useCategories } from '../CategoryContext';
 import { useState } from 'react';
-import { CATEGORIES, type Category, type Transaction } from '../types';
+import { type Category, type Transaction } from '../types';
 import { monthlySpending, readBudgets, saveBudgets } from '../budgets';
 
 const money = (value: number) =>
@@ -16,9 +17,23 @@ export function MonthlyBudgets({
   month: number;
   year: number;
 }) {
+  const { categories } = useCategories();
+  const names = categories.map((c) => c.id);
+  const label = (id: string) => {
+    const c = categories.find((c) => c.id === id);
+    return c ? `${c.name}${c.archived ? ' (arquivada)' : ''}` : id;
+  };
   const [initial] = useState(() => {
     try {
-      return { budgets: readBudgets(storageKey), error: '' };
+      return {
+        budgets: Object.fromEntries(
+          Object.entries(readBudgets(storageKey)).map(([key, value]) => [
+            categories.find((c) => c.id === key || c.name === key)?.id ?? key,
+            value,
+          ]),
+        ),
+        error: '',
+      };
     } catch (error) {
       return { budgets: {}, error: (error as Error).message };
     }
@@ -26,9 +41,13 @@ export function MonthlyBudgets({
   const [budgets, setBudgets] = useState(initial.budgets);
   const [error, setError] = useState(initial.error);
   const [message, setMessage] = useState('');
-  const [category, setCategory] = useState<Category>('Alimentação');
+  const [category, setCategory] = useState<Category>(categories[0]?.id ?? '');
   const [amount, setAmount] = useState('');
-  const spending = monthlySpending(transactions, month, year);
+  const spending = monthlySpending(
+    transactions.map((t) => ({ ...t, categoria: t.categoria_id ?? t.categoria })),
+    month,
+    year,
+  );
 
   function persist(next: typeof budgets) {
     try {
@@ -86,11 +105,13 @@ export function MonthlyBudgets({
                 onChange={(event) => {
                   const next = event.target.value as Category;
                   setCategory(next);
-                  setAmount(budgets[next]?.toString() ?? '');
+                  setAmount(Object.hasOwn(budgets, next) ? String(budgets[next]) : '');
                 }}
               >
-                {CATEGORIES.map((name) => (
-                  <option key={name}>{name}</option>
+                {names.map((name) => (
+                  <option key={name} value={name}>
+                    {label(name)}
+                  </option>
                 ))}
               </select>
             </label>
@@ -126,72 +147,74 @@ export function MonthlyBudgets({
             </p>
           )}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {CATEGORIES.filter((name) => budgets[name] !== undefined).map((name) => {
-              const limit = budgets[name]!;
-              const used = spending[name] ?? 0;
-              const remaining = (Math.round(limit * 100) - Math.round(used * 100)) / 100;
-              return (
-                <div
-                  key={name}
-                  className="space-y-2 rounded-xl border border-slate-200 dark:border-slate-700 p-3"
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <strong className="text-sm">{name}</strong>
-                    <div className="flex gap-3 text-xs">
-                      <button
-                        type="button"
-                        className="underline"
-                        aria-label={`Editar limite de ${name}`}
-                        onClick={() => {
-                          setCategory(name);
-                          setAmount(String(limit));
-                        }}
-                      >
-                        Editar
-                      </button>
-                      <button
-                        type="button"
-                        className="underline"
-                        aria-label={`Remover limite de ${name}`}
-                        onClick={() => {
-                          const next = { ...budgets };
-                          delete next[name];
-                          persist(next);
-                        }}
-                      >
-                        Remover
-                      </button>
-                    </div>
-                  </div>
-                  <p className="text-xs">
-                    {money(used)} utilizados de {money(limit)}
-                  </p>
+            {names
+              .filter((name) => Object.hasOwn(budgets, name))
+              .map((name) => {
+                const limit = budgets[name]!;
+                const used = spending[name] ?? 0;
+                const remaining = (Math.round(limit * 100) - Math.round(used * 100)) / 100;
+                return (
                   <div
-                    role="progressbar"
-                    aria-label={`Orçamento de ${name}`}
-                    aria-valuemin={0}
-                    aria-valuemax={limit}
-                    aria-valuenow={Math.min(used, limit)}
-                    aria-valuetext={`${money(used)} utilizados de ${money(limit)}`}
-                    className="h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700"
+                    key={name}
+                    className="space-y-2 rounded-xl border border-slate-200 dark:border-slate-700 p-3"
                   >
+                    <div className="flex items-center justify-between gap-2">
+                      <strong className="text-sm">{label(name)}</strong>
+                      <div className="flex gap-3 text-xs">
+                        <button
+                          type="button"
+                          className="underline"
+                          aria-label={`Editar limite de ${label(name)}`}
+                          onClick={() => {
+                            setCategory(name);
+                            setAmount(String(limit));
+                          }}
+                        >
+                          Editar
+                        </button>
+                        <button
+                          type="button"
+                          className="underline"
+                          aria-label={`Remover limite de ${label(name)}`}
+                          onClick={() => {
+                            const next = { ...budgets };
+                            delete next[name];
+                            persist(next);
+                          }}
+                        >
+                          Remover
+                        </button>
+                      </div>
+                    </div>
+                    <p className="text-xs">
+                      {money(used)} utilizados de {money(limit)}
+                    </p>
                     <div
-                      className={`h-full ${remaining < 0 ? 'bg-rose-600' : 'bg-emerald-600'}`}
-                      style={{ width: `${Math.min(100, (used / limit) * 100)}%` }}
-                    />
+                      role="progressbar"
+                      aria-label={`Orçamento de ${label(name)}`}
+                      aria-valuemin={0}
+                      aria-valuemax={limit}
+                      aria-valuenow={Math.min(used, limit)}
+                      aria-valuetext={`${money(used)} utilizados de ${money(limit)}`}
+                      className="h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700"
+                    >
+                      <div
+                        className={`h-full ${remaining < 0 ? 'bg-rose-600' : 'bg-emerald-600'}`}
+                        style={{ width: `${Math.min(100, (used / limit) * 100)}%` }}
+                      />
+                    </div>
+                    <p
+                      className={`text-xs ${remaining < 0 ? 'text-rose-700 dark:text-rose-300' : 'text-slate-600 dark:text-slate-300'}`}
+                    >
+                      {remaining < 0
+                        ? `Limite ultrapassado em ${money(-remaining)}`
+                        : remaining === 0
+                          ? 'Limite atingido.'
+                          : `${money(remaining)} restantes`}
+                    </p>
                   </div>
-                  <p
-                    className={`text-xs ${remaining < 0 ? 'text-rose-700 dark:text-rose-300' : 'text-slate-600 dark:text-slate-300'}`}
-                  >
-                    {remaining < 0
-                      ? `Limite ultrapassado em ${money(-remaining)}`
-                      : remaining === 0
-                        ? 'Limite atingido.'
-                        : `${money(remaining)} restantes`}
-                  </p>
-                </div>
-              );
-            })}
+                );
+              })}
           </div>
         </>
       )}

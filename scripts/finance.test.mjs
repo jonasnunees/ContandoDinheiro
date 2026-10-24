@@ -86,8 +86,12 @@ test('agrupamento aceita rótulos que coincidem com propriedades de objetos', ()
 });
 
 test('configurações dos gráficos preservam tema, valores, tooltips e movimento reduzido', async () => {
-  const { createCategoryChartConfig, createPaymentChartConfig, createCashflowChartConfig } =
-    await import('../src/features/finance/components/financialChartConfig.ts');
+  const {
+    createCategoryChartConfig,
+    createPaymentChartConfig,
+    createCashflowChartConfig,
+    CATEGORY_PALETTE,
+  } = await import('../src/features/finance/components/financialChartConfig.ts');
   const previousWindow = globalThis.window;
   try {
     for (const reducedMotion of [false, true]) {
@@ -106,7 +110,10 @@ test('configurações dos gráficos preservam tema, valores, tooltips e moviment
         const cashflow = createCashflowChartConfig(100, 12.34, isLight);
         assert.deepEqual(category.data.labels, ['Alimentação', 'Desconhecida']);
         assert.deepEqual(category.data.datasets[0].data, [12.34, 5]);
-        assert.deepEqual(category.data.datasets[0].backgroundColor, ['#f97316', '#94a3b8']);
+        assert.deepEqual(category.data.datasets[0].backgroundColor, [
+          '#f97316',
+          CATEGORY_PALETTE.Desconhecida,
+        ]);
         assert.equal(category.data.datasets[0].borderColor, isLight ? '#ffffff' : '#0f172a');
         assert.deepEqual(payment.data.datasets[0].data, [67.89, 2]);
         assert.deepEqual(payment.data.datasets[0].backgroundColor, ['#10b981', '#64748b']);

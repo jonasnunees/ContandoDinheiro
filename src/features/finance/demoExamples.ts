@@ -7,6 +7,7 @@ export interface DemoState {
   transactions: Transaction[];
   series: TransactionSeries[];
   examplesVersion?: number;
+  categories?: import('./types.ts').UserCategory[];
 }
 
 // Exemplos usam as mesmas regras de geração e edição dos lançamentos cadastrados.

@@ -1,4 +1,4 @@
-import { CATEGORIES, PAYMENT_METHODS, type Transaction, type TransactionSeries } from './types.ts';
+import { PAYMENT_METHODS, type Transaction, type TransactionSeries } from './types.ts';
 
 // Monta a data no formato ano-mês-dia usando o horário local, sem mudar o dia por causa do fuso.
 export function localDate(date = new Date()): string {
@@ -78,7 +78,10 @@ export function isTransaction(value: unknown): value is Transaction {
     ['pago', 'pendente'].includes(String(tx.status)) &&
     isCalendarDate(tx.data) &&
     PAYMENT_METHODS.some((method) => method === tx.forma_pagamento) &&
-    CATEGORIES.some((category) => category === tx.categoria)
+    typeof tx.categoria === 'string' &&
+    tx.categoria.trim().length > 0 &&
+    [...tx.categoria].length <= 60 &&
+    (tx.categoria_id === undefined || typeof tx.categoria_id === 'string')
   );
 }
 

@@ -1,3 +1,4 @@
+import { initialCategories, categoryName, categoryKey } from './categories.ts';
 import { createDemoExamples, upgradeDemoExamples, type DemoState } from './demoExamples';
 import { localDate, isTransaction, isTransactionSeries } from './validation';
 import { readStorage, writeStorage } from '../../services/storage';
@@ -112,7 +113,7 @@ function demoTransactions(): Transaction[] {
 // Sem conteúdo salvo, oferece exemplos. Uma lista vazia salva continua vazia:
 // excluir todos os lançamentos não deve recriar a demonstração.
 // JSON inválido gera erro e permanece intacto para permitir recuperação.
-export function getLocalState(): DemoState {
+function readLocalState(): DemoState {
   const raw = readStorage(STORAGE_KEYS.LOCAL_TRANSACTIONS);
   if (!raw) {
     const examples = createDemoExamples();
@@ -150,6 +151,41 @@ export function getLocalState(): DemoState {
 }
 
 // Expõe apenas os lançamentos para operações que não alteram a configuração das séries.
+function upgradeCategories(state: DemoState): DemoState {
+  const categories = state.categories ?? initialCategories();
+  if (
+    !Array.isArray(categories) ||
+    categories.some(
+      (c) =>
+        !c ||
+        typeof c.id !== 'string' ||
+        c.user_id !== 'demo-user-id' ||
+        typeof c.archived !== 'boolean' ||
+        categoryName(c.name) !== c.name,
+    ) ||
+    new Set(categories.map((c) => c.id)).size !== categories.length ||
+    new Set(categories.map((c) => categoryKey(c.name))).size !== categories.length
+  )
+    throw new Error('Categorias locais inválidas.');
+  const link = <T extends { categoria: string; categoria_id?: string }>(row: T): T => {
+    const c = row.categoria_id
+      ? categories.find((c) => c.id === row.categoria_id)
+      : categories.find((c) => c.name === row.categoria);
+    if (!c) throw new Error('Referência de categoria local inválida.');
+    return { ...row, categoria_id: c.id, categoria: c.name };
+  };
+  return {
+    ...state,
+    categories,
+    transactions: state.transactions.map(link),
+    series: state.series.map((s) => ({ ...s, template: link(s.template) })),
+  };
+}
+
+export function getLocalState(): DemoState {
+  return upgradeCategories(readLocalState());
+}
+
 export function getLocalTransactions(): Transaction[] {
   return getLocalState().transactions;
 }
@@ -158,9 +194,17 @@ export function getLocalTransactions(): Transaction[] {
 export function saveLocalState(state: DemoState) {
   if (!state.transactions.every(isTransaction) || !state.series.every(isTransactionSeries))
     throw new Error('Dados de demonstração inválidos.');
-  writeStorage(STORAGE_KEYS.LOCAL_TRANSACTIONS, JSON.stringify(state));
+  writeStorage(STORAGE_KEYS.LOCAL_TRANSACTIONS, JSON.stringify(upgradeCategories(state)));
 }
 export function saveLocalTransactions(transactions: Transaction[]) {
   if (!transactions.every(isTransaction)) throw new Error('Dados de demonstração inválidos.');
   saveLocalState({ ...getLocalState(), transactions });
+}
+
+// Serializa operações locais entre abas quando Web Locks está disponível.
+// A decisão de validar e a gravação do único documento ficam no mesmo bloqueio.
+export async function withDemoLock<T>(operation: () => T): Promise<T> {
+  if (typeof navigator !== 'undefined' && navigator.locks)
+    return navigator.locks.request('contandodinheiro-demo', operation);
+  return operation();
 }

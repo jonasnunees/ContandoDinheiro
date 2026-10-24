@@ -119,6 +119,7 @@ async function loadServices({
     'src/services/supabase.ts',
     'src/features/finance/transactionsService.ts',
     'src/features/finance/demoStorage.ts',
+    'src/features/finance/categoriesService.ts',
     'src/features/auth/authService.ts',
   ]) {
     const module = getModule(file);
@@ -784,4 +785,79 @@ test('falha de consulta rejeita a carga completa e não impede recarga', async (
   );
   client.from = original;
   await service.fetchTransactionLoadService('account-a', false, loadPeriod, '2026-10-28');
+});
+
+test('categorias demo: upgrade antigo, nomes, arquivo, series e rollback local sem banco', async () => {
+  const { service, storage, calls } = await loadServices();
+  const user = { id: 'demo-user-id', isDemo: true, email: 'demo@example.invalid' };
+  const legacy = [{ ...validTx, id: 'demo-legacy', user_id: user.id }];
+  storage.set('gf_local_transactions', JSON.stringify(legacy));
+  const initial = await service.fetchCategories(user);
+  assert.equal(initial.length, 10);
+  const salary = initial.find((c) => c.name === 'Salário');
+  assert.equal(service.getLocalState().transactions[0].categoria_id, salary.id);
+  await service.createCategory(user, '  Viagens  ');
+  const custom = (await service.fetchCategories(user)).find((c) => c.name === 'Viagens');
+  await assert.rejects(service.createCategory(user, 'viagens'));
+  await assert.rejects(service.createCategory(user, ' \n '));
+  await assert.rejects(service.createCategory(user, 'x'.repeat(61)));
+  const draft = { ...validTx, categoria: 'Viagens', categoria_id: custom.id, status: 'pendente' };
+  await service.saveScheduledTransaction(draft, { mode: 'installments', count: 2 }, true, user.id);
+  await service.archiveCategory(user, custom.id, true);
+  const before = storage.get('gf_local_transactions');
+  await assert.rejects(service.addTransactionService(draft, true, user.id));
+  assert.equal(storage.get('gf_local_transactions'), before);
+  const row = service.getLocalState().transactions.find((t) => t.categoria_id === custom.id);
+  await service.updateTransactionService(row.id, { descricao: 'Mantida' }, true, user.id);
+  await service.saveScheduledTransaction(
+    { ...draft, descricao: 'Serie mantida' },
+    { mode: 'single', scope: 'following' },
+    true,
+    user.id,
+    row.id,
+  );
+  assert.ok(service.getLocalState().series.some((s) => s.template.categoria_id === custom.id));
+  await service.archiveCategory(user, custom.id, false);
+  await service.addTransactionService(draft, true, user.id);
+  await assert.rejects(
+    service.addTransactionService({ ...draft, categoria_id: 'outra-conta' }, true, user.id),
+  );
+  await assert.rejects(service.fetchCategories({ ...user, isDemo: false }));
+  assert.equal(
+    calls.some((c) => c[0] === 'from' || c[0] === 'rpc'),
+    false,
+  );
+});
+
+test('categorias reais: paginação por conta, dados externos e troca de identidade', async () => {
+  const userA = { id: 'account-a', email: 'a@example.invalid', isDemo: false };
+  const category = { id: 'cat-a', user_id: 'account-a', name: 'Casa', archived: false };
+  const loaded = await loadServices({ pages: [[category], []] });
+  assert.equal((await loaded.service.fetchCategories(userA))[0].id, 'cat-a');
+  assert.equal(loaded.calls.filter((c) => c[0] === 'from' && c[1] === 'categories').length, 2);
+  assert.ok(loaded.calls.some((c) => c[0] === 'eq' && c[1] === 'user_id' && c[2] === 'account-a'));
+  const invalid = await loadServices({ pages: [[{ ...category, user_id: 'account-b' }], []] });
+  await assert.rejects(invalid.service.fetchCategories(userA));
+  const changed = await loadServices();
+  let release, started;
+  const gate = new Promise((resolve) => {
+    release = resolve;
+  });
+  const begun = new Promise((resolve) => {
+    started = resolve;
+  });
+  const original = changed.client.from;
+  changed.client.from = (table) => {
+    const query = original(table);
+    query.then = (resolve) => {
+      started();
+      return gate.then(() => resolve({ data: [], error: null }));
+    };
+    return query;
+  };
+  const pending = changed.service.fetchCategories(userA);
+  await begun;
+  changed.user.id = 'account-b';
+  release();
+  await assert.rejects(pending);
 });

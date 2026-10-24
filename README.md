@@ -78,6 +78,17 @@ A seção de pendências reúne somente despesas pendentes, ordenadas pelo venci
 
 A migração `20261021231121_payment_dates.sql` deve ser aplicada antes da publicação do frontend atualizado. Ela adiciona a coluna opcional, valida pagamentos e atualiza a geração de séries, preservando os dados existentes.
 
+## Categorias personalizadas
+
+Use **Gerenciar categorias** no painel para criar, arquivar e reativar categorias.
+O arquivamento preserva lançamentos, orçamentos e séries; novas transações usam
+categorias ativas. Ao editar o histórico, a categoria arquivada pode ser mantida.
+A demonstração mantém essas alterações somente no navegador.
+
+A modelagem, o mapeamento dos usos, a ordem de migrações/publicação, os testes e as
+limitações estão em [Categorias por conta](CATEGORIES.md). A migração de categorias
+deve preceder a publicação do frontend; não foi aplicada em produção nesta tarefa.
+
 ## Decisões de engenharia
 
 O projeto vai além do cadastro de receitas e despesas: trata regras financeiras, limites entre dados locais e autenticados e qualidade da experiência. Alguns exemplos verificáveis no código:

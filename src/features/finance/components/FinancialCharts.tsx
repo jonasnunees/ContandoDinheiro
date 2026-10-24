@@ -1,3 +1,4 @@
+import { useCategories } from '../CategoryContext';
 import {
   CATEGORY_PALETTE,
   PAYMENT_PALETTE,
@@ -14,7 +15,7 @@ import {
   summarizeTransactions,
 } from '../calculations';
 import React, { useEffect, useRef, useMemo, useState, useCallback } from 'react';
-import { CATEGORIES, PAYMENT_METHODS, Transaction, TransactionPeriod, FilterState } from '../types';
+import { PAYMENT_METHODS, Transaction, TransactionPeriod, FilterState } from '../types';
 import { useTheme } from '../../../context/ThemeContext';
 import {
   Chart as ChartJS,
@@ -76,6 +77,8 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({
   period,
   filters,
 }) => {
+  const { categories } = useCategories();
+  const categoryNames = useMemo(() => categories.map((c) => c.name), [categories]);
   const { theme } = useTheme();
   const [tooltip, setTooltip] = useState<ChartTooltip | null>(null);
   const tooltipRef = useRef<HTMLDivElement | null>(null);
@@ -87,7 +90,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({
   const isPayment = comparisonMode === 'payment' || comparisonMode === 'payments';
   const isGrouped = comparisonMode === 'all' || comparisonMode === 'payments';
   const selectedGroup = isPayment ? selectedPayment : selectedCategory;
-  const groupOptions = isPayment ? PAYMENT_METHODS : CATEGORIES;
+  const groupOptions = isPayment ? PAYMENT_METHODS : categoryNames;
   const [rangeIndex, setRangeIndex] = useState(0);
   const groupSize = comparisonRange === 'quarter' ? 3 : 6;
   const isExtended = comparisonRange !== 'selected';
@@ -559,7 +562,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({
                   onChange={(event) => setSelectedCategory(event.target.value)}
                   className="rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-2"
                 >
-                  {CATEGORIES.map((category) => (
+                  {categoryNames.map((category) => (
                     <option key={category}>{category}</option>
                   ))}
                 </select>
@@ -739,7 +742,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({
           )}
           {hasFlow && (
             <div className="sr-only">
-              <div className="overflow-x-auto mt-3">
+              <div>
                 <table className="w-full text-left">
                   <caption className="sr-only">{comparisonTitle}</caption>
                   <thead>
@@ -791,7 +794,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({
       </div>
       {/* Alternativa textual ao canvas, com os mesmos totais para leitura acessível. */}
       <div className="sr-only">
-        <div className="overflow-x-auto mt-3">
+        <div>
           <table className="w-full text-left text-sm">
             <caption className="sr-only">Valores agregados dos gráficos financeiros</caption>
             <thead>

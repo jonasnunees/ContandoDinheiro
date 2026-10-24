@@ -1,6 +1,6 @@
 import type { ChartConfiguration, ChartOptions } from 'chart.js';
 
-export const CATEGORY_PALETTE: Record<string, string> = {
+const initialPalette: Record<string, string> = {
   Alimentação: '#f97316',
   Moradia: '#6366f1',
   Transporte: '#06b6d4',
@@ -12,6 +12,14 @@ export const CATEGORY_PALETTE: Record<string, string> = {
   Serviços: '#eab308',
   Outros: '#94a3b8',
 };
+export const CATEGORY_PALETTE: Record<string, string> = new Proxy(initialPalette, {
+  get(target, key: string) {
+    if (Object.hasOwn(target, key)) return target[key];
+    let hash = 0;
+    for (const char of key) hash = (hash * 31 + char.codePointAt(0)!) >>> 0;
+    return `hsl(${hash % 360} 65% 45%)`;
+  },
+});
 
 export const PAYMENT_PALETTE: Record<string, string> = {
   Pix: '#10b981',

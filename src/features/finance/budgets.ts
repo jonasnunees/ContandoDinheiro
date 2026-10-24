@@ -1,4 +1,4 @@
-import { CATEGORIES, type Category, type Transaction } from './types';
+import { type Category, type Transaction } from './types';
 import { groupTransactionValues, matchesTransactionPeriod } from './calculations';
 import { readStorage, writeStorage } from '../../services/storage';
 
@@ -18,7 +18,7 @@ export function readBudgets(key: string): Budgets {
       if (
         entries.every(
           ([category, limit]) =>
-            CATEGORIES.includes(category as Category) &&
+            category.trim().length > 0 &&
             typeof limit === 'number' &&
             Number.isSafeInteger(Math.round(limit * 100)) &&
             limit > 0,

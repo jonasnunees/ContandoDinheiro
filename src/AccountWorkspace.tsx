@@ -1,3 +1,5 @@
+import { CategoryProvider, useCategories } from './features/finance/CategoryContext';
+import { CategoryManager } from './features/finance/components/CategoryManager';
 import { useWorkspaceScroll } from './hooks/useWorkspaceScroll';
 import { LegalLinks } from './features/legal/LegalLinks';
 import { localDate } from './features/finance/validation';
@@ -38,7 +40,7 @@ const FinancialCharts = lazy(() =>
   })),
 );
 
-export default function AccountWorkspace({
+function Workspace({
   user,
   sessionError,
   onLogout,
@@ -47,6 +49,7 @@ export default function AccountWorkspace({
   sessionError: string;
   onLogout: () => Promise<void>;
 }) {
+  const { categories } = useCategories();
   const currentDate = new Date();
   const { showBackToTop, footerRef, isFooterVisible, floatingButtonStyle, scrollBackToTop } =
     useWorkspaceScroll();
@@ -125,6 +128,7 @@ export default function AccountWorkspace({
         tabIndex={-1}
         className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 space-y-6 pb-24 md:pb-12"
       >
+        <CategoryManager errorAlreadyShown={loadError} />
         {sessionError && (
           <p
             role="alert"
@@ -270,13 +274,15 @@ export default function AccountWorkspace({
                 Selecione um mês para definir e acompanhar o orçamento por categoria.
               </p>
             ) : (
-              <MonthlyBudgets
-                key={budgetStorageKey(user.id, currentMonth, currentYear, user.isDemo)}
-                storageKey={budgetStorageKey(user.id, currentMonth, currentYear, user.isDemo)}
-                transactions={transactions}
-                month={currentMonth}
-                year={currentYear}
-              />
+              categories.length > 0 && (
+                <MonthlyBudgets
+                  key={budgetStorageKey(user.id, currentMonth, currentYear, user.isDemo)}
+                  storageKey={budgetStorageKey(user.id, currentMonth, currentYear, user.isDemo)}
+                  transactions={transactions}
+                  month={currentMonth}
+                  year={currentYear}
+                />
+              )
             ))}
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
@@ -443,5 +449,13 @@ export default function AccountWorkspace({
       {/* Aviso de falta de conexão informado pelo navegador. */}
       <OfflineIndicator />
     </div>
+  );
+}
+
+export default function AccountWorkspace(props: Parameters<typeof Workspace>[0]) {
+  return (
+    <CategoryProvider user={props.user}>
+      <Workspace {...props} />
+    </CategoryProvider>
   );
 }
