@@ -16,7 +16,7 @@ const features = [
   ],
   [
     'Entenda seus gastos com gráficos',
-    'Veja quais categorias concentram suas despesas, como você paga e a comparação entre entradas e saídas. Também é possível consultar esses dados em tabelas.',
+    'Veja quais categorias concentram suas despesas, como você paga e a evolução mensal das receitas e despesas em gráficos de linhas.',
   ],
   [
     'Encontre seus registros com facilidade',
@@ -80,6 +80,63 @@ export function ReleaseNotes() {
           Acompanhe o que chega ao ContandoDinheiro e veja como cada novidade pode ajudar você a
           cuidar do seu dinheiro.
         </p>
+
+        <article
+          aria-labelledby="version-1-4-0"
+          className="mt-10 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+        >
+          <div className="border-b border-slate-200 bg-emerald-50 p-6 sm:p-8">
+            <div className="flex flex-wrap items-center gap-3">
+              <h2 id="version-1-4-0" className="text-2xl font-bold">
+                Versão 1.4.0
+              </h2>
+              <span className="rounded-full border border-emerald-200 bg-white px-3 py-1 text-xs font-semibold text-emerald-800">
+                Comparativos financeiros por período
+              </span>
+            </div>
+            <p className="mt-3 text-sm text-slate-600">
+              <time dateTime="2026-10-24">24 de outubro de 2026</time>
+            </p>
+            <p className="mt-4 leading-relaxed text-slate-700">
+              Acompanhe como suas finanças mudam ao longo dos meses, com gráficos de linhas e
+              detalhes fáceis de consultar no celular e no computador.
+            </p>
+          </div>
+          <ul className="space-y-6 p-6 sm:p-8">
+            <li>
+              <h3 className="font-semibold">Compare meses, trimestres e semestres</h3>
+              <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                Veja o mês selecionado ao lado do anterior ou acompanhe os doze meses do ano. No
+                comparativo, você também pode escolher um trimestre ou semestre para ver sua
+                evolução mensal, sem alterar os cartões e a lista de lançamentos.
+              </p>
+            </li>
+            <li>
+              <h3 className="font-semibold">Explore categorias e formas de pagamento</h3>
+              <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                Compare os totais de receitas recebidas e despesas pagas, uma categoria ou uma forma
+                de pagamento. Para uma visão conjunta das despesas pagas, mostre todas as categorias
+                ou formas de pagamento, cada uma com sua linha e cor.
+              </p>
+            </li>
+            <li>
+              <h3 className="font-semibold">Consulte os valores com mouse ou toque</h3>
+              <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                Os marcadores identificam cada mês sem números sobrepostos ao gráfico. Passe o mouse
+                ou toque para abrir um balão com os valores. A legenda abaixo permite escolher um
+                mês, consultar seus valores e ocultar ou mostrar cada linha.
+              </p>
+            </li>
+            <li>
+              <h3 className="font-semibold">Identifique períodos ainda incompletos</h3>
+              <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                Avisos indicam valores parciais e meses futuros, ajudando a interpretar a comparação
+                com períodos completos. Os comparativos respeitam a busca e os filtros do painel; os
+                valores seguem a data do lançamento.
+              </p>
+            </li>
+          </ul>
+        </article>
 
         <article
           aria-labelledby="version-1-3-0"
