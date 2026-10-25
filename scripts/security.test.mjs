@@ -26,6 +26,8 @@ async function loadServices({
   authenticated = true,
   pages = [[]],
   mutation = validTx,
+  seriesResult = validTx,
+  seriesError = null,
   oauth = { url: 'https://example.supabase.co/auth/v1/authorize' },
 } = {}) {
   const calls = [];
@@ -65,7 +67,10 @@ async function loadServices({
   const client = {
     rpc: async (...args) => {
       calls.push(['rpc', ...args]);
-      return { data: null, error: null };
+      return {
+        data: args[0] === 'save_transaction_series_with_target' ? seriesResult : null,
+        error: seriesError,
+      };
     },
     auth: {
       getUser: async () => ({ data: { user: authenticated ? user : null }, error: null }),
@@ -860,4 +865,58 @@ test('categorias reais: paginação por conta, dados externos e troca de identid
   changed.user.id = 'account-b';
   release();
   await assert.rejects(pending);
+});
+
+test('salvamento retorna identidade persistida em criação, edição e RPC de série', async () => {
+  const { service, calls } = await loadServices();
+  assert.equal(
+    (await service.saveScheduledTransaction(validTx, { mode: 'single' }, false, 'account-a')).id,
+    validTx.id,
+  );
+  assert.equal(
+    (
+      await service.saveScheduledTransaction(
+        validTx,
+        { mode: 'single' },
+        false,
+        'account-a',
+        validTx.id,
+      )
+    ).id,
+    validTx.id,
+  );
+  assert.equal(
+    (
+      await service.saveScheduledTransaction(
+        validTx,
+        { mode: 'installments', count: 2 },
+        false,
+        'account-a',
+      )
+    ).id,
+    validTx.id,
+  );
+  assert.ok(
+    calls.some(
+      ([method, rpc]) => method === 'rpc' && rpc === 'save_transaction_series_with_target',
+    ),
+  );
+  const removed = await loadServices({ seriesResult: null });
+  assert.equal(
+    await removed.service.saveScheduledTransaction(
+      validTx,
+      { mode: 'single', scope: 'following', cancel: true },
+      false,
+      'account-a',
+      validTx.id,
+    ),
+    null,
+  );
+  await assert.rejects(
+    removed.service.saveScheduledTransaction(validTx, { mode: 'monthly' }, false, 'account-a'),
+  );
+  const failed = await loadServices({ seriesError: new Error('Falha de gravação') });
+  await assert.rejects(
+    failed.service.saveScheduledTransaction(validTx, { mode: 'monthly' }, false, 'account-a'),
+  );
 });

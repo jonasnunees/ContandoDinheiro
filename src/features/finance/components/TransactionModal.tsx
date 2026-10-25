@@ -172,7 +172,6 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
       );
       onClose();
     } catch (err: unknown) {
-      console.error(err);
       setError(
         err instanceof Error
           ? err.message

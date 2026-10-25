@@ -198,8 +198,55 @@ test('categories migration: backfill, ownership, archive and recurring inheritan
     assert.equal(generated[0].data_pagamento.toISOString().slice(0, 10), '2026-01-01');
     assert.equal(generated[1].status, 'pendente');
     assert.equal(generated[1].data_pagamento, null);
+    await db.exec('RESET ROLE');
+    await db.exec(
+      read(
+        readdirSync(new URL('../supabase/migrations', import.meta.url)).find((n) =>
+          n.endsWith('_saved_transaction_destination.sql'),
+        ),
+      ),
+    );
+    await db.exec(
+      `SET ROLE authenticated; SELECT set_config('request.jwt.claim.sub','${a}',false)`,
+    );
+    const saveTarget = async (d, o, id = null) =>
+      (
+        await db.query(
+          'SELECT public.save_transaction_series_with_target($1::jsonb,$2::jsonb,$3::uuid) AS target',
+          [JSON.stringify(d), JSON.stringify(o), id],
+        )
+      ).rows[0].target;
+    for (const mode of ['installments', 'monthly']) {
+      const first = await saveTarget(
+        { ...draft, categoria_id: c.id },
+        { mode, count: 3, end: '2026-03-01' },
+      );
+      assert.equal(first.ocorrencia, 0);
+      assert.equal(first.user_id, a);
+      assert.equal(first.data, draft.data);
+      const selected = (
+        await db.query('SELECT id FROM public.transacoes WHERE serie_id=$1 AND ocorrencia=1', [
+          first.serie_id,
+        ])
+      ).rows[0];
+      const edited = await saveTarget(
+        { ...draft, categoria_id: c.id, data: '2027-01-02' },
+        { scope: 'following' },
+        selected.id,
+      );
+      assert.equal(edited.id, selected.id);
+      assert.equal(edited.data, '2027-01-02');
+      await db.exec(`SELECT set_config('request.jwt.claim.sub','${b}',false)`);
+      await assert.rejects(saveTarget(draft, { scope: 'following' }, selected.id));
+      await db.exec(`SELECT set_config('request.jwt.claim.sub','${a}',false)`);
+      assert.equal(
+        await saveTarget(draft, { scope: 'following', cancel: true }, selected.id),
+        null,
+      );
+    }
     await db.exec('RESET ROLE; SET ROLE anon');
     await assert.rejects(db.query('SELECT * FROM public.categories'));
+    await assert.rejects(saveTarget(draft, { mode: 'monthly' }));
   } finally {
     await db.close();
   }

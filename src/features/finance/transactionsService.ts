@@ -205,7 +205,6 @@ export async function addTransactionService(
     const { data, error } = await client.from('transacoes').insert([payload]).select().single();
 
     if (error) {
-      console.error('Erro ao inserir no Supabase:', error);
       throw error;
     }
     if (!isTransaction(data)) throw new Error('O servidor retornou uma transação inválida.');
@@ -257,7 +256,6 @@ export async function updateTransactionService(
       .single();
 
     if (error) {
-      console.error('Erro ao atualizar no Supabase:', error);
       throw error;
     }
     if (!isTransaction(data)) throw new Error('O servidor retornou uma transação inválida.');
@@ -332,29 +330,30 @@ export async function saveScheduledTransaction(
   isDemo: boolean,
   userId: string,
   id?: string,
-): Promise<void> {
+): Promise<Transaction | null> {
   assertTransactionContext(isDemo, userId, id);
   validateSchedule(draft, options);
   if (!id && options.mode === 'single') {
-    await addTransactionService(draft, isDemo, userId);
-    return;
+    return addTransactionService(draft, isDemo, userId);
   }
   if (id && options.scope !== 'following' && !options.cancel) {
-    await updateTransactionService(id, draft, isDemo, userId);
-    return;
+    return updateTransactionService(id, draft, isDemo, userId);
   }
   if (!isDemo) {
     const { client } = await requireAuthenticatedClient(userId);
-    const { error } = await client.rpc('save_transaction_series', {
+    const { data, error } = await client.rpc('save_transaction_series_with_target', {
       draft: editableTransactionFields(draft),
       options,
       transaction_id: id ?? null,
     });
     if (error) throw error;
-    return;
+    if (data === null && options.cancel) return null;
+    if (!isTransaction(data)) throw new Error('O servidor retornou um destino inválido.');
+    return data;
   }
   return withDemoLock(() => {
     const state = getLocalState();
+    let target: Transaction | null = null;
     const previous = state.transactions.find((row) => row.id === id);
     if (!options.cancel) {
       const c = assertCategory(
@@ -376,6 +375,7 @@ export async function saveScheduledTransaction(
         draft,
         options.cancel,
       );
+      target = state.transactions.find((row) => row.id === id) ?? null;
     } else {
       const series: TransactionSeries = {
         id: crypto.randomUUID(),
@@ -386,8 +386,11 @@ export async function saveScheduledTransaction(
         next: 0,
       };
       state.series.push(series);
-      state.transactions.push(...materialize(series));
+      const created = materialize(series);
+      state.transactions.push(...created);
+      target = created[0] ?? null;
     }
     saveLocalState(state);
+    return target;
   });
 }

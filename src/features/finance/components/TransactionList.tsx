@@ -1,6 +1,6 @@
 import { occurrenceLabel } from '../scheduling';
 import { localDate } from '../validation';
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Transaction, TransactionStatus, FilterState } from '../types';
 import { serializeCSV } from '../csv';
 import {
@@ -17,6 +17,8 @@ import {
 } from 'lucide-react';
 
 interface TransactionListProps {
+  revealId?: string;
+  onRevealed?: () => void;
   transactions: Transaction[];
   hasPeriodTransactions: boolean;
   onEdit: (transaction: Transaction) => void;
@@ -44,6 +46,8 @@ const CATEGORY_COLORS: Record<string, string> = {
 
 export const TransactionList: React.FC<TransactionListProps> = ({
   transactions,
+  revealId,
+  onRevealed,
   hasPeriodTransactions,
   onEdit,
   onDuplicate,
@@ -53,6 +57,39 @@ export const TransactionList: React.FC<TransactionListProps> = ({
   onFilterChange,
   onOpenNewModal,
 }) => {
+  const highlightTimer = useRef<number | undefined>(undefined);
+  const listRef = useRef<HTMLDivElement>(null);
+  const revealedCallback = useRef(onRevealed);
+  revealedCallback.current = onRevealed;
+  useEffect(() => {
+    if (!revealId) return;
+    const item = Array.from(
+      listRef.current?.querySelectorAll<HTMLElement>('[data-transaction-id]') ?? [],
+    ).find(
+      (element) =>
+        element.dataset.transactionId === revealId && element.getClientRects().length > 0,
+    );
+    if (!item) return;
+    listRef.current
+      ?.querySelectorAll('[data-saved-highlight]')
+      .forEach((element) => element.removeAttribute('data-saved-highlight'));
+    window.clearTimeout(highlightTimer.current);
+    item.dataset.savedHighlight = 'true';
+    highlightTimer.current = window.setTimeout(
+      () => item.removeAttribute('data-saved-highlight'),
+      8000,
+    );
+    item.focus({ preventScroll: true });
+    item.scrollIntoView({
+      block: 'center',
+      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        ? 'instant'
+        : 'smooth',
+    });
+    revealedCallback.current?.();
+  }, [revealId]);
+  // Apenas a decoração expira por tempo; a navegação depende dos dados carregados.
+  useEffect(() => () => window.clearTimeout(highlightTimer.current), []);
   const searchRef = useRef<HTMLInputElement>(null);
   const clearFilters = () => {
     onFilterChange({ type: 'todos', status: 'todos', searchTerm: '' });
@@ -145,7 +182,10 @@ export const TransactionList: React.FC<TransactionListProps> = ({
   };
 
   return (
-    <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-xl overflow-hidden transition-colors">
+    <div
+      ref={listRef}
+      className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-xl overflow-hidden transition-colors"
+    >
       {actionError && (
         <p role="alert" className="p-4 text-rose-700 dark:text-rose-300">
           {actionError}
@@ -292,6 +332,8 @@ export const TransactionList: React.FC<TransactionListProps> = ({
                   return (
                     <tr
                       key={tx.id}
+                      data-transaction-id={tx.id}
+                      tabIndex={-1}
                       className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition group"
                     >
                       {/* Ícone que identifica entrada ou saída de dinheiro. */}
@@ -314,6 +356,10 @@ export const TransactionList: React.FC<TransactionListProps> = ({
                       {/* Descrição */}
                       <td className="py-3.5 px-4 font-semibold text-slate-900 dark:text-white">
                         {tx.descricao}
+                        <span className="saved-marker text-xs font-normal">
+                          {' '}
+                          · Lançamento salvo
+                        </span>
                         {tx.serie_id && (
                           <span className="ml-2 text-xs font-normal">({occurrenceLabel(tx)})</span>
                         )}
@@ -460,7 +506,12 @@ export const TransactionList: React.FC<TransactionListProps> = ({
                 : CATEGORY_COLORS.Outros;
 
               return (
-                <div key={tx.id} className="p-4 space-y-2.5">
+                <div
+                  key={tx.id}
+                  data-transaction-id={tx.id}
+                  tabIndex={-1}
+                  className="p-4 space-y-2.5"
+                >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2.5">
                       <div
@@ -479,6 +530,10 @@ export const TransactionList: React.FC<TransactionListProps> = ({
                       <div>
                         <h3 className="text-sm font-bold text-slate-900 dark:text-white">
                           {tx.descricao}
+                          <span className="saved-marker text-xs font-normal">
+                            {' '}
+                            · Lançamento salvo
+                          </span>
                           {tx.serie_id && (
                             <span className="ml-2 text-xs font-normal">
                               ({occurrenceLabel(tx)})

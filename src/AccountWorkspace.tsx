@@ -8,7 +8,7 @@ import { DueDates } from './features/finance/components/DueDates';
 import { DemoGuide } from './features/finance/components/DemoGuide';
 import { MonthlyBudgets } from './features/finance/components/MonthlyBudgets';
 import { budgetStorageKey } from './features/finance/budgets';
-import React, { lazy, Suspense, useState, useMemo } from 'react';
+import React, { lazy, Suspense, useState, useMemo, useEffect, useRef } from 'react';
 import type { Transaction, TransactionFormIntent, FilterState } from './features/finance/types';
 import type { AppUser } from './features/auth/session';
 import { useTransactions } from './features/finance/useTransactions';
@@ -62,6 +62,7 @@ function Workspace({
 
   const {
     transactions,
+    ready,
     pendingTransactions,
     loading,
     loadError,
@@ -76,7 +77,24 @@ function Workspace({
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
   const [transactionToEdit, setTransactionToEdit] = useState<Transaction | null>(null);
   const [duplicateIntent, setDuplicateIntent] = useState<TransactionFormIntent | null>(null);
-  const [saveNotice, setSaveNotice] = useState('');
+  const [saveNotice, setSaveNotice] = useState<{
+    message: string;
+    target: Transaction | null;
+  } | null>(null);
+  const [revealTarget, setRevealTarget] = useState<Transaction | null>(null);
+  const noticeRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!revealTarget || loading) return;
+    if (loadError || (ready && !transactions.some((tx) => tx.id === revealTarget.id))) {
+      setRevealTarget(null);
+      setSaveNotice({
+        message:
+          'Lançamento salvo, mas não foi possível localizá-lo. Recarregue os lançamentos e tente novamente.',
+        target: revealTarget,
+      });
+      noticeRef.current?.focus();
+    }
+  }, [revealTarget, loading, loadError, ready, transactions]);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   // No celular, mostra apenas a seção escolhida na navegação inferior.
@@ -108,33 +126,81 @@ function Workspace({
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-sans transition-colors duration-200">
-      {/* Cabeçalho com período selecionado e ações da conta. */}
-      <Header
-        currentMonth={currentMonth}
-        currentYear={currentYear}
-        onMonthChange={(m) => {
-          setCurrentMonth(m);
-        }}
-        onYearChange={(y) => {
-          setCurrentYear(y);
-        }}
-        onOpenNewTransaction={() => {
-          setTransactionToEdit(null);
-          setIsTransactionModalOpen(true);
-        }}
-        onOpenAuth={() => {
-          setIsAuthModalOpen(true);
-        }}
-        onLogout={onLogout}
-        onOpenLanding={
-          user.isDemo
-            ? () => {
-                window.location.assign('/');
-              }
-            : undefined
-        }
-        user={user}
-      />
+      <p role="status" className="sr-only">
+        {saveNotice?.message}
+      </p>
+      <div className="sticky top-0 z-40">
+        {/* Cabeçalho com período selecionado e ações da conta. */}
+        <Header
+          currentMonth={currentMonth}
+          currentYear={currentYear}
+          onMonthChange={(m) => {
+            setCurrentMonth(m);
+          }}
+          onYearChange={(y) => {
+            setCurrentYear(y);
+          }}
+          onOpenNewTransaction={() => {
+            setTransactionToEdit(null);
+            setIsTransactionModalOpen(true);
+          }}
+          onOpenAuth={() => {
+            setIsAuthModalOpen(true);
+          }}
+          onLogout={onLogout}
+          onOpenLanding={
+            user.isDemo
+              ? () => {
+                  window.location.assign('/');
+                }
+              : undefined
+          }
+          user={user}
+        />
+        {saveNotice && (
+          <div
+            ref={noticeRef}
+            tabIndex={-1}
+            aria-label="Confirmação de salvamento"
+            className="save-notice border-b border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-3 shadow-md focus-visible:outline-2 focus-visible:outline-emerald-600"
+          >
+            <div className="max-w-7xl mx-auto flex flex-wrap items-center gap-3">
+              <p className="flex-1 text-sm min-w-40">{saveNotice.message}</p>
+              {saveNotice.target && (
+                <button
+                  type="button"
+                  disabled={!!revealTarget}
+                  className="rounded-lg border px-3 py-2 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600"
+                  onClick={() => {
+                    const target = saveNotice.target!;
+                    const [year, month] = target.data.split('-').map(Number);
+                    setCurrentYear(year);
+                    setCurrentMonth(month - 1);
+                    setComparisonRange('selected');
+                    setFilterState({ type: 'todos', status: 'todos', searchTerm: '' });
+                    setActiveTab('transactions');
+                    setRevealTarget(target);
+                  }}
+                >
+                  {revealTarget ? 'Localizando…' : 'Ver lançamento'}
+                </button>
+              )}
+              <button
+                type="button"
+                aria-label="Dispensar confirmação"
+                className="rounded-lg px-3 py-2 focus-visible:outline-2 focus-visible:outline-emerald-600"
+                onClick={() => {
+                  setSaveNotice(null);
+                  setRevealTarget(null);
+                  document.getElementById('transactions-section')?.focus();
+                }}
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Área principal com os dados financeiros e avisos de carregamento. */}
       <main
@@ -142,9 +208,6 @@ function Workspace({
         tabIndex={-1}
         className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 space-y-6 pb-24 md:pb-12"
       >
-        <p role="status" className="text-sm">
-          {saveNotice}
-        </p>
         <CategoryManager errorAlreadyShown={loadError} />
         {sessionError && (
           <p
@@ -395,6 +458,14 @@ function Workspace({
 
           {!loading && !loadError && (
             <TransactionList
+              revealId={ready ? revealTarget?.id : undefined}
+              onRevealed={() => {
+                setRevealTarget(null);
+                setSaveNotice({
+                  message: 'Lançamento localizado. Busca e filtros limpos.',
+                  target: null,
+                });
+              }}
               onDuplicate={(tx) => {
                 setTransactionToEdit(null);
                 setDuplicateIntent({
@@ -500,13 +571,15 @@ function Workspace({
           setDuplicateIntent(null);
         }}
         onSave={async (draft, id, options) => {
-          await handleSaveTransaction(draft, id, options);
-          const outside = !draft.data.startsWith(
-            `${currentYear}-${currentMonth === -1 ? '' : String(currentMonth + 1).padStart(2, '0')}`,
-          );
-          setSaveNotice(
-            `Lançamento salvo com sucesso.${outside ? ` Para encontrá-lo, selecione o período de vencimento ${draft.data.split('-').reverse().join('/')}.` : ' Consulte a lista de lançamentos; limpe a busca e os filtros se necessário.'}`,
-          );
+          setSaveNotice(null);
+          setRevealTarget(null);
+          const saved = await handleSaveTransaction(draft, id, options);
+          setSaveNotice({
+            message: saved
+              ? `Lançamento salvo com sucesso. Vencimento: ${saved.data.split('-').reverse().join('/')}.`
+              : 'Série atualizada com sucesso.',
+            target: saved,
+          });
         }}
         intent={
           transactionToEdit

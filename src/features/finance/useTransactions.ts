@@ -16,6 +16,8 @@ export function useTransactions(user: AppUser, month: number, year: number) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [pendingTransactions, setPendingTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadedKey, setLoadedKey] = useState('');
+  const [errorKey, setErrorKey] = useState('');
   const [loadError, setLoadError] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
   // Cada leitura recebe uma versão. Só a mais recente pode atualizar a tela,
@@ -46,9 +48,11 @@ export function useTransactions(user: AppUser, month: number, year: number) {
       if (mounted.current && request === version.current && activeKey.current === key) {
         setTransactions(data);
         setPendingTransactions(pending);
+        setLoadedKey(key);
       }
     } catch (error) {
       if (mounted.current && request === version.current && activeKey.current === key) {
+        setErrorKey(key);
         setLoadError(
           user.isDemo && error instanceof Error
             ? error.message
@@ -82,8 +86,11 @@ export function useTransactions(user: AppUser, month: number, year: number) {
   ) => {
     if (!mounted.current || activeKey.current !== key)
       throw new Error('A conta ou o período mudou. Abra o formulário novamente.');
-    await saveScheduledTransaction(data, options, user.isDemo, user.id, id);
+    const saved = await saveScheduledTransaction(data, options, user.isDemo, user.id, id);
     await loadTransactions();
+    if (!mounted.current || activeKey.current !== key)
+      throw new Error('A conta ou o período mudou. Abra o formulário novamente.');
+    return saved;
   };
   const deleteTransaction = async (id: string) => {
     await deleteTransactionService(id, user.isDemo, user.id);
@@ -99,9 +106,10 @@ export function useTransactions(user: AppUser, month: number, year: number) {
   };
   return {
     transactions,
+    ready: loadedKey === key && !loading,
     pendingTransactions,
     loading,
-    loadError,
+    loadError: errorKey === key ? loadError : '',
     isRefreshing,
     saveTransaction,
     deleteTransaction,

@@ -270,3 +270,31 @@ button:disabled {
   color-scheme: dark;
   scrollbar-color: #475569 transparent;
 }
+
+/* In-flow sticky confirmation reserves space and stays clear of the floating controls. */
+.save-notice {
+  position: relative;
+}
+.saved-marker {
+  display: none;
+}
+[data-saved-highlight] .saved-marker {
+  display: inline;
+}
+[data-saved-highlight] {
+  outline: 2px dashed currentColor;
+  outline-offset: -3px;
+}
+[data-transaction-id]:focus-visible {
+  outline: 3px solid currentColor;
+  outline-offset: -3px;
+}
+[data-transaction-id] {
+  scroll-margin-block: 10rem;
+}
+
+/* hidden no eixo horizontal cria um contêiner de rolagem no body e impede
+   o aviso sticky de acompanhar a janela. clip mantém o corte sem esse contêiner. */
+body:has(.save-notice) {
+  overflow-x: clip;
+}
