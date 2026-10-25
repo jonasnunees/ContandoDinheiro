@@ -11,7 +11,21 @@ for (const theme of ['light', 'dark']) {
       const search = page.getByRole('textbox', { name: 'Buscar transações' });
       await expect(search).toBeVisible();
       await expect(page.getByRole('group', { name: 'Escopo do resumo' })).toHaveCount(0);
+      const scope = page.getByRole('group', { name: 'Escopo do resumo' });
+      const dueDates = page.getByRole('region', { name: 'Pendências e próximos vencimentos' });
+      const originalDueDates = await dueDates.innerText();
+      await search.fill('   ');
+      await expect(scope).toHaveCount(0);
+      await page.getByLabel('Filtrar por tipo').selectOption('despesa');
+      await expect(scope).toContainText('Resumo filtrado: Despesas');
+      await page.getByLabel('Filtrar por tipo').selectOption('todos');
+      await page.getByLabel('Filtrar por situação').selectOption('pendente');
+      await expect(scope).toContainText('Resumo filtrado: Pendentes');
+      await page.getByLabel('Filtrar por situação').selectOption('pago');
+      await expect(scope).toContainText('Resumo filtrado: Pagos / Recebidos');
+      await page.getByLabel('Filtrar por situação').selectOption('todos');
       await search.fill('  Salário Mensal  ');
+      await expect(scope).toContainText('Resumo filtrado: Busca: Salário Mensal');
       await expect(
         page.getByRole('button', { name: 'Editar Salário Mensal', exact: true }).first(),
       ).toBeVisible();
@@ -25,18 +39,25 @@ for (const theme of ['light', 'dark']) {
       expect(csv).not.toContain('Aluguel do Apartamento');
       await page.getByLabel('Filtrar por tipo').selectOption('receita');
       await page.getByLabel('Filtrar por situação').selectOption('pendente');
+      await expect(scope).toContainText(
+        'Resumo filtrado: Receitas · Pendentes · Busca: Salário Mensal',
+      );
+      expect(await dueDates.innerText()).toBe(originalDueDates);
       await expect(page.getByText('Nenhuma transação encontrada', { exact: true })).toBeVisible();
       const audit = await new AxeBuilder({ page })
         .include('div:has(> div > input[aria-label="Buscar transações"])')
+        .include('#financial-summary')
         .analyze();
       expect(audit.violations.map((v) => v.id)).toEqual([]);
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
         true,
       );
-      const clear = page.getByRole('button', { name: 'Limpar busca e filtros' }).first();
+      const clear = page.getByRole('button', { name: 'Limpar filtros', exact: true });
       await clear.focus();
       await page.keyboard.press('Enter');
-      await expect(clear).toBeFocused();
+      await expect(page.getByRole('region', { name: 'Resumo financeiro' })).toBeFocused();
+      await expect(scope).toHaveCount(0);
+      expect(await dueDates.innerText()).toBe(originalDueDates);
       await expect(search).toHaveValue('');
       await expect(page.getByLabel('Filtrar por tipo')).toHaveValue('todos');
       await expect(page.getByLabel('Filtrar por situação')).toHaveValue('todos');
@@ -44,8 +65,19 @@ for (const theme of ['light', 'dark']) {
       await expect(page.getByLabel('Ano dos lançamentos')).toHaveValue('2026');
       await page.getByLabel('Mês dos lançamentos').selectOption('-1');
       await search.fill('<img src=x onerror=alert(1)>');
+      await expect(scope).toContainText('Busca: <img src=x onerror=alert(1)>');
+      await expect(scope.locator('img')).toHaveCount(0);
+      const liveNotice = page.getByRole('status').filter({ hasText: 'Busca ativa' });
+      const announcement = await liveNotice.innerText();
+      await search.fill('internet'.repeat(50));
+      await expect(liveNotice).toHaveText(announcement);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+        true,
+      );
       await clear.click();
       await expect(page.getByLabel('Mês dos lançamentos')).toHaveValue('-1');
+      await expect(page.getByLabel('Ano dos lançamentos')).toHaveValue('2026');
+      expect(await dueDates.innerText()).toBe(originalDueDates);
     });
   }
 }

@@ -94,6 +94,16 @@ function Workspace({
     [transactions, currentMonth, currentYear, filterState],
   );
   const stats = useMemo(() => summarizeTransactions(filteredTransactions), [filteredTransactions]);
+  const searchLabel = filterState.searchTerm.trim();
+  const filterLabels = [
+    filterState.type === 'todos' ? '' : filterState.type === 'receita' ? 'Receitas' : 'Despesas',
+    filterState.status === 'todos'
+      ? ''
+      : filterState.status === 'pago'
+        ? 'Pagos / Recebidos'
+        : 'Pendentes',
+  ].filter(Boolean);
+  const summaryCriteria = [...filterLabels, ...(searchLabel ? [`Busca: ${searchLabel}`] : [])];
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-sans transition-colors duration-200">
@@ -214,7 +224,43 @@ function Workspace({
         )}
 
         {/* Totais do recorte atual; ocultos durante carregamento ou erro de leitura. */}
-        {!loading && !loadError && <SummaryCards stats={stats} />}
+        {/* Anuncia os critérios sem repetir o texto a cada caractere da busca. */}
+        <p role="status" className="sr-only">
+          {summaryCriteria.length > 0
+            ? `Resumo filtrado: ${[...filterLabels, ...(searchLabel ? ['Busca ativa'] : [])].join(' · ')}`
+            : 'Resumo sem filtros de tipo, situação ou busca.'}
+        </p>
+        {!loading && !loadError && (
+          <section
+            id="financial-summary"
+            aria-label="Resumo financeiro"
+            tabIndex={-1}
+            className="space-y-3 rounded-xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-600"
+          >
+            {summaryCriteria.length > 0 && (
+              <div
+                role="group"
+                aria-label="Escopo do resumo"
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3 text-sm text-slate-700 dark:text-slate-200"
+              >
+                <p className="min-w-0 [overflow-wrap:anywhere]">
+                  <strong>Resumo filtrado:</strong> {summaryCriteria.join(' · ')}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFilterState({ type: 'todos', status: 'todos', searchTerm: '' });
+                    document.getElementById('financial-summary')?.focus();
+                  }}
+                  className="self-start sm:self-auto shrink-0 rounded-lg px-3 py-2 text-sm font-semibold text-emerald-700 dark:text-emerald-400 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                >
+                  Limpar filtros
+                </button>
+              </div>
+            )}
+            <SummaryCards stats={stats} />
+          </section>
+        )}
 
         {!loading && !loadError && (
           <div>
