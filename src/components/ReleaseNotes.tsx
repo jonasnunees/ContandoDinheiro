@@ -104,6 +104,15 @@ export function ReleaseNotes() {
           </div>
           <ul className="space-y-6 p-6 sm:p-8">
             <li>
+              <h3 className="font-semibold">Veja quando o resumo está filtrado</h3>
+              <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                Um aviso acima dos cartões mostra os filtros de tipo, situação e busca aplicados ao
+                resumo, aos gráficos e ao extrato. Use “Limpar filtros” para restaurar essas opções
+                sem perder o período selecionado. Os vencimentos continuam com um recorte
+                independente do período, da busca e dos filtros do resumo.
+              </p>
+            </li>
+            <li>
               <h3 className="font-semibold">Escolha o que deseja acompanhar</h3>
               <p className="mt-1 text-sm leading-relaxed text-slate-600">
                 O gráfico começa em “Despesas pagas por forma de pagamento”. Use a seleção para
