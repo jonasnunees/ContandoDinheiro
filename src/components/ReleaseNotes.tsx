@@ -82,6 +82,49 @@ export function ReleaseNotes() {
         </p>
 
         <article
+          aria-labelledby="version-1-6-2"
+          className="mt-10 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+        >
+          <div className="border-b border-slate-200 bg-emerald-50 p-6 sm:p-8">
+            <div className="flex flex-wrap items-center gap-3">
+              <h2 id="version-1-6-2" className="text-2xl font-bold">
+                Versão 1.6.2
+              </h2>
+              <span className="rounded-full border border-emerald-200 bg-white px-3 py-1 text-xs font-semibold text-emerald-800">
+                Mensagens mais claras no extrato
+              </span>
+            </div>
+            <p className="mt-3 text-sm text-slate-600">
+              <time dateTime="2026-10-25">25 de outubro de 2026</time>
+            </p>
+            <p className="mt-4 leading-relaxed text-slate-700">
+              Saiba quando o período está vazio e quando a busca ou os filtros não encontram
+              correspondências.
+            </p>
+          </div>
+          <ul className="space-y-6 p-6 sm:p-8">
+            <li>
+              <h3 className="font-semibold">Identifique períodos sem lançamentos</h3>
+              <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                Quando não há lançamentos no período selecionado, o extrato apresenta uma mensagem
+                clara e a ação “Cadastrar transação”, mesmo com busca ou filtros ativos.
+              </p>
+            </li>
+            <li>
+              <h3 className="font-semibold">
+                Retome a lista quando os filtros não encontram resultados
+              </h3>
+              <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                Se existem lançamentos no período, mas nenhum corresponde aos critérios, o extrato
+                mostra “Nenhum lançamento corresponde aos filtros”. Use “Limpar filtros” para
+                restaurar a busca, o tipo e a situação, preservando o período escolhido. O foco
+                volta ao campo de busca para continuar a navegação por teclado.
+              </p>
+            </li>
+          </ul>
+        </article>
+
+        <article
           aria-labelledby="version-1-6-1"
           className="mt-10 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
         >
