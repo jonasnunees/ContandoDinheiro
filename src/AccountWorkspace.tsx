@@ -14,6 +14,7 @@ import type { AppUser } from './features/auth/session';
 import { useTransactions } from './features/finance/useTransactions';
 import {
   filterTransactions,
+  matchesTransactionPeriod,
   summarizeTransactions,
   ComparisonRange,
 } from './features/finance/calculations';
@@ -403,6 +404,9 @@ function Workspace({
                 setIsTransactionModalOpen(true);
               }}
               transactions={filteredTransactions}
+              hasPeriodTransactions={transactions.some((tx) =>
+                matchesTransactionPeriod(tx, { month: currentMonth, year: currentYear }),
+              )}
               onEdit={(tx) => {
                 setTransactionToEdit(tx);
                 setIsTransactionModalOpen(true);

@@ -18,6 +18,7 @@ import {
 
 interface TransactionListProps {
   transactions: Transaction[];
+  hasPeriodTransactions: boolean;
   onEdit: (transaction: Transaction) => void;
   onDuplicate: (transaction: Transaction) => void;
   onDelete: (id: string) => Promise<void>;
@@ -43,6 +44,7 @@ const CATEGORY_COLORS: Record<string, string> = {
 
 export const TransactionList: React.FC<TransactionListProps> = ({
   transactions,
+  hasPeriodTransactions,
   onEdit,
   onDuplicate,
   onDelete,
@@ -51,6 +53,13 @@ export const TransactionList: React.FC<TransactionListProps> = ({
   onFilterChange,
   onOpenNewModal,
 }) => {
+  const searchRef = useRef<HTMLInputElement>(null);
+  const clearFilters = () => {
+    onFilterChange({ type: 'todos', status: 'todos', searchTerm: '' });
+    // A ação do estado vazio desaparece após a limpeza; a busca permanece na tela.
+    searchRef.current?.focus();
+  };
+
   // O primeiro clique pede confirmação na própria linha/cartão; o segundo executa a exclusão.
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
@@ -149,6 +158,7 @@ export const TransactionList: React.FC<TransactionListProps> = ({
           <div className="relative flex-1">
             <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-600 dark:text-slate-400" />
             <input
+              ref={searchRef}
               type="text"
               aria-label="Buscar transações"
               value={filterState.searchTerm}
@@ -207,7 +217,7 @@ export const TransactionList: React.FC<TransactionListProps> = ({
         </div>
         <button
           type="button"
-          onClick={() => onFilterChange({ type: 'todos', status: 'todos', searchTerm: '' })}
+          onClick={clearFilters}
           className="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 dark:focus-visible:outline-emerald-400 cursor-pointer transition"
         >
           Limpar busca e filtros
@@ -221,17 +231,21 @@ export const TransactionList: React.FC<TransactionListProps> = ({
             <FileSpreadsheet className="w-6 h-6" />
           </div>
           <h3 className="text-base font-bold text-slate-900 dark:text-white">
-            Nenhuma transação encontrada
+            {hasPeriodTransactions
+              ? 'Nenhum lançamento corresponde aos filtros'
+              : 'Nenhum lançamento neste período'}
           </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
-            Não há lançamentos para os filtros ou mês selecionados. Que tal cadastrar uma nova
-            transação agora?
+          <p className="text-xs text-slate-600 dark:text-slate-400 max-w-sm mx-auto">
+            {hasPeriodTransactions
+              ? 'Limpe a busca e os filtros para ver os lançamentos do período.'
+              : 'Cadastre uma transação para começar a registrar este período.'}
           </p>
           <button
-            onClick={onOpenNewModal}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-xs font-semibold text-white transition cursor-pointer shadow-lg shadow-emerald-950/20"
+            type="button"
+            onClick={hasPeriodTransactions ? clearFilters : onOpenNewModal}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-xs font-semibold text-white transition cursor-pointer shadow-lg shadow-emerald-950/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 dark:focus-visible:outline-emerald-400"
           >
-            + Cadastrar Transação
+            {hasPeriodTransactions ? 'Limpar filtros' : 'Cadastrar transação'}
           </button>
         </div>
       ) : (

@@ -43,7 +43,9 @@ for (const theme of ['light', 'dark']) {
         'Resumo filtrado: Receitas · Pendentes · Busca: Salário Mensal',
       );
       expect(await dueDates.innerText()).toBe(originalDueDates);
-      await expect(page.getByText('Nenhuma transação encontrada', { exact: true })).toBeVisible();
+      await expect(
+        page.getByText('Nenhum lançamento corresponde aos filtros', { exact: true }),
+      ).toBeVisible();
       const audit = await new AxeBuilder({ page })
         .include('div:has(> div > input[aria-label="Buscar transações"])')
         .include('#financial-summary')
@@ -52,7 +54,7 @@ for (const theme of ['light', 'dark']) {
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
         true,
       );
-      const clear = page.getByRole('button', { name: 'Limpar filtros', exact: true });
+      const clear = scope.getByRole('button', { name: 'Limpar filtros', exact: true });
       await clear.focus();
       await page.keyboard.press('Enter');
       await expect(page.getByRole('region', { name: 'Resumo financeiro' })).toBeFocused();
@@ -86,9 +88,38 @@ test('falha de leitura remove totais e permite recuperar', async ({ page }) => {
   await page.goto('/demo');
   await expect(page.getByRole('textbox', { name: 'Buscar transações' })).toBeVisible();
   const saved = await page.evaluate(() => localStorage.getItem('gf_local_transactions')!);
-  await page.evaluate(() => localStorage.setItem('gf_local_transactions', '{invalid'));
-  await page.getByRole('button', { name: 'Recarregar lançamentos' }).click();
+  await page.getByRole('textbox', { name: 'Buscar transações' }).fill('sem correspondência');
+  const emptyHeading = page.getByRole('heading', {
+    name: 'Nenhum lançamento corresponde aos filtros',
+  });
+  await expect(emptyHeading).toBeVisible();
+  const loadingSnapshot = page.evaluate(
+    () =>
+      new Promise<boolean>((resolve) => {
+        const observer = new MutationObserver(() => {
+          if (document.body.textContent?.includes('Carregando lançamentos...')) {
+            observer.disconnect();
+            resolve(
+              !Array.from(document.querySelectorAll('h3')).some((heading) =>
+                heading.textContent?.startsWith('Nenhum lançamento'),
+              ),
+            );
+          }
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+        localStorage.setItem('gf_local_transactions', '{invalid');
+        const reload = document.querySelector<HTMLButtonElement>(
+          'button[title="Recarregar lançamentos"]',
+        );
+        reload?.click();
+      }),
+  );
+  expect(await loadingSnapshot).toBe(true);
   await expect(page.getByRole('alert').first()).toBeVisible();
+  await expect(emptyHeading).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Nenhum lançamento neste período' })).toHaveCount(
+    0,
+  );
   await expect(page.getByText('Saldo do Período', { exact: true })).toHaveCount(0);
   await expect(page.getByRole('textbox', { name: 'Buscar transações' })).toHaveCount(0);
   await page.evaluate((value) => localStorage.setItem('gf_local_transactions', value), saved);
