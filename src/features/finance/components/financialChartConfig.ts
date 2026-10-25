@@ -130,6 +130,7 @@ export function createCategoryChartConfig(
 export function createPaymentChartConfig(
   totals: Record<string, number>,
   isLight: boolean,
+  title = 'Despesas pagas por forma de pagamento',
 ): ChartConfiguration<'bar', number[]> {
   const labels = Object.keys(totals);
   const data = Object.values(totals);
@@ -140,7 +141,7 @@ export function createPaymentChartConfig(
       labels,
       datasets: [
         {
-          label: 'Volume (R$)',
+          label: title,
           data,
           backgroundColor,
           borderRadius: 8,

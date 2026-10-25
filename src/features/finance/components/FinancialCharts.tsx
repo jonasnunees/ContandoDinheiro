@@ -9,6 +9,9 @@ import {
   createMonthlyCashflowChartConfig,
 } from './financialChartConfig';
 import {
+  composePaymentChart,
+  PAYMENT_VIEWS,
+  PaymentView,
   compareTransactionMonths,
   ComparisonRange,
   groupTransactionValues,
@@ -86,6 +89,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({
   const [hiddenGroups, setHiddenGroups] = useState<Record<string, boolean>>({});
   const [comparisonMode, setComparisonMode] = useState('totals');
   const [selectedCategory, setSelectedCategory] = useState<string>('Alimentação');
+  const [paymentView, setPaymentView] = useState<PaymentView>('paidExpenses');
   const [selectedPayment, setSelectedPayment] = useState<string>('Pix');
   const isPayment = comparisonMode === 'payment' || comparisonMode === 'payments';
   const isGrouped = comparisonMode === 'all' || comparisonMode === 'payments';
@@ -138,7 +142,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({
             ? 'Resumo do mês'
             : chartType === 'doughnut'
               ? 'Despesas por categoria'
-              : 'Volume por forma de pagamento',
+              : (chart.data.datasets[0]?.label ?? 'Forma de pagamento'),
         title: model.title.join(' '),
         rows,
         width,
@@ -155,18 +159,18 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({
     [],
   );
 
-  // Categorias usam somente despesas pagas. Formas de pagamento somam receitas e
-  // despesas, incluindo pendentes; o fluxo usa entradas/saídas realizadas do resumo.
+  // Categorias e comparação usam despesas pagas; a seleção das barras é local.
   const expenses = useMemo(
     () => transactions.filter((t) => t.tipo === 'despesa' && t.status === 'pago'),
     [transactions],
   );
 
   const categoryTotals = useMemo(() => groupTransactionValues(expenses, 'categoria'), [expenses]);
-  const paymentTotals = useMemo(
-    () => groupTransactionValues(transactions, 'forma_pagamento'),
-    [transactions],
+  const paymentComposition = useMemo(
+    () => composePaymentChart(transactions, paymentView),
+    [transactions, paymentView],
   );
+  const paymentTotals = paymentComposition.totals;
   const summary = useMemo(() => summarizeTransactions(transactions), [transactions]);
   const sourceMonths = useMemo(
     () =>
@@ -319,31 +323,32 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({
     };
   }, [expenses, categoryTotals, isLight, showChartTooltip]);
 
-  // Recria o gráfico que compara as formas de pagamento.
+  // Atualiza a instância existente; destrói ao esvaziar ou desmontar o cartão.
   useEffect(() => {
-    if (!paymentCanvasRef.current) return;
-
-    if (paymentChartInstance.current) {
-      paymentChartInstance.current.destroy();
+    if (!paymentCanvasRef.current || paymentComposition.count === 0) {
+      paymentChartInstance.current?.destroy();
       paymentChartInstance.current = null;
+      return;
     }
-
-    if (transactions.length === 0) return;
-
-    const ctx = paymentCanvasRef.current.getContext('2d');
-    if (!ctx) return;
-
-    const config = createPaymentChartConfig(paymentTotals, isLight);
+    const config = createPaymentChartConfig(paymentTotals, isLight, paymentComposition.title);
     config.options!.plugins!.tooltip = { enabled: false, external: showChartTooltip };
-    paymentChartInstance.current = new ChartJS(ctx, config);
+    if (paymentChartInstance.current) {
+      paymentChartInstance.current.data = config.data;
+      paymentChartInstance.current.options = config.options!;
+      paymentChartInstance.current.update();
+    } else {
+      const ctx = paymentCanvasRef.current.getContext('2d');
+      if (ctx) paymentChartInstance.current = new ChartJS(ctx, config);
+    }
+  }, [paymentComposition, paymentTotals, isLight, showChartTooltip]);
 
-    return () => {
-      if (paymentChartInstance.current) {
-        paymentChartInstance.current.destroy();
-        paymentChartInstance.current = null;
-      }
-    };
-  }, [transactions, paymentTotals, isLight, showChartTooltip]);
+  useEffect(
+    () => () => {
+      paymentChartInstance.current?.destroy();
+      paymentChartInstance.current = null;
+    },
+    [],
+  );
 
   // Mostra dois meses ou os doze meses do ano.
   useEffect(() => {
@@ -401,8 +406,9 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({
   return (
     <div>
       <p className="mb-3 text-sm text-slate-600 dark:text-slate-300">
-        Categorias e fluxo consideram lançamentos pagos ou recebidos. Formas de pagamento incluem
-        também os pendentes.
+        Categorias: despesas pagas. Comparação: receitas recebidas e despesas pagas, ou apenas
+        despesas pagas ao comparar categorias e formas. Todos respeitam busca e filtros globais. O
+        período segue o vencimento do lançamento, não a data efetiva do pagamento.
       </p>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Distribuição das despesas pagas por categoria. */}
@@ -442,7 +448,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({
           </div>
         </div>
 
-        {/* Volume de lançamentos por forma de pagamento, incluindo pendentes. */}
+        {/* Recorte local aplicado aos lançamentos já filtrados. */}
         <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-sm dark:shadow-xl flex flex-col transition-colors">
           <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800/80">
             <div className="flex items-center gap-2">
@@ -451,10 +457,10 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({
               </div>
               <div>
                 <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                  Formas de Pagamento
+                  {paymentComposition.title}
                 </h3>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                  Volume por método (Pix, Cartão, etc.)
+                  {paymentComposition.description}
                 </p>
               </div>
             </div>
@@ -463,20 +469,74 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({
             </span>
           </div>
 
+          <label className="field-label mt-3 flex flex-col gap-1">
+            Visualização por forma de pagamento
+            <select
+              value={paymentView}
+              onChange={(event) => {
+                setTooltip(null);
+                setPaymentView(event.target.value as PaymentView);
+              }}
+              className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-2 focus-visible:outline-2 focus-visible:outline-orange-500"
+            >
+              {Object.entries(PAYMENT_VIEWS).map(([value, view]) => (
+                <option key={value} value={value}>
+                  {view.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">
+            Período do cabeçalho, por vencimento; busca e filtros globais aplicados.
+          </p>
+          <p className="mt-2 text-sm font-semibold" aria-live="polite">
+            {paymentComposition.label}: {money(paymentComposition.total)}
+          </p>
           <div className="h-[300px] relative flex items-center justify-center mt-3">
-            {transactions.length === 0 ? (
+            {paymentComposition.count === 0 ? (
               <div className="text-center p-6 text-slate-600 dark:text-slate-400 text-xs flex flex-col items-center gap-2">
                 <AlertCircle className="w-8 h-8 text-slate-300 dark:text-slate-600" />
-                <span>Nenhuma transação cadastrada no período.</span>
+                <span>
+                  Nenhum lançamento de {paymentComposition.label.toLowerCase()} no período e filtros
+                  atuais. Ajuste a seleção, a busca ou os filtros globais.
+                </span>
               </div>
             ) : (
               <canvas
                 ref={paymentCanvasRef}
                 role="img"
-                aria-label="Volume por forma de pagamento, incluindo pendentes. Dados disponíveis em tabela para leitores de tela."
+                aria-label={`${paymentComposition.title}. Total: ${money(paymentComposition.total)}. Dados na tabela abaixo.`}
               />
             )}
           </div>
+          <details className="mt-3 text-sm">
+            <summary className="cursor-pointer rounded focus-visible:outline-2 focus-visible:outline-orange-500">
+              Ver dados por forma em tabela
+            </summary>
+            <table className="mt-2 w-full text-left text-xs">
+              <caption>{paymentComposition.title}</caption>
+              <thead>
+                <tr>
+                  <th scope="col">{paymentComposition.description}</th>
+                  <th scope="col">Valor</th>
+                </tr>
+              </thead>
+              <tbody>
+                {Object.entries(paymentTotals).map(([label, value]) => (
+                  <tr key={label}>
+                    <th scope="row">{label}</th>
+                    <td>{money(value)}</td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <th scope="row">Total</th>
+                  <td>{money(paymentComposition.total)}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </details>
         </div>
 
         {/* Comparativo de Fluxo: Entradas vs Saídas */}
@@ -810,7 +870,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({
                   ([label, value]) => ['Despesas pagas', label, value] as const,
                 ),
                 ...Object.entries(paymentTotals).map(
-                  ([label, value]) => ['Formas de pagamento', label, value] as const,
+                  ([label, value]) => [paymentComposition.title, label, value] as const,
                 ),
                 ['Fluxo realizado', 'Entradas recebidas', summary.totalEntradas] as const,
                 ['Fluxo realizado', 'Despesas pagas', summary.totalSaidas] as const,

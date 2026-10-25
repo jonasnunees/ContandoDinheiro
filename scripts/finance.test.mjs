@@ -245,3 +245,54 @@ test('busca isolada e espaços mantêm resumo e agrupamentos no mesmo recorte da
   assert.equal(summarizeTransactions(empty).quantidadeTransacoes, 0);
   assert.deepEqual(groupTransactionValues(empty, 'categoria'), {});
 });
+
+test('quatro recortes de pagamento isolam tipo/status e preservam filtros e centavos', async () => {
+  const { composePaymentChart, PAYMENT_VIEWS, compareTransactionMonths } =
+    await import('../src/features/finance/calculations.ts');
+  const rows = [
+    tx('1', 0.1, 'despesa'),
+    tx('2', 0.2, 'despesa'),
+    tx('3', 0.41, 'despesa', 'pendente'),
+    tx('4', 0.53),
+    tx('5', 0.67, 'receita', 'pendente'),
+    tx('6', 99, 'despesa', 'pago', '2026-09-01'),
+  ];
+  rows[0].data_pagamento = '2026-11-01';
+  const filters = { type: 'todos', status: 'todos', searchTerm: ' Pix ' };
+  const period = { month: 9, year: 2026 };
+  const filtered = filterTransactions(rows, period, filters);
+  for (const [view, total] of Object.entries({
+    paidExpenses: 0.3,
+    pendingExpenses: 0.41,
+    receivedIncome: 0.53,
+    pendingIncome: 0.67,
+  })) {
+    const result = composePaymentChart(filtered, view);
+    assert.deepEqual(result.totals, { Pix: total });
+    assert.equal(result.total, total);
+    const incompatible = filterTransactions(rows, period, {
+      ...filters,
+      type: PAYMENT_VIEWS[view].tipo === 'receita' ? 'despesa' : 'receita',
+    });
+    assert.equal(composePaymentChart(incompatible, view).count, 0);
+    const wrongStatus = filterTransactions(rows, period, {
+      ...filters,
+      status: PAYMENT_VIEWS[view].status === 'pago' ? 'pendente' : 'pago',
+    });
+    assert.deepEqual(composePaymentChart(wrongStatus, view).totals, {});
+    assert.equal(
+      composePaymentChart(
+        filterTransactions(rows, period, { ...filters, searchTerm: 'ausente' }),
+        view,
+      ).total,
+      0,
+    );
+  }
+  const months = compareTransactionMonths(rows, period, filters);
+  assert.deepEqual(
+    months.map((m) => m.payments),
+    [{ Pix: 99 }, { Pix: 0.3 }],
+  );
+  assert.equal(months[1].totalEntradas, 0.53);
+  assert.equal(months[1].totalSaidas, 0.3);
+});

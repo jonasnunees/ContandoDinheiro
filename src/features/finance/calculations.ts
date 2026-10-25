@@ -104,13 +104,53 @@ export function compareTransactionMonths(
         rows.filter((tx) => tx.tipo === 'despesa' && tx.status === 'pago'),
         'categoria',
       ),
-      payments: groupTransactionValues(
-        rows.filter((tx) => tx.tipo === 'despesa' && tx.status === 'pago'),
-        'forma_pagamento',
-      ),
+      payments: composePaymentChart(rows, 'paidExpenses').totals,
       count: rows.length,
     };
   });
 }
 
 export type ComparisonRange = 'selected' | 'quarter' | 'semester';
+
+// A entrada já deve respeitar período (vencimento), busca e filtros globais.
+export const PAYMENT_VIEWS = {
+  paidExpenses: {
+    tipo: 'despesa',
+    status: 'pago',
+    label: 'Despesas pagas',
+    description: 'Forma de pagamento das despesas realizadas.',
+  },
+  pendingExpenses: {
+    tipo: 'despesa',
+    status: 'pendente',
+    label: 'Despesas pendentes',
+    description: 'Forma prevista de pagamento das despesas pendentes.',
+  },
+  receivedIncome: {
+    tipo: 'receita',
+    status: 'pago',
+    label: 'Receitas recebidas',
+    description: 'Forma de recebimento das receitas realizadas.',
+  },
+  pendingIncome: {
+    tipo: 'receita',
+    status: 'pendente',
+    label: 'Receitas pendentes',
+    description: 'Forma prevista de recebimento das receitas pendentes.',
+  },
+} as const;
+export type PaymentView = keyof typeof PAYMENT_VIEWS;
+
+export function composePaymentChart(transactions: Transaction[], view: PaymentView) {
+  const definition = PAYMENT_VIEWS[view];
+  const rows = transactions.filter(
+    (tx) => tx.tipo === definition.tipo && tx.status === definition.status,
+  );
+  return {
+    ...definition,
+    title: `${definition.label} por forma de ${definition.tipo === 'receita' ? 'recebimento' : 'pagamento'}`,
+    totals: groupTransactionValues(rows, 'forma_pagamento'),
+    total: rows.reduce((sum, tx) => sum + Math.round(tx.valor * 100), 0) / 100,
+    count: rows.length,
+  };
+}
