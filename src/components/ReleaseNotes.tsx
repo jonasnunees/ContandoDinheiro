@@ -82,6 +82,57 @@ export function ReleaseNotes() {
         </p>
 
         <article
+          aria-labelledby="version-1-6-3"
+          className="mt-10 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+        >
+          <div className="border-b border-slate-200 bg-emerald-50 p-6 sm:p-8">
+            <div className="flex flex-wrap items-center gap-3">
+              <h2 id="version-1-6-3" className="text-2xl font-bold">
+                Versão 1.6.3
+              </h2>
+              <span className="rounded-full border border-emerald-200 bg-white px-3 py-1 text-xs font-semibold text-emerald-800">
+                Encontre o lançamento que acabou de salvar
+              </span>
+            </div>
+            <p className="mt-3 text-sm text-slate-600">
+              <time dateTime="2026-10-25">25 de outubro de 2026</time>
+            </p>
+            <p className="mt-4 leading-relaxed text-slate-700">
+              Após salvar, use “Ver lançamento” para encontrar o registro, mesmo em outro mês ou
+              ano.
+            </p>
+          </div>
+          <ul className="space-y-6 p-6 sm:p-8">
+            <li>
+              <h3 className="font-semibold">Uma confirmação ao seu alcance</h3>
+              <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                A confirmação de salvamento permanece visível no celular e no computador até você
+                fechá-la. Salvar preserva o período, a busca e os filtros, sem levar você para outro
+                lugar da tela. Se o salvamento falhar, a ação não é oferecida.
+              </p>
+            </li>
+            <li>
+              <h3 className="font-semibold">Vá direto ao registro salvo</h3>
+              <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                Ao acionar “Ver lançamento”, o aplicativo seleciona o mês e o ano do vencimento,
+                abre a seção de lançamentos e limpa a busca e os filtros. Assim que o registro
+                estiver disponível, ele recebe o foco e um destaque temporário com contorno e texto.
+                A navegação funciona por teclado e respeita a preferência por movimento reduzido. Se
+                o registro não puder ser localizado, você recebe um aviso.
+              </p>
+            </li>
+            <li>
+              <h3 className="font-semibold">Encontre também cópias e ocorrências de séries</h3>
+              <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                O atalho acompanha a criação, a edição e a duplicação. Em séries mensais ou
+                parceladas, leva à ocorrência editada ou à primeira ocorrência criada. Se um
+                cancelamento remover essa ocorrência, o atalho não aparece.
+              </p>
+            </li>
+          </ul>
+        </article>
+
+        <article
           aria-labelledby="version-1-6-2"
           className="mt-10 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
         >
