@@ -82,6 +82,59 @@ export function ReleaseNotes() {
         </p>
 
         <article
+          aria-labelledby="version-1-6-1"
+          className="mt-10 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+        >
+          <div className="border-b border-slate-200 bg-emerald-50 p-6 sm:p-8">
+            <div className="flex flex-wrap items-center gap-3">
+              <h2 id="version-1-6-1" className="text-2xl font-bold">
+                Versão 1.6.1
+              </h2>
+              <span className="rounded-full border border-emerald-200 bg-white px-3 py-1 text-xs font-semibold text-emerald-800">
+                Formas de pagamento com clareza
+              </span>
+            </div>
+            <p className="mt-3 text-sm text-slate-600">
+              <time dateTime="2026-10-25">25 de outubro de 2026</time>
+            </p>
+            <p className="mt-4 leading-relaxed text-slate-700">
+              Consulte pagamentos, recebimentos e pendências separadamente, com totais próprios para
+              cada situação.
+            </p>
+          </div>
+          <ul className="space-y-6 p-6 sm:p-8">
+            <li>
+              <h3 className="font-semibold">Escolha o que deseja acompanhar</h3>
+              <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                O gráfico começa em “Despesas pagas por forma de pagamento”. Use a seleção para
+                alternar entre despesas pagas, despesas pendentes, receitas recebidas e receitas
+                pendentes. Nas pendências, a forma indica como você prevê pagar ou receber.
+              </p>
+            </li>
+            <li>
+              <h3 className="font-semibold">Mantenha o mesmo recorte dos seus filtros</h3>
+              <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                A seleção muda somente esse gráfico e seus dados textuais, respeitando o período, a
+                busca e os filtros globais. Quando a combinação não tem lançamentos, um aviso
+                explica o resultado vazio. O período continua seguindo o vencimento do lançamento, e
+                não a data efetiva do pagamento. Os comparativos mantêm receitas recebidas e
+                despesas pagas nos totais; por categoria ou forma de pagamento, mostram despesas
+                pagas.
+              </p>
+            </li>
+            <li>
+              <h3 className="font-semibold">Confira os mesmos valores em tabela</h3>
+              <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                Título, descrição, total e detalhes acompanham a opção escolhida. Abra “Ver dados
+                por forma em tabela” para consultar os valores e o total sem depender das cores ou
+                de passar o mouse. A seleção funciona por teclado, no celular e no computador, com
+                suporte aos temas claro e escuro.
+              </p>
+            </li>
+          </ul>
+        </article>
+
+        <article
           aria-labelledby="version-1-6-0"
           className="mt-10 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
         >
