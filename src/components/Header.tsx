@@ -1,3 +1,4 @@
+import { ToolsMenu } from './ToolsMenu';
 import React, { useState } from 'react';
 import { PWAInstallButton } from './PWAInstallButton';
 import { ThemeToggle } from './ThemeToggle';
@@ -91,6 +92,7 @@ export const Header: React.FC<HeaderProps> = ({
   // Reutiliza o mesmo grupo de ações nos diferentes tamanhos de tela.
   const renderActions = (_isCompact = false) => (
     <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+      <ToolsMenu />
       <PWAInstallButton />
 
       {/* Botão para alternar a aparência clara e escura. */}
@@ -396,6 +398,7 @@ export const Header: React.FC<HeaderProps> = ({
               )}
             </div>
 
+            <ToolsMenu inline onNavigate={() => setIsMobileMenuOpen(false)} />
             {/* Atalhos de navegação e instalação do aplicativo. */}
             <div className="space-y-1 pt-1 border-t border-slate-200 dark:border-slate-800">
               {onOpenLanding && (

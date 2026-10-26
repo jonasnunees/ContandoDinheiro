@@ -3,6 +3,7 @@
   "rewrites": [
     { "source": "/demo", "destination": "/index.html" },
     { "source": "/termos-de-uso", "destination": "/index.html" },
-    { "source": "/politica-de-privacidade", "destination": "/index.html" }
+    { "source": "/politica-de-privacidade", "destination": "/index.html" },
+    { "source": "/ferramentas/conversor-de-moedas", "destination": "/index.html" }
   ]
 }

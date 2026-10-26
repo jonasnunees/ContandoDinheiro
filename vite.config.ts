@@ -41,6 +41,11 @@ export default defineConfig(() => {
           ],
           runtimeCaching: [
             {
+              // Cotações pertencem exclusivamente ao cache em memória do conversor.
+              urlPattern: /^https:\/\/economia\.awesomeapi\.com\.br\//,
+              handler: 'NetworkOnly',
+            },
+            {
               // O Vite exige o CSS compartilhado ao abrir componentes sob demanda.
               urlPattern: /\/assets\/[^/]+\.css$/,
               handler: 'CacheFirst',

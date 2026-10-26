@@ -19,12 +19,13 @@
     "test:e2e:production": "npm run build && playwright test --config=playwright.production.config.ts",
     "test:budgets": "node --test scripts/budgets.test.mjs",
     "test:categories": "node --test scripts/categories.test.mjs",
-    "test": "npm run test:budgets && npm run test:categories && npm run test:validation && npm run test:finance && npm run test:demo && npm run test:scheduling && npm run test:security && npm run test:auth && npm run test:due-dates && npm run test:duplication",
+    "test": "npm run test:budgets && npm run test:categories && npm run test:validation && npm run test:finance && npm run test:demo && npm run test:scheduling && npm run test:security && npm run test:auth && npm run test:due-dates && npm run test:duplication && npm run test:currency",
     "test:scheduling": "node --test scripts/scheduling.test.mjs",
     "test:demo": "node --test scripts/demo.test.mjs",
     "test:finance": "node --test scripts/finance.test.mjs",
     "test:duplication": "node --test scripts/duplication.test.mjs",
-    "test:due-dates": "node --test scripts/due-dates.test.mjs"
+    "test:due-dates": "node --test scripts/due-dates.test.mjs",
+    "test:currency": "node --test scripts/currency.test.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.2",

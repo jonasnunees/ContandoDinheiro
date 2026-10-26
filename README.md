@@ -201,3 +201,7 @@ Sugestões e contribuições são bem-vindas: abra uma [issue](https://github.co
 ## Licença
 
 Disponível sob a [licença MIT](LICENSE).
+
+## Conversor de moedas
+
+A rota pública `/ferramentas/conversor-de-moedas`, no menu Ferramentas, converte BRL, USD e EUR gratuitamente, sem login e independente dos lançamentos. Usa o endpoint público da [AwesomeAPI](https://docs.awesomeapi.com.br/api-de-moedas), sem chave, consultando USD-BRL e EUR-BRL juntos. Taxas inversas e cruzadas são calculadas dos campos `bid`, sem arredondamento intermediário. A data vem do timestamp da API (a referência mais antiga nos cruzamentos). Cache apenas em memória por 60 segundos, com requisições simultâneas compartilhadas e timeout de 10 segundos. Sem polling ou cache de cotações na PWA. A origem também pode aplicar cache de um minuto às chamadas públicas. Cotação de referência: o valor cobrado pode variar.

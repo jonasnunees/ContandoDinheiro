@@ -1,3 +1,4 @@
+import { ToolsMenu } from './ToolsMenu';
 import React, { useState } from 'react';
 import {
   ArrowRight,
@@ -14,14 +15,13 @@ import {
   Repeat2,
   CreditCard,
   CalendarDays,
-  Github,
   Plus,
 } from 'lucide-react';
 import { FeatureCarousel } from './FeatureCarousel';
 import { GettingStarted } from './GettingStarted';
 import { PWAInstallButton } from './PWAInstallButton';
 import { ThemeToggle } from './ThemeToggle';
-import { LegalLinks } from '../features/legal/LegalLinks';
+import { Footer } from './Footer';
 
 interface LandingPageProps {
   onOpenLogin: () => void;
@@ -103,6 +103,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
           {/* Botões de acesso exibidos em telas maiores. */}
           <div className="hidden sm:flex items-center gap-2 sm:gap-3">
+            <ToolsMenu />
             <ThemeToggle />
             <PWAInstallButton />
 
@@ -184,6 +185,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             id="landing-mobile-menu"
             className="sm:hidden max-w-7xl mx-auto pt-3 pb-2 mt-3 border-t border-slate-200 dark:border-slate-800 space-y-3"
           >
+            <ToolsMenu inline onNavigate={() => setIsMobileMenuOpen(false)} />
             {isLoggedIn ? (
               <div className="p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 min-w-0">
@@ -625,60 +627,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         </section>
       </main>
       {/* Rodapé com informações do aplicativo. */}
-      <footer className="border-t border-slate-200 dark:border-slate-900 bg-white dark:bg-slate-950 py-8 px-4 sm:px-8 text-xs text-slate-600 dark:text-slate-400 transition-colors">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-lg bg-emerald-700 flex items-center justify-center text-white font-bold text-xs">
-              C
-            </div>
-            <span className="font-semibold text-slate-800 dark:text-slate-300">
-              ContandoDinheiro
-            </span>
-            <span>— Gestão Financeira Pessoal Gratuita</span>
-          </div>
-
-          <div className="flex flex-wrap items-center justify-center gap-4 text-slate-500 dark:text-slate-400">
-            <LegalLinks />
-            <a
-              href="#notas-da-versao"
-              className="rounded underline underline-offset-4 hover:text-emerald-700 dark:hover:text-emerald-400"
-            >
-              Notas da versão
-            </a>
-            <a
-              href="https://github.com/jonasnunees/ContandoDinheiro"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded hover:text-emerald-600 dark:hover:text-emerald-400 transition focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-600"
-              aria-label="Projeto no GitHub (abre em uma nova aba)"
-            >
-              <Github className="w-4 h-4 shrink-0" aria-hidden="true" />
-              Projeto no GitHub
-            </a>
-            <span aria-hidden="true">•</span>
-            <button
-              onClick={onOpenLogin}
-              className="hover:text-emerald-600 dark:hover:text-emerald-400 transition cursor-pointer"
-            >
-              Login
-            </button>
-            <span>•</span>
-            <button
-              onClick={onOpenRegister}
-              className="hover:text-emerald-600 dark:hover:text-emerald-400 transition cursor-pointer"
-            >
-              Cadastro
-            </button>
-            <span>•</span>
-            <a
-              href="/demo"
-              className="hover:text-emerald-600 dark:hover:text-emerald-400 transition cursor-pointer"
-            >
-              Acessar Painel
-            </a>
-          </div>
-        </div>
-      </footer>
+      <Footer onOpenLogin={onOpenLogin} onOpenRegister={onOpenRegister} />
     </div>
   );
 };

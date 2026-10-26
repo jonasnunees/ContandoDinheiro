@@ -6,6 +6,9 @@ import { LandingPage } from './components/LandingPage';
 import { AuthModal } from './features/auth/AuthModal';
 import { OfflineIndicator } from './components/OfflineIndicator';
 
+const CurrencyPage = lazy(() => import('./features/currency/CurrencyPage'));
+const isCurrencyPage =
+  window.location.pathname.replace(/\/$/, '') === '/ferramentas/conversor-de-moedas';
 const AccountWorkspace = lazy(() => import('./AccountWorkspace'));
 const LegalPage = lazy(() => import('./features/legal/LegalPage'));
 const legalKind =
@@ -38,17 +41,21 @@ function LoadingScreen() {
 export default function App() {
   const hash = useSyncExternalStore(subscribeToNavigation, () => window.location.hash);
   useEffect(() => {
-    document.title = legalKind
-      ? `${legalKind === 'terms' ? 'Termos de Uso' : 'Política de Privacidade'} — ContandoDinheiro`
-      : hash === '#notas-da-versao'
-        ? 'Notas da versão — ContandoDinheiro'
-        : isDemoPage
-          ? 'Demonstração — ContandoDinheiro'
-          : 'ContandoDinheiro — Gestão Financeira & Controle de Gastos';
+    document.title = isCurrencyPage
+      ? 'Conversor de moedas — ContandoDinheiro'
+      : legalKind
+        ? `${legalKind === 'terms' ? 'Termos de Uso' : 'Política de Privacidade'} — ContandoDinheiro`
+        : hash === '#notas-da-versao'
+          ? 'Notas da versão — ContandoDinheiro'
+          : isDemoPage
+            ? 'Demonstração — ContandoDinheiro'
+            : 'ContandoDinheiro — Gestão Financeira & Controle de Gastos';
   }, [hash]);
   return (
     <Suspense fallback={<LoadingScreen />}>
-      {legalKind ? (
+      {isCurrencyPage ? (
+        <CurrencyPage />
+      ) : legalKind ? (
         <LegalPage kind={legalKind} />
       ) : hash === '#notas-da-versao' ? (
         <ReleaseNotes />
