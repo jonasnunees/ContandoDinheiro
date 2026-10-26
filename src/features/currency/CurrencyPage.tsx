@@ -33,8 +33,8 @@ export default function CurrencyPage() {
   const timestamp = !same && data ? quoteTimestamp(from, to, data) : null;
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
-      <header className="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-4 py-4">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3">
+      <header className="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 py-4">
+        <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
           <a href="/" className="flex items-center gap-2 rounded-lg font-bold">
             <span className="rounded-xl bg-emerald-700 p-2 text-white">
               <DollarSign aria-hidden="true" className="h-5 w-5" />
@@ -47,7 +47,7 @@ export default function CurrencyPage() {
           </div>
         </div>
       </header>
-      <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-10 sm:py-16">
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 sm:px-6 sm:py-16 lg:px-8">
         <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">Conversor de moedas</h1>
         <p className="mt-3 text-slate-600 dark:text-slate-300">
           Consulte o câmbio e converta valores gratuitamente, sem precisar entrar.
