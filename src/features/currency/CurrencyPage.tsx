@@ -12,6 +12,8 @@ import {
   quoteTimestamp,
 } from './calculations';
 import { useQuotes } from './useQuotes';
+import { isCurrency } from './catalog';
+import { CurrencyHistory } from './CurrencyHistory';
 import type { Currency } from './types';
 const AuthModal = lazy(() =>
   import('../auth/AuthModal').then((module) => ({ default: module.AuthModal })),
@@ -24,7 +26,7 @@ export default function CurrencyPage() {
   const [from, setFrom] = useState<Currency>('USD');
   const [to, setTo] = useState<Currency>('BRL');
   const same = from === to;
-  const { data, loading, error, refresh } = useQuotes(!same);
+  const { data, loading, error, refresh } = useQuotes(from, to);
   const number = parseAmount(amount);
   const rate = exchangeRate(from, to, data);
   const result = number !== null && rate !== null ? convert(number, rate) : null;
@@ -82,7 +84,7 @@ export default function CurrencyPage() {
                 id="currency-from"
                 className={field}
                 value={from}
-                onChange={(event) => setFrom(event.target.value as Currency)}
+                onChange={(event) => isCurrency(event.target.value) && setFrom(event.target.value)}
               >
                 {currencies.map((c) => (
                   <option key={c.code} value={c.code}>
@@ -110,7 +112,7 @@ export default function CurrencyPage() {
                 id="currency-to"
                 className={field}
                 value={to}
-                onChange={(event) => setTo(event.target.value as Currency)}
+                onChange={(event) => isCurrency(event.target.value) && setTo(event.target.value)}
               >
                 {currencies.map((c) => (
                   <option key={c.code} value={c.code}>
@@ -187,10 +189,12 @@ export default function CurrencyPage() {
             >
               AwesomeAPI
             </a>
-            . Taxas inversas e cruzadas calculadas a partir das referências de compra (bid) USD/BRL
-            e EUR/BRL. Em conversões cruzadas, exibimos a data da referência mais antiga.
+            . Taxas inversas e cruzadas calculadas a partir das referências de compra (bid) das
+            moedas selecionadas em BRL. Em conversões cruzadas, exibimos a data da referência mais
+            antiga.
           </p>
         </section>
+        <CurrencyHistory from={from} to={to} />
       </main>
       <Footer onOpenLogin={() => setIsAuthOpen(true)} onOpenRegister={() => setIsAuthOpen(true)} />
       {isAuthOpen && (

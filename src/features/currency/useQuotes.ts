@@ -1,31 +1,46 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getQuotes } from './service';
-import type { References } from './types';
-export function useQuotes(enabled: boolean) {
-  const [data, setData] = useState<References>();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+import { requiredReferences } from './catalog';
+import type { Currency, References } from './types';
+export function useQuotes(from: Currency, to: Currency) {
+  const key = requiredReferences(from, to).join(',');
+  const [state, setState] = useState<{
+    key: string;
+    data?: References;
+    loading: boolean;
+    error: string;
+  }>({ key, loading: false, error: '' });
   const version = useRef(0);
   const refresh = useCallback(async () => {
     const id = ++version.current;
-    setLoading(true);
-    setError('');
+    if (from === to) return;
+    setState((previous) => ({
+      key,
+      data: previous.key === key ? previous.data : undefined,
+      loading: true,
+      error: '',
+    }));
     try {
-      const next = await getQuotes();
-      if (id === version.current) setData(next);
+      const data = await getQuotes(requiredReferences(from, to));
+      if (id === version.current) setState({ key, data, loading: false, error: '' });
     } catch (error) {
       if (id === version.current)
-        setError(error instanceof Error ? error.message : 'Não foi possível consultar a cotação.');
-    } finally {
-      if (id === version.current) setLoading(false);
+        setState((previous) => ({
+          ...previous,
+          loading: false,
+          error: error instanceof Error ? error.message : 'Não foi possível consultar a cotação.',
+        }));
     }
-  }, []);
+  }, [from, to, key]);
   const invalidate = useCallback(() => {
     version.current++;
   }, []);
   useEffect(() => {
-    if (enabled) void refresh();
+    void refresh();
     return invalidate;
-  }, [enabled, refresh, invalidate]);
-  return { data, loading, error, refresh };
+  }, [refresh, invalidate]);
+  return {
+    ...(state.key === key ? state : { data: undefined, loading: from !== to, error: '' }),
+    refresh,
+  };
 }

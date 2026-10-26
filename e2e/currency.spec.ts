@@ -2,6 +2,15 @@ import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 const path = '/ferramentas/conversor-de-moedas';
 const api = '**/economia.awesomeapi.com.br/json/last/**';
+const historyApi = '**/economia.awesomeapi.com.br/json/daily/**';
+const historical = [
+  { bid: '5', timestamp: String(Date.parse('2026-10-20T20:00Z') / 1000) },
+  { bid: '4', timestamp: String(Date.parse('2026-10-19T20:00Z') / 1000) },
+];
+test.beforeEach(async ({ page }) => {
+  await page.clock.setFixedTime(new Date('2026-10-26T15:00Z'));
+  await page.route(historyApi, (route) => route.fulfill({ json: historical }));
+});
 const quotes = {
   USDBRL: { code: 'USD', codein: 'BRL', bid: '5', timestamp: '1792950000' },
   EURBRL: { code: 'EUR', codein: 'BRL', bid: '6', timestamp: '1792950010' },
@@ -80,7 +89,7 @@ for (const width of [320, 1280])
       await expect(button).toBeFocused();
       await expect(button).toHaveAttribute('aria-expanded', 'false');
       await button.click();
-      await page.getByRole('heading').click();
+      await page.getByRole('heading', { name: 'Conversor de moedas', exact: true }).click();
       await expect(button).toHaveAttribute('aria-expanded', 'false');
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
         true,
@@ -131,4 +140,165 @@ test('atualização identifica cotação anterior e mantém data em caso de falh
   await expect(page.getByRole('alert')).toContainText('indisponível');
   await expect(page.getByRole('status')).toContainText('Cotação anterior');
   expect(calls).toBe(2);
+});
+
+test('novas moedas, períodos, inversão, tabela e valor local', async ({ page }) => {
+  let current = 0,
+    history = 0;
+  await page.route(api, (route) => {
+    current++;
+    const data = Object.fromEntries(
+      ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'CHF', 'JPY', 'ARS', 'CLP', 'MXN', 'CNY'].map((code) => [
+        `${code}BRL`,
+        { code, codein: 'BRL', bid: code === 'EUR' ? '6' : '5', timestamp: '1792950000' },
+      ]),
+    );
+    return route.fulfill({ json: data });
+  });
+  await page.route(historyApi, (route) => {
+    history++;
+    return route.fulfill({ json: historical });
+  });
+  await page.goto(path);
+  const card = page.getByRole('region', { name: 'Histórico da cotação' });
+  await expect(card.getByRole('img')).toHaveAccessibleName('Histórico de 1 USD em BRL');
+  await expect(page.getByRole('button', { name: '3 meses', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await card.getByText('Ver tabela de datas e taxas').click();
+  await expect(card.getByRole('row')).toHaveCount(3);
+  await expect(card.getByRole('table')).toContainText('20/10/2026');
+  const before = [current, history];
+  await page.getByLabel('Valor', { exact: true }).fill('999');
+  expect([current, history]).toEqual(before);
+  await page.getByRole('button', { name: 'Inverter moedas' }).click();
+  await expect(card.getByRole('img')).toHaveAccessibleName('Histórico de 1 BRL em USD');
+  await card.getByText('Ver tabela de datas e taxas').click();
+  await expect(card.getByRole('table')).toContainText('0,200000');
+  expect(history).toBe(1);
+  await page.getByRole('button', { name: '1 mês', exact: true }).click();
+  await expect(card.getByRole('button', { name: '1 mês', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  expect(history).toBe(1);
+  await page.getByRole('button', { name: '6 meses', exact: true }).click();
+  await expect.poll(() => history).toBe(2);
+  for (const code of ['GBP', 'CAD', 'AUD', 'CHF', 'JPY', 'ARS', 'CLP', 'MXN', 'CNY']) {
+    await page.getByLabel('De', { exact: true }).selectOption(code);
+    await expect(card.getByRole('img')).toHaveAccessibleName(`Histórico de 1 ${code} em USD`);
+  }
+  await page.getByLabel('De', { exact: true }).selectOption('USD');
+  await expect(card).toContainText('taxa constante 1');
+  const same = [current, history];
+  await page.getByRole('button', { name: '3 meses', exact: true }).click();
+  await page.getByLabel('Valor', { exact: true }).fill('2');
+  expect([current, history]).toEqual(same);
+});
+
+test('histórico falha independentemente, recupera e mostra cobertura insuficiente', async ({
+  page,
+}) => {
+  await page.route(api, (route) => route.fulfill({ json: quotes }));
+  await page.route(historyApi, (route) => route.fulfill({ status: 429, json: {} }));
+  await page.goto(path);
+  await expect(page.getByRole('status')).toContainText('5,00');
+  const card = page.getByRole('region', { name: 'Histórico da cotação' });
+  await expect(card.getByRole('alert')).toContainText('Limite');
+  await page.route(historyApi, (route) => route.fulfill({ json: [historical[0]] }));
+  await card.getByRole('button', { name: 'Tentar histórico novamente' }).click();
+  await expect(card).toContainText('Histórico insuficiente');
+  await expect(card.getByRole('img')).toHaveCount(0);
+});
+
+test('cotação falha sem apagar histórico válido', async ({ page }) => {
+  await page.route(api, (route) => route.fulfill({ status: 503, json: {} }));
+  await page.goto(path);
+  await expect(page.getByRole('alert')).toContainText('indisponível');
+  await expect(page.getByRole('img', { name: 'Histórico de 1 USD em BRL' })).toBeVisible();
+});
+
+test('respostas atrasadas não recebem rótulos de outra seleção', async ({ page }) => {
+  let release!: () => void;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  await page.route(api, async (route) => {
+    if (route.request().url().includes('USD-BRL')) await gate;
+    return route.fulfill({ json: quotes });
+  });
+  await page.route(historyApi, async (route) => {
+    if (route.request().url().includes('USD-BRL')) await gate;
+    return route.fulfill({ json: historical });
+  });
+  await page.goto(path);
+  await page.getByLabel('De', { exact: true }).selectOption('EUR');
+  await expect(page.getByRole('status')).toContainText('6,00');
+  await expect(page.getByRole('img')).toHaveAccessibleName('Histórico de 1 EUR em BRL');
+  release();
+  await expect(page.getByRole('status')).toContainText('6,00');
+  await expect(page.getByRole('img')).toHaveAccessibleName('Histórico de 1 EUR em BRL');
+});
+
+test('toque e alternativa textual disponíveis em tela móvel', async ({ browser }) => {
+  const context = await browser.newContext({
+    viewport: { width: 320, height: 800 },
+    hasTouch: true,
+  });
+  const page = await context.newPage();
+  await page.clock.setFixedTime(new Date('2026-10-26T15:00Z'));
+  await page.route(api, (route) => route.fulfill({ json: quotes }));
+  await page.route(historyApi, (route) => route.fulfill({ json: historical }));
+  await page.goto(path);
+  await page.getByText('Ver tabela de datas e taxas').tap();
+  await expect(page.getByRole('table')).toBeVisible();
+  await page.getByRole('button', { name: '1 mês', exact: true }).tap();
+  await expect(page.getByRole('button', { name: '1 mês', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await context.close();
+});
+
+test('histórico preserva a seleção e identifica dados anteriores em falha de atualização', async ({
+  page,
+}) => {
+  await page.route(api, (route) => route.fulfill({ json: quotes }));
+  await page.goto(path);
+  const card = page.getByRole('region', { name: 'Histórico da cotação' });
+  await expect(card.getByRole('img')).toBeVisible();
+  await page.clock.install();
+  await page.clock.fastForward(3600001);
+  await page.route(historyApi, (route) => route.fulfill({ status: 503, json: {} }));
+  await card.getByRole('button', { name: 'Atualizar histórico' }).click();
+  await expect(card.getByRole('alert')).toContainText('indisponível');
+  await expect(card).toContainText('Histórico anterior, consultado em');
+  await expect(card.getByRole('img')).toBeVisible();
+  await page.route(historyApi, (route) =>
+    route.fulfill({ json: [...historical, { bid: 'x', timestamp: 'bad' }] }),
+  );
+  await card.getByRole('button', { name: 'Tentar histórico novamente' }).click();
+  await expect(card).toContainText('Cobertura parcial');
+  await expect(card.getByRole('alert')).toHaveCount(0);
+});
+
+test('troca rápida de período descarta histórico antigo', async ({ page }) => {
+  await page.route(api, (route) => route.fulfill({ json: quotes }));
+  let release!: () => void;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  await page.route(historyApi, async (route) => {
+    const url = route.request().url();
+    if (url.includes('start_date=20260726')) await gate;
+    return route.fulfill({ json: url.includes('start_date=20260426') ? historical : [] });
+  });
+  await page.goto(path);
+  await page.getByRole('button', { name: '6 meses', exact: true }).click();
+  const card = page.getByRole('region', { name: 'Histórico da cotação' });
+  await expect(card.getByRole('img')).toBeVisible();
+  release();
+  await expect(card.getByRole('img')).toBeVisible();
+  await expect(card).not.toContainText('Histórico insuficiente');
 });

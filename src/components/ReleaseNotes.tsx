@@ -82,6 +82,23 @@ export function ReleaseNotes() {
         </p>
 
         <article
+          aria-labelledby="version-1-8-0"
+          className="mt-10 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8"
+        >
+          <h2 id="version-1-8-0" className="text-2xl font-bold">
+            Versão 1.8.0
+          </h2>
+          <p className="mt-3 text-sm text-slate-600">
+            <time dateTime="2026-10-26">26 de outubro de 2026</time>
+          </p>
+          <h3 className="mt-4 font-semibold">Mais moedas e histórico da cotação</h3>
+          <p className="mt-2 text-slate-700">
+            Converta entre 12 moedas gratuitamente, sem login. Consulte referências diárias dos
+            últimos 1, 3 ou 6 meses em um gráfico com tabela acessível. Taxas cruzadas usam somente
+            datas comuns e as falhas de histórico e cotação são independentes.
+          </p>
+        </article>
+        <article
           aria-labelledby="version-1-7-0"
           className="mt-10 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
         >

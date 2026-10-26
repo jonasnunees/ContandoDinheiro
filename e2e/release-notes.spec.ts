@@ -12,7 +12,7 @@ test('notas públicas em modo claro com navegação e preferência de tema prese
   await expect(page.getByRole('heading', { name: 'Versão 1.0', exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Versão 1.0.1', exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Versão 1.1.0', exact: true })).toBeVisible();
-  await expect(page.locator('article').first()).toHaveAccessibleName('Versão 1.7.0');
+  await expect(page.locator('article').first()).toHaveAccessibleName('Versão 1.8.0');
   const currency = page.getByRole('article', { name: 'Versão 1.7.0', exact: true });
   await expect(currency).toContainText('AwesomeAPI');
   await expect(currency).toContainText('Ferramentas');
@@ -40,7 +40,7 @@ test('notas públicas em modo claro com navegação e preferência de tema prese
   ).toHaveAttribute('href', 'https://contando-dinheiro.vercel.app/demo');
   await expect(page.locator('article').first().locator('time')).toHaveAttribute(
     'datetime',
-    '2026-10-25',
+    '2026-10-26',
   );
   await expect(
     page

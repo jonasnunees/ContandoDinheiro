@@ -36,6 +36,9 @@ export default defineConfig(() => {
           globIgnores: [
             '**/AccountWorkspace-*.js',
             '**/FinancialCharts-*.js',
+            '**/CurrencyChart-*.js',
+            '**/chart-*.js',
+            '**/CurrencyPage-*.js',
             '**/ReleaseNotes-*.js',
             '**/*.css',
           ],
@@ -52,7 +55,8 @@ export default defineConfig(() => {
               options: { cacheName: 'app-styles', expiration: { maxEntries: 5 } },
             },
             {
-              urlPattern: /\/assets\/(?:AccountWorkspace|FinancialCharts|ReleaseNotes)-[^/]+\.js$/,
+              urlPattern:
+                /\/assets\/(?:AccountWorkspace|FinancialCharts|ReleaseNotes|CurrencyChart|CurrencyPage|chart)-[^/]+\.js$/,
               handler: 'CacheFirst',
               options: { cacheName: 'optional-screens', expiration: { maxEntries: 10 } },
             },
