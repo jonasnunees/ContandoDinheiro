@@ -88,7 +88,9 @@ test('fluxo demonstrativo acessível: teclado, valores, gráficos e persistênci
   await page.getByRole('textbox', { name: 'Buscar transações' }).fill('Teste de acessibilidade');
   await expect(page.getByRole('cell', { name: /1.234,56/ }).first()).toBeVisible();
   await page.reload();
-  await expect(page.getByText('Teste de acessibilidade', { exact: true }).first()).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: 'Editar Teste de acessibilidade', exact: true }).first(),
+  ).toBeVisible();
   await expect(
     page.getByRole('table', { name: 'Valores agregados dos gráficos financeiros' }),
   ).toBeAttached();
@@ -111,7 +113,9 @@ test('painel em celular e tema claro mantém nomes acessíveis', async ({ page }
   await page
     .getByRole('textbox', { name: 'Buscar transações' })
     .fill('Nenhum lançamento com este nome');
-  await expect(page.getByText('Nenhuma transação encontrada', { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Nenhum lançamento corresponde aos filtros', exact: true }),
+  ).toBeVisible();
   const emptyResults = await new AxeBuilder({ page }).analyze();
   expect(
     emptyResults.violations.map((v) => ({ id: v.id, nodes: v.nodes.map((n) => n.html) })),

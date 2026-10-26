@@ -89,7 +89,7 @@ test('configurações dos gráficos preservam tema, valores, tooltips e moviment
   const {
     createCategoryChartConfig,
     createPaymentChartConfig,
-    createCashflowChartConfig,
+    createMonthlyCashflowChartConfig,
     CATEGORY_PALETTE,
   } = await import('../src/features/finance/components/financialChartConfig.ts');
   const previousWindow = globalThis.window;
@@ -107,7 +107,10 @@ test('configurações dos gráficos preservam tema, valores, tooltips e moviment
           isLight,
         );
         const payment = createPaymentChartConfig({ Pix: 67.89, Desconhecido: 2 }, isLight);
-        const cashflow = createCashflowChartConfig(100, 12.34, isLight);
+        const cashflow = createMonthlyCashflowChartConfig(
+          [{ label: 'Out', totalEntradas: 100, totalSaidas: 12.34 }],
+          isLight,
+        );
         assert.deepEqual(category.data.labels, ['Alimentação', 'Desconhecida']);
         assert.deepEqual(category.data.datasets[0].data, [12.34, 5]);
         assert.deepEqual(category.data.datasets[0].backgroundColor, [
@@ -118,7 +121,11 @@ test('configurações dos gráficos preservam tema, valores, tooltips e moviment
         assert.deepEqual(payment.data.datasets[0].data, [67.89, 2]);
         assert.deepEqual(payment.data.datasets[0].backgroundColor, ['#10b981', '#64748b']);
         assert.equal(payment.data.datasets[0].borderSkipped, false);
-        assert.deepEqual(cashflow.data.datasets[0].data, [100, 12.34]);
+        assert.deepEqual(cashflow.data.labels, ['Out']);
+        assert.deepEqual(
+          cashflow.data.datasets.map((dataset) => dataset.data),
+          [[100], [12.34]],
+        );
         assert.equal(category.options.cutout, '68%');
         assert.equal(
           category.options.plugins.tooltip.callbacks.label({ label: 'Alimentação', raw: 12.34 }),
@@ -128,7 +135,13 @@ test('configurações dos gráficos preservam tema, valores, tooltips e moviment
           payment.options.plugins.tooltip.callbacks.label({ raw: 67.89 }),
           ' Total: R$ 67,89',
         );
-        assert.equal(cashflow.options.plugins.tooltip.callbacks.label({ raw: 100 }), ' R$ 100,00');
+        assert.equal(
+          cashflow.options.plugins.tooltip.callbacks.label({
+            dataset: { label: 'Receitas recebidas' },
+            raw: 100,
+          }),
+          `Receitas recebidas: ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(100)}`,
+        );
         assert.equal(payment.options.scales.x.ticks.font.size, 10);
         assert.equal(cashflow.options.scales.x.ticks.font, undefined);
         for (const config of [category, payment, cashflow]) {

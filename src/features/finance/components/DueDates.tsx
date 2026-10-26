@@ -1,3 +1,4 @@
+import { formatCurrency } from '../formatCurrency';
 import { useState } from 'react';
 import {
   ArrowRight,
@@ -13,8 +14,6 @@ import type { Transaction } from '../types';
 import { dueGroups, overdueDays } from '../dueDates';
 import { localDate } from '../validation';
 
-const currency = (value: number) =>
-  value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 const styles = [
   {
     icon: TriangleAlert,
@@ -93,7 +92,7 @@ export function DueDates({
                   </span>
                 </div>
                 <p className="mt-3 text-2xl font-bold tracking-tight text-slate-900 tabular-nums dark:text-white">
-                  {currency(
+                  {formatCurrency(
                     group.rows.reduce((sum, tx) => sum + Math.round(tx.valor * 100), 0) / 100,
                   )}
                 </p>
@@ -164,7 +163,7 @@ export function DueDates({
                             </p>
                           </div>
                           <p className="ml-auto text-sm font-bold text-slate-900 tabular-nums dark:text-white">
-                            {currency(tx.valor)}
+                            {formatCurrency(tx.valor)}
                           </p>
                           <button
                             type="button"

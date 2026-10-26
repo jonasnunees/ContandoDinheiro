@@ -1,5 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import { readStorage, writeStorage } from './storage';
+import { readStorage } from './storage';
 const STORAGE_KEYS = { SUPABASE_URL: 'gf_supabase_url', SUPABASE_ANON_KEY: 'gf_supabase_anon_key' };
 
 let supabaseClient: SupabaseClient | null = null;
@@ -49,24 +49,6 @@ export function validateSupabaseCredentials(url: string, key: string): void {
   throw new Error(
     'Use somente a chave pública anon ou publishable; chaves secretas não são permitidas.',
   );
-}
-
-// Salva ou remove a configuração local e atualiza a conexão reutilizada pela aplicação.
-export function setSupabaseCredentials(url: string, key: string) {
-  if (import.meta.env.VITE_SUPABASE_URL || import.meta.env.VITE_SUPABASE_ANON_KEY) {
-    throw new Error('A conexão deste ambiente é definida pela configuração da aplicação.');
-  }
-  if (url || key) {
-    validateSupabaseCredentials(url.trim(), key.trim());
-    const nextClient = createClient(url.trim(), key.trim());
-    writeStorage(STORAGE_KEYS.SUPABASE_URL, url.trim());
-    writeStorage(STORAGE_KEYS.SUPABASE_ANON_KEY, key.trim());
-    supabaseClient = nextClient;
-  } else {
-    localStorage.removeItem(STORAGE_KEYS.SUPABASE_URL);
-    localStorage.removeItem(STORAGE_KEYS.SUPABASE_ANON_KEY);
-    supabaseClient = null;
-  }
 }
 
 // Indica se a configuração tem formato válido; isso não testa a conexão pela internet.

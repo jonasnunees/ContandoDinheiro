@@ -1,3 +1,4 @@
+import { formatCurrency } from '../formatCurrency';
 import { useCategories } from '../CategoryContext';
 import {
   CATEGORY_PALETTE,
@@ -236,8 +237,6 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({
       item.year > now.getFullYear() ||
       (item.year === now.getFullYear() && item.month > now.getMonth()),
   );
-  const money = (value: number) =>
-    value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   const legendMonth =
     comparisonMonths.find((month) => month.label === legendMonthLabel) ??
     comparisonMonths.find(
@@ -490,7 +489,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({
             Período do cabeçalho, por vencimento; busca e filtros globais aplicados.
           </p>
           <p className="mt-2 text-sm font-semibold" aria-live="polite">
-            {paymentComposition.label}: {money(paymentComposition.total)}
+            {paymentComposition.label}: {formatCurrency(paymentComposition.total)}
           </p>
           <div className="h-[300px] relative flex items-center justify-center mt-3">
             {paymentComposition.count === 0 ? (
@@ -505,7 +504,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({
               <canvas
                 ref={paymentCanvasRef}
                 role="img"
-                aria-label={`${paymentComposition.title}. Total: ${money(paymentComposition.total)}. Dados na tabela abaixo.`}
+                aria-label={`${paymentComposition.title}. Total: ${formatCurrency(paymentComposition.total)}. Dados na tabela abaixo.`}
               />
             )}
           </div>
@@ -525,14 +524,14 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({
                 {Object.entries(paymentTotals).map(([label, value]) => (
                   <tr key={label}>
                     <th scope="row">{label}</th>
-                    <td>{money(value)}</td>
+                    <td>{formatCurrency(value)}</td>
                   </tr>
                 ))}
               </tbody>
               <tfoot>
                 <tr>
                   <th scope="row">Total</th>
-                  <td>{money(paymentComposition.total)}</td>
+                  <td>{formatCurrency(paymentComposition.total)}</td>
                 </tr>
               </tfoot>
             </table>
@@ -740,7 +739,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({
                       />
                       <span className="min-w-0 flex-1">{label}</span>
                       <span className="font-semibold tabular-nums whitespace-nowrap">
-                        {money(value)}
+                        {formatCurrency(value)}
                       </span>
                     </button>
                   );
@@ -793,7 +792,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({
                     />
                     <span className="flex-1 text-slate-600 dark:text-slate-300">{row.label}</span>
                     <span className="font-semibold tabular-nums whitespace-nowrap text-slate-900 dark:text-white">
-                      {money(row.value)}
+                      {formatCurrency(row.value)}
                     </span>
                   </div>
                 ))}
@@ -834,7 +833,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({
                         <th scope="row">{category}</th>
                         {chartMonths.map((month) => (
                           <td key={month.label}>
-                            {money(
+                            {formatCurrency(
                               comparisonMode === 'totals'
                                 ? category === 'Receitas recebidas'
                                   ? month.totalEntradas
@@ -880,7 +879,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({
                   <th scope="row" className="font-normal">
                     {label}
                   </th>
-                  <td>{value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+                  <td>{formatCurrency(value)}</td>
                 </tr>
               ))}
             </tbody>

@@ -1,3 +1,4 @@
+import { formatCurrency } from '../formatCurrency';
 import { occurrenceLabel } from '../scheduling';
 import { localDate } from '../validation';
 import React, { useState, useRef, useEffect } from 'react';
@@ -122,14 +123,6 @@ export const TransactionList: React.FC<TransactionListProps> = ({
       pending.current.delete(id);
       setBusyIds(new Set(pending.current));
     }
-  };
-
-  // Formata valores em reais usando a escrita brasileira, como R$ 1.234,56.
-  const formatCurrency = (val: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(val);
   };
 
   // Reorganiza o texto da data para dia/mês/ano, sem conversão de fuso horário.

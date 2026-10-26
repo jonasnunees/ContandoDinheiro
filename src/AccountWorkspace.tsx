@@ -8,7 +8,7 @@ import { DueDates } from './features/finance/components/DueDates';
 import { DemoGuide } from './features/finance/components/DemoGuide';
 import { MonthlyBudgets } from './features/finance/components/MonthlyBudgets';
 import { budgetStorageKey } from './features/finance/budgets';
-import React, { lazy, Suspense, useState, useMemo, useEffect, useRef } from 'react';
+import { lazy, Suspense, useState, useMemo, useEffect, useRef } from 'react';
 import type { Transaction, TransactionFormIntent, FilterState } from './features/finance/types';
 import type { AppUser } from './features/auth/session';
 import { useTransactions } from './features/finance/useTransactions';

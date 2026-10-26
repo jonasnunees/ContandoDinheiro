@@ -1,3 +1,4 @@
+import { formatCurrency } from '../formatCurrency';
 import React from 'react';
 import { SummaryStats } from '../types';
 import {
@@ -15,14 +16,6 @@ interface SummaryCardsProps {
 }
 
 export const SummaryCards: React.FC<SummaryCardsProps> = ({ stats }) => {
-  // Os totais vêm prontos do App; aqui formatamos os valores em reais para exibição.
-  const formatCurrency = (val: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(val);
-  };
-
   // Escolhe a aparência do saldo conforme ele esteja positivo/zerado ou negativo.
   const isSaldoPositive = stats.saldoAtual >= 0;
 

@@ -188,16 +188,17 @@ test('conexão rejeita HTTP, destino externo e chaves privilegiadas', async () =
 });
 
 test('configuração de produção ignora alterações no navegador', async () => {
-  const { service } = await loadServices({
+  const { service, storage } = await loadServices({
     env: {
       VITE_SUPABASE_URL: 'https://production.supabase.co',
       VITE_SUPABASE_ANON_KEY: 'sb_publishable_production',
     },
   });
   assert.equal(service.getSupabaseCredentials().url, 'https://production.supabase.co');
-  assert.throws(() =>
-    service.setSupabaseCredentials('https://example.supabase.co', 'sb_publishable_test'),
-  );
+  storage.set('gf_supabase_url', 'https://other.supabase.co');
+  storage.set('gf_supabase_anon_key', 'sb_publishable_other');
+  assert.equal(service.getSupabaseCredentials().url, 'https://production.supabase.co');
+  assert.equal(service.getSupabaseCredentials().key, 'sb_publishable_production');
 });
 
 test('CRUD real exige sessão e não usa armazenamento demo como fallback', async () => {

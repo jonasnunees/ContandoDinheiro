@@ -1,10 +1,8 @@
+import { formatCurrency } from '../formatCurrency';
 import { useCategories } from '../CategoryContext';
 import { useState } from 'react';
 import { type Category, type Transaction } from '../types';
 import { monthlySpending, readBudgets, saveBudgets } from '../budgets';
-
-const money = (value: number) =>
-  value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
 export function MonthlyBudgets({
   storageKey,
@@ -187,7 +185,7 @@ export function MonthlyBudgets({
                       </div>
                     </div>
                     <p className="text-xs">
-                      {money(used)} utilizados de {money(limit)}
+                      {formatCurrency(used)} utilizados de {formatCurrency(limit)}
                     </p>
                     <div
                       role="progressbar"
@@ -195,7 +193,7 @@ export function MonthlyBudgets({
                       aria-valuemin={0}
                       aria-valuemax={limit}
                       aria-valuenow={Math.min(used, limit)}
-                      aria-valuetext={`${money(used)} utilizados de ${money(limit)}`}
+                      aria-valuetext={`${formatCurrency(used)} utilizados de ${formatCurrency(limit)}`}
                       className="h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700"
                     >
                       <div
@@ -207,10 +205,10 @@ export function MonthlyBudgets({
                       className={`text-xs ${remaining < 0 ? 'text-rose-700 dark:text-rose-300' : 'text-slate-600 dark:text-slate-300'}`}
                     >
                       {remaining < 0
-                        ? `Limite ultrapassado em ${money(-remaining)}`
+                        ? `Limite ultrapassado em ${formatCurrency(-remaining)}`
                         : remaining === 0
                           ? 'Limite atingido.'
-                          : `${money(remaining)} restantes`}
+                          : `${formatCurrency(remaining)} restantes`}
                     </p>
                   </div>
                 );

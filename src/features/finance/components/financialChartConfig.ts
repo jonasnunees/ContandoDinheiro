@@ -1,3 +1,4 @@
+import { formatCurrency } from '../formatCurrency.ts';
 import type { ChartConfiguration, ChartOptions } from 'chart.js';
 
 const initialPalette: Record<string, string> = {
@@ -153,28 +154,6 @@ export function createPaymentChartConfig(
   };
 }
 
-export function createCashflowChartConfig(
-  totalEntradas: number,
-  totalSaidas: number,
-  isLight: boolean,
-): ChartConfiguration<'bar', number[]> {
-  return {
-    type: 'bar',
-    data: {
-      labels: ['Entradas', 'Saídas'],
-      datasets: [
-        {
-          label: 'Total (R$)',
-          data: [totalEntradas, totalSaidas],
-          backgroundColor: ['#10b981', '#f43f5e'],
-          borderRadius: 8,
-        },
-      ],
-    },
-    options: barOptions(isLight, ' R$ '),
-  };
-}
-
 function monthlyLineConfig(
   labels: string[],
   series: { label: string; data: number[]; color: string }[],
@@ -214,7 +193,7 @@ function monthlyLineConfig(
         tooltip: {
           callbacks: {
             label: (context) =>
-              `${context.dataset.label}: ${(context.raw as number).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`,
+              `${context.dataset.label}: ${formatCurrency(context.raw as number)}`,
           },
         },
       },

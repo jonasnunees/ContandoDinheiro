@@ -1,6 +1,6 @@
-import { type Category, type Transaction } from './types';
-import { groupTransactionValues, matchesTransactionPeriod } from './calculations';
-import { readStorage, writeStorage } from '../../services/storage';
+import type { Category, Transaction } from './types';
+import { groupTransactionValues, matchesTransactionPeriod } from './calculations.ts';
+import { readStorage, writeStorage } from '../../services/storage.ts';
 
 export type Budgets = Partial<Record<Category, number>>;
 

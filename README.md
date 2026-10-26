@@ -94,9 +94,10 @@ O arquivamento preserva lançamentos, orçamentos e séries; novas transações 
 categorias ativas. Ao editar o histórico, a categoria arquivada pode ser mantida.
 A demonstração mantém essas alterações somente no navegador.
 
-A modelagem, o mapeamento dos usos, a ordem de migrações/publicação, os testes e as
-limitações estão em [Categorias por conta](CATEGORIES.md). A migração de categorias
-deve preceder a publicação do frontend; não foi aplicada em produção nesta tarefa.
+As [migrações do banco](supabase/migrations) devem ser aplicadas antes da publicação
+do frontend que depende delas. As regras de categorias são verificadas pelos
+[testes de categorias](scripts/categories.test.mjs) e pelos
+[testes de navegador](e2e/categories.spec.ts).
 
 ## Decisões de engenharia
 
@@ -131,7 +132,7 @@ e2e/                 # Fluxos de navegador, acessibilidade e versão compilada
 scripts/             # Testes de regras, segurança e autenticação
 ```
 
-A avaliação de manutenção, as melhorias aplicadas e as convenções para novas alterações estão em [Qualidade do código](CODE_QUALITY.md).
+A manutenção é verificada pela análise de tipos, pelo ESLint, pelo Prettier e pelos testes automatizados definidos no [package.json](package.json) e na [integração contínua](.github/workflows/ci.yml).
 
 ### Tecnologias
 
