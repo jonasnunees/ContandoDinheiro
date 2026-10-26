@@ -28,6 +28,6 @@ export function formatMoney(value: number, currency: Currency, rate = false): st
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency,
-    ...(rate ? { minimumSignificantDigits: 6, maximumSignificantDigits: 8 } : {}),
+    ...(rate ? { minimumFractionDigits: 2, maximumFractionDigits: 2 } : {}),
   }).format(value);
 }

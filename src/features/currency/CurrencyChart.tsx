@@ -1,4 +1,7 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
+import { ChartTooltip } from '../../components/charts/ChartTooltip';
+import { useChartTooltip } from '../../components/charts/useChartTooltip';
+import type { TooltipModel } from 'chart.js';
 import {
   Chart,
   LineController,
@@ -24,6 +27,12 @@ export default function CurrencyChart({
 }) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const { theme } = useTheme();
+  const { tooltip, tooltipRef, showTooltip, closeTooltip } = useChartTooltip();
+  const showChartTooltip = useCallback(
+    (context: { chart: Chart; tooltip: TooltipModel<'line'> }) =>
+      showTooltip(context, 'Histórico da cotação'),
+    [showTooltip],
+  );
   useEffect(() => {
     if (!canvas.current) return;
     const values = new Map(points.map((p) => [p.date, p.bid]));
@@ -56,6 +65,7 @@ export default function CurrencyChart({
         responsive: true,
         maintainAspectRatio: false,
         animation: false,
+        interaction: { mode: 'index', intersect: false },
         scales: {
           x: { ticks: { color: text, maxTicksLimit: 6 }, grid: { display: false } },
           y: {
@@ -65,21 +75,35 @@ export default function CurrencyChart({
         },
         plugins: {
           tooltip: {
-            callbacks: { label: (context) => formatMoney(context.parsed.y ?? 0, to, true) },
+            enabled: false,
+            external: showChartTooltip,
           },
         },
       },
     });
-    return () => chart.destroy();
-  }, [points, from, to, theme]);
+    return () => {
+      chart.destroy();
+      closeTooltip();
+    };
+  }, [points, from, to, theme, showChartTooltip, closeTooltip]);
   return (
-    <div className="relative h-72 min-w-0">
-      <canvas
-        ref={canvas}
-        role="img"
-        aria-label={`Histórico de 1 ${from} em ${to}`}
-        aria-describedby="history-description"
-      />
-    </div>
+    <>
+      <div className="relative h-72 min-w-0">
+        <canvas
+          ref={canvas}
+          role="img"
+          aria-label={`Histórico de 1 ${from} em ${to}`}
+          aria-describedby="history-description"
+        />
+      </div>
+      {tooltip && (
+        <ChartTooltip
+          data={tooltip}
+          tooltipRef={tooltipRef}
+          formatValue={(value) => formatMoney(value, to, true)}
+          onClose={closeTooltip}
+        />
+      )}
+    </>
   );
 }

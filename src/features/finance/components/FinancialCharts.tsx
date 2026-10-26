@@ -1,3 +1,5 @@
+import { ChartTooltip } from '../../../components/charts/ChartTooltip';
+import { useChartTooltip } from '../../../components/charts/useChartTooltip';
 import { formatCurrency } from '../formatCurrency';
 import { useCategories } from '../CategoryContext';
 import {
@@ -55,15 +57,6 @@ ChartJS.register(
   BarController,
 );
 
-interface ChartTooltip {
-  heading: string;
-  title: string;
-  rows: { label: string; value: number; color: string }[];
-  left: number;
-  top: number;
-  width: number;
-}
-
 interface FinancialChartsProps {
   comparisonRange: ComparisonRange;
   onComparisonRangeChange: (range: ComparisonRange) => void;
@@ -84,8 +77,8 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({
   const { categories } = useCategories();
   const categoryNames = useMemo(() => categories.map((c) => c.name), [categories]);
   const { theme } = useTheme();
-  const [tooltip, setTooltip] = useState<ChartTooltip | null>(null);
-  const tooltipRef = useRef<HTMLDivElement | null>(null);
+  const { tooltip, tooltipRef, showTooltip, closeTooltip } = useChartTooltip();
+
   const [legendMonthLabel, setLegendMonthLabel] = useState<string | null>(null);
   const [hiddenGroups, setHiddenGroups] = useState<Record<string, boolean>>({});
   const [comparisonMode, setComparisonMode] = useState('totals');
@@ -119,47 +112,18 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({
       chart: ChartJS;
       tooltip: TooltipModel<T>;
     }) => {
-      if (!model.opacity) {
-        if (!tooltipRef.current?.matches(':hover')) setTooltip(null);
-        return;
-      }
       const chartType = 'type' in chart.config ? chart.config.type : undefined;
-      const rect = chart.canvas.getBoundingClientRect();
-      const width = Math.min(320, window.innerWidth - 32);
-      const rows = model.dataPoints.map((point, index) => ({
-        label:
-          chartType === 'line'
-            ? (chart.data.datasets[point.datasetIndex]?.label ?? '')
-            : point.label,
-        value: point.raw as number,
-        color: String(model.labelColors[index]?.backgroundColor ?? '#94a3b8'),
-      }));
-      const height = Math.min(360, window.innerHeight - 32, 80 + rows.length * 36);
-      const x = rect.left + model.caretX;
-      const y = rect.top + model.caretY;
-      setTooltip({
-        heading:
-          chartType === 'line'
-            ? 'Resumo do mês'
-            : chartType === 'doughnut'
-              ? 'Despesas por categoria'
-              : (chart.data.datasets[0]?.label ?? 'Forma de pagamento'),
-        title: model.title.join(' '),
-        rows,
-        width,
-        left: Math.max(16, Math.min(window.innerWidth - width - 16, x - width / 2)),
-        top: Math.max(
-          16,
-          Math.min(
-            window.innerHeight - height - 16,
-            y - height - 16 > 16 ? y - height - 16 : y + 16,
-          ),
-        ),
-      });
+      showTooltip(
+        { chart, tooltip: model },
+        chartType === 'line'
+          ? 'Resumo do mês'
+          : chartType === 'doughnut'
+            ? 'Despesas por categoria'
+            : (chart.data.datasets[0]?.label ?? 'Forma de pagamento'),
+      );
     },
-    [],
+    [showTooltip],
   );
-
   // Categorias e comparação usam despesas pagas; a seleção das barras é local.
   const expenses = useMemo(
     () => transactions.filter((t) => t.tipo === 'despesa' && t.status === 'pago'),
@@ -271,29 +235,6 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({
               ? '#c2410c'
               : '#fb923c',
         }));
-
-  useEffect(() => {
-    const dismiss = (event: Event) => {
-      if (
-        event.target instanceof Node &&
-        (categoryCanvasRef.current?.contains(event.target) ||
-          paymentCanvasRef.current?.contains(event.target) ||
-          cashflowCanvasRef.current?.contains(event.target) ||
-          tooltipRef.current?.contains(event.target))
-      )
-        return;
-      setTooltip(null);
-    };
-    const resize = () => setTooltip(null);
-    document.addEventListener('pointerdown', dismiss);
-    document.addEventListener('scroll', dismiss, true);
-    window.addEventListener('resize', resize);
-    return () => {
-      document.removeEventListener('pointerdown', dismiss);
-      document.removeEventListener('scroll', dismiss, true);
-      window.removeEventListener('resize', resize);
-    };
-  }, []);
 
   // Recria o gráfico de categorias quando os gastos ou as cores do tema mudam.
   useEffect(() => {
@@ -473,7 +414,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({
             <select
               value={paymentView}
               onChange={(event) => {
-                setTooltip(null);
+                closeTooltip();
                 setPaymentView(event.target.value as PaymentView);
               }}
               className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-2 focus-visible:outline-2 focus-visible:outline-orange-500"
@@ -727,7 +668,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({
                       type="button"
                       aria-pressed={!hiddenGroups[key]}
                       onClick={() => {
-                        setTooltip(null);
+                        closeTooltip();
                         setHiddenGroups((previous) => ({ ...previous, [key]: !previous[key] }));
                       }}
                       className={`flex items-center gap-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 px-3 py-2 text-xs text-left text-slate-700 dark:text-slate-200 ${hiddenGroups[key] ? 'opacity-50 line-through' : ''}`}
@@ -748,56 +689,12 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({
             </div>
           )}
           {tooltip && (
-            <div
-              ref={tooltipRef}
-              role="tooltip"
-              aria-label={`Detalhes de ${tooltip.title}`}
-              style={{
-                position: 'fixed',
-                left: tooltip.left,
-                top: tooltip.top,
-                width: tooltip.width,
-                maxHeight: 'min(360px, calc(100dvh - 32px))',
-              }}
-              className="z-[80] overflow-y-auto rounded-2xl border border-slate-200/80 dark:border-slate-700/80 bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl shadow-2xl ring-1 ring-black/5 dark:ring-white/5"
-            >
-              <div className="flex items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 px-4 py-3">
-                <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400">
-                    {tooltip.heading}
-                  </p>
-                  <p className="mt-0.5 text-sm font-semibold text-slate-900 dark:text-white">
-                    {tooltip.title}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  aria-label="Fechar detalhes do gráfico"
-                  onClick={() => setTooltip(null)}
-                  className="h-8 w-8 rounded-full bg-slate-100 dark:bg-slate-800 text-lg text-slate-500 dark:text-slate-300"
-                >
-                  ×
-                </button>
-              </div>
-              <div className="space-y-1 p-2">
-                {tooltip.rows.map((row) => (
-                  <div
-                    key={row.label}
-                    className="flex items-center gap-2 rounded-lg px-2 py-2 text-xs"
-                  >
-                    <span
-                      aria-hidden="true"
-                      className="h-2 w-2 shrink-0 rounded-full"
-                      style={{ backgroundColor: row.color }}
-                    />
-                    <span className="flex-1 text-slate-600 dark:text-slate-300">{row.label}</span>
-                    <span className="font-semibold tabular-nums whitespace-nowrap text-slate-900 dark:text-white">
-                      {formatCurrency(row.value)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <ChartTooltip
+              data={tooltip}
+              tooltipRef={tooltipRef}
+              formatValue={formatCurrency}
+              onClose={closeTooltip}
+            />
           )}
           {hasFlow && (
             <div className="sr-only">

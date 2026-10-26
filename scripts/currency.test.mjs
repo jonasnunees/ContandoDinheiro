@@ -155,7 +155,8 @@ test('catálogo fiduciário, referências e precisão própria da moeda', () => 
   }
   assert.match(formatMoney(12.5, 'JPY'), /13/);
   assert.match(formatMoney(12.5, 'CLP'), /13/);
-  assert.match(formatMoney(0.00000123, 'BRL', true), /0,00000123/);
+  assert.match(formatMoney(5, 'BRL', true), /5,00$/);
+  assert.match(formatMoney(5.126, 'BRL', true), /5,13$/);
   assert.equal(exchangeRate('JPY', 'BRL', {}), null);
 });
 test('meses de calendário, finais de mês e bissextos', () => {

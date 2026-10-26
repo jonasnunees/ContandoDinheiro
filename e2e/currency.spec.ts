@@ -175,7 +175,7 @@ test('novas moedas, períodos, inversão, tabela e valor local', async ({ page }
   await page.getByRole('button', { name: 'Inverter moedas' }).click();
   await expect(card.getByRole('img')).toHaveAccessibleName('Histórico de 1 BRL em USD');
   await card.getByText('Ver tabela de datas e taxas').click();
-  await expect(card.getByRole('table')).toContainText('0,200000');
+  await expect(card.getByRole('table')).toContainText('0,20');
   expect(history).toBe(1);
   await page.getByRole('button', { name: '1 mês', exact: true }).click();
   await expect(card.getByRole('button', { name: '1 mês', exact: true })).toHaveAttribute(
@@ -302,3 +302,46 @@ test('troca rápida de período descarta histórico antigo', async ({ page }) =>
   await expect(card.getByRole('img')).toBeVisible();
   await expect(card).not.toContainText('Histórico insuficiente');
 });
+
+for (const theme of ['light', 'dark']) {
+  test(`tooltip compartilhado no histórico: ${theme}, toque, teclado e limites da tela`, async ({
+    browser,
+  }) => {
+    const context = await browser.newContext({
+      viewport: { width: 320, height: 800 },
+      hasTouch: true,
+    });
+    const page = await context.newPage();
+    await page.clock.setFixedTime(new Date('2026-10-26T15:00Z'));
+    await page.addInitScript((theme) => localStorage.setItem('gf_app_theme', theme), theme);
+    await page.route(api, (route) => route.fulfill({ json: quotes }));
+    await page.route(historyApi, (route) => route.fulfill({ json: historical }));
+    await page.goto(path);
+    const chart = page.getByRole('img', { name: 'Histórico de 1 USD em BRL' });
+    await chart.scrollIntoViewIfNeeded();
+    const box = (await chart.boundingBox())!;
+    await page.touchscreen.tap(box.x + box.width - 50, box.y + 80);
+    const tooltip = page.getByRole('tooltip');
+    await expect(tooltip).toBeVisible();
+    await expect(tooltip).toContainText('Histórico da cotação');
+    await expect(tooltip).toContainText('20/10/2026');
+    await expect(tooltip).toContainText('1 USD em BRL');
+    await expect(tooltip).toContainText('5,00');
+    const bounds = (await tooltip.boundingBox())!;
+    expect(bounds.x).toBeGreaterThanOrEqual(0);
+    expect(bounds.x + bounds.width).toBeLessThanOrEqual(320);
+    expect(bounds.y).toBeGreaterThanOrEqual(0);
+    expect(bounds.y + bounds.height).toBeLessThanOrEqual(800);
+    expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+    await tooltip.screenshot({ path: `test-results/currency-tooltip-${theme}.png` });
+    await page.keyboard.press('Escape');
+    await expect(tooltip).toHaveCount(0);
+    await page.touchscreen.tap(box.x + box.width - 50, box.y + 80);
+    await expect(tooltip).toBeVisible();
+    await tooltip.getByRole('button', { name: 'Fechar detalhes do gráfico' }).click();
+    await expect(tooltip).toHaveCount(0);
+    await page.getByText('Ver tabela de datas e taxas').click();
+    await expect(page.getByRole('table')).toContainText('5,00');
+    await context.close();
+  });
+}
