@@ -82,6 +82,67 @@ export function ReleaseNotes() {
         </p>
 
         <article
+          aria-labelledby="version-1-7-0"
+          className="mt-10 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+        >
+          <div className="border-b border-slate-200 bg-emerald-50 p-6 sm:p-8">
+            <div className="flex flex-wrap items-center gap-3">
+              <h2 id="version-1-7-0" className="text-2xl font-bold">
+                Versão 1.7.0
+              </h2>
+              <span className="rounded-full border border-emerald-200 bg-white px-3 py-1 text-xs font-semibold text-emerald-800">
+                Consulte o câmbio em poucos segundos
+              </span>
+            </div>
+            <p className="mt-3 text-sm text-slate-600">
+              <time dateTime="2026-10-25">25 de outubro de 2026</time>
+            </p>
+            <p className="mt-4 leading-relaxed text-slate-700">
+              Converta valores entre real, dólar americano e euro gratuitamente, sem login e sem
+              alterar seus lançamentos.
+            </p>
+          </div>
+          <ul className="space-y-6 p-6 sm:p-8">
+            <li>
+              <h3 className="font-semibold">Uma nova ferramenta ao seu alcance</h3>
+              <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                Abra o menu “Ferramentas” na página inicial ou no painel e escolha “Conversor de
+                moedas”. Você também pode{' '}
+                <a
+                  href="/ferramentas/conversor-de-moedas"
+                  className="rounded font-semibold text-emerald-800 underline underline-offset-4"
+                >
+                  acessar o conversor diretamente
+                </a>
+                . A página oferece os temas claro e escuro e o mesmo rodapé da página inicial, com
+                links de acesso, documentos legais e notas da versão.
+              </p>
+            </li>
+            <li>
+              <h3 className="font-semibold">Conversão automática, com entrada brasileira</h3>
+              <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                Digite o valor com vírgula decimal e escolha as moedas de origem e destino. O
+                resultado muda automaticamente, sem botão de conversão. Use “Inverter moedas” para
+                trocar a direção mantendo o valor digitado. Para moedas iguais, a taxa é 1 e não há
+                consulta de câmbio.
+              </p>
+            </li>
+            <li>
+              <h3 className="font-semibold">Cotação de referência com fonte e data</h3>
+              <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                As referências vêm da AwesomeAPI. O resultado mostra a equivalência de uma unidade e
+                a data e hora da cotação informada pela fonte. As taxas inversas e cruzadas são
+                calculadas a partir das referências de compra de dólar e euro em reais. Use
+                “Atualizar cotação” para consultar novamente, respeitando o intervalo de cache de 60
+                segundos. Se houver falha de conexão ou indisponibilidade, você recebe um aviso e
+                pode tentar de novo; cotações anteriores são identificadas durante a atualização ou
+                em caso de erro. Cotação de referência. O valor cobrado pode variar.
+              </p>
+            </li>
+          </ul>
+        </article>
+
+        <article
           aria-labelledby="version-1-6-3"
           className="mt-10 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
         >

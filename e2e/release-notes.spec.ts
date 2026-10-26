@@ -12,7 +12,13 @@ test('notas públicas em modo claro com navegação e preferência de tema prese
   await expect(page.getByRole('heading', { name: 'Versão 1.0', exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Versão 1.0.1', exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Versão 1.1.0', exact: true })).toBeVisible();
-  await expect(page.locator('article').first()).toHaveAccessibleName('Versão 1.6.3');
+  await expect(page.locator('article').first()).toHaveAccessibleName('Versão 1.7.0');
+  const currency = page.getByRole('article', { name: 'Versão 1.7.0', exact: true });
+  await expect(currency).toContainText('AwesomeAPI');
+  await expect(currency).toContainText('Ferramentas');
+  await expect(
+    currency.getByRole('link', { name: 'acessar o conversor diretamente' }),
+  ).toHaveAttribute('href', '/ferramentas/conversor-de-moedas');
   const latest = page.getByRole('article', { name: 'Versão 1.6.3', exact: true });
   await expect(latest).toContainText('Ver lançamento');
   await expect(latest).toContainText('Salvar preserva o período, a busca e os filtros');
