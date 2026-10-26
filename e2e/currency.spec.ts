@@ -345,3 +345,56 @@ for (const theme of ['light', 'dark']) {
     await context.close();
   });
 }
+
+for (const width of [320, 390, 1280]) {
+  test(`histórico longo rola dentro do cartão sem alargar a página em ${width}px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.route(api, (route) => route.fulfill({ json: quotes }));
+    const series = Array.from({ length: 183 }, (_, i) => ({
+      bid: String(5 + i / 1000),
+      timestamp: String((Date.UTC(2026, 9, 26, 20) - (i + 1) * 86400000) / 1000),
+    }));
+    await page.route(historyApi, (route) => route.fulfill({ json: series }));
+    await page.goto(path);
+    const scroller = page.getByRole('region', { name: 'Gráfico com rolagem horizontal' });
+    await expect(page.getByRole('img')).toBeVisible();
+    const dimensions = () =>
+      scroller.evaluate((element) => ({
+        visible: element.clientWidth,
+        total: element.scrollWidth,
+      }));
+    const three = await dimensions();
+    if (width < 1024) {
+      expect(three.total).toBeGreaterThan(three.visible);
+      await scroller.focus();
+      await page.keyboard.press('ArrowRight');
+      await expect
+        .poll(() => scroller.evaluate((element) => element.scrollLeft))
+        .toBeGreaterThan(0);
+    } else {
+      expect(three.total).toBeLessThanOrEqual(three.visible + 1);
+    }
+    await page.getByRole('button', { name: '6 meses', exact: true }).click();
+    await expect(page.getByText(/183 observações/)).toBeVisible();
+    const six = await dimensions();
+    if (width < 1024) {
+      expect(six.total).toBeGreaterThan(three.total);
+      await scroller.scrollIntoViewIfNeeded();
+      const box = (await scroller.boundingBox())!;
+      await page.mouse.move(box.x + box.width / 2, box.y + 100);
+      await page.mouse.wheel(500, 0);
+      await expect
+        .poll(() => scroller.evaluate((element) => element.scrollLeft))
+        .toBeGreaterThan(100);
+    } else {
+      expect(six.total).toBeLessThanOrEqual(six.visible + 1);
+    }
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+      true,
+    );
+    expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+    await page.screenshot({ path: `test-results/currency-scroll-${width}.png`, fullPage: true });
+  });
+}
