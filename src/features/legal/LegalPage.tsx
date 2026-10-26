@@ -1,3 +1,4 @@
+import { BrandLogo } from '../../components/BrandLogo';
 import { LegalLinks } from './LegalLinks';
 import { LEGAL_CONTACT, LEGAL_VERSION, privacy, terms } from './legalContent';
 
@@ -10,9 +11,7 @@ export default function LegalPage({ kind }: { kind: 'terms' | 'privacy' }) {
       </a>
       <header className="border-b border-slate-200 px-5 py-4">
         <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
-          <a href="/" className="font-bold rounded">
-            ContandoDinheiro <span className="block text-xs font-normal">Voltar ao início</span>
-          </a>
+          <BrandLogo forceLight />
         </div>
       </header>
       <main id="conteudo-legal" className="max-w-4xl mx-auto px-5 py-10 sm:py-14">

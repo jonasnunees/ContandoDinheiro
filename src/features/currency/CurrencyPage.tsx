@@ -1,6 +1,7 @@
+import { BrandLogo } from '../../components/BrandLogo';
 import { lazy, Suspense, useState } from 'react';
 import { Footer } from '../../components/Footer';
-import { ArrowLeftRight, DollarSign, RefreshCw } from 'lucide-react';
+import { ArrowLeftRight, RefreshCw } from 'lucide-react';
 import { ToolsMenu } from '../../components/ToolsMenu';
 import { ThemeToggle } from '../../components/ThemeToggle';
 import {
@@ -35,12 +36,7 @@ export default function CurrencyPage() {
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
       <header className="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 py-4">
         <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
-          <a href="/" className="flex items-center gap-2 rounded-lg font-bold">
-            <span className="rounded-xl bg-emerald-700 p-2 text-white">
-              <DollarSign aria-hidden="true" className="h-5 w-5" />
-            </span>
-            ContandoDinheiro
-          </a>
+          <BrandLogo />
           <div className="flex flex-wrap items-center gap-2">
             <ToolsMenu />
             <ThemeToggle />

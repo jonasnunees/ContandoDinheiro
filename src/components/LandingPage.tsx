@@ -1,3 +1,4 @@
+import { BrandLogo } from './BrandLogo';
 import { ToolsMenu } from './ToolsMenu';
 import React, { useState } from 'react';
 import {
@@ -76,30 +77,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       <nav className="sticky top-0 z-40 bg-white/90 dark:bg-slate-950/85 backdrop-blur-md border-b border-slate-200 dark:border-slate-800/80 px-4 sm:px-8 py-3.5 transition-colors">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           {/* Identidade visual e nome do aplicativo. */}
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-700 flex items-center justify-center shadow-lg shadow-emerald-950/20 p-2">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="w-6 h-6 text-white"
-              >
-                <line x1="12" y1="1" x2="12" y2="23"></line>
-                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-              </svg>
-            </div>
-            <div>
-              <span className="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight">
-                ContandoDinheiro
-              </span>
-              <span className="hidden sm:inline-block ml-2 text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
-                100% Gratuito
-              </span>
-            </div>
-          </div>
+          <BrandLogo />
 
           {/* Botões de acesso exibidos em telas maiores. */}
           <div className="hidden sm:flex items-center gap-2 sm:gap-3">

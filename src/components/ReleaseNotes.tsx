@@ -1,5 +1,6 @@
+import { BrandLogo } from './BrandLogo';
 import { useEffect, useRef } from 'react';
-import { ArrowLeft, Check, Wallet } from 'lucide-react';
+import { ArrowLeft, Check } from 'lucide-react';
 
 const features = [
   [
@@ -56,10 +57,7 @@ export function ReleaseNotes() {
     >
       <header className="border-b border-slate-200 bg-white px-5 py-5">
         <div className="mx-auto flex max-w-3xl flex-wrap items-center justify-between gap-4">
-          <a href="#inicio" className="inline-flex items-center gap-2 font-bold text-slate-900">
-            <Wallet className="h-6 w-6 text-emerald-700" aria-hidden="true" />
-            ContandoDinheiro
-          </a>
+          <BrandLogo forceLight href="#inicio" />
           <a
             href="#inicio"
             className="inline-flex items-center gap-2 rounded text-sm text-slate-600 hover:text-emerald-800"

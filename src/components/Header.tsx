@@ -1,3 +1,4 @@
+import { BrandLogo } from './BrandLogo';
 import { ToolsMenu } from './ToolsMenu';
 import React, { useState } from 'react';
 import { PWAInstallButton } from './PWAInstallButton';
@@ -180,38 +181,7 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Organiza o logo e os botões no topo da tela. */}
         <div className="flex items-center justify-between w-full xl:w-auto gap-2 sm:gap-3 flex-wrap sm:flex-nowrap">
           {/* Logo e nome do aplicativo. */}
-          <button
-            type="button"
-            disabled={!onOpenLanding}
-            onClick={onOpenLanding}
-            className="flex items-center gap-2.5 cursor-pointer group flex-shrink-0"
-            title="Voltar para a Página Inicial"
-          >
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-700 flex items-center justify-center shadow-lg shadow-emerald-950/20 p-2 group-hover:scale-105 transition flex-shrink-0">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="w-5 h-5 sm:w-6 sm:h-6 text-white"
-              >
-                <line x1="12" y1="1" x2="12" y2="23"></line>
-                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-              </svg>
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5 sm:gap-2">
-                <h1 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition">
-                  ContandoDinheiro
-                </h1>
-              </div>
-              <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
-                Controle Financeiro & Dashboard
-              </p>
-            </div>
-          </button>
+          <BrandLogo onClick={onOpenLanding} />
 
           {/* Ações exibidas em telas de tamanho intermediário. */}
           <div className="hidden sm:flex xl:hidden items-center">{renderActions(true)}</div>
